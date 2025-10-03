@@ -1,11 +1,15 @@
 <script lang="ts">
-	import favicon from '$lib/assets/favicon.svg';
-
-	let { children } = $props();
+  import '../app.css';
+  import AppNav from '$lib/components/navigation/AppNav.svelte';
+  import { Toaster } from 'svelte-sonner';
+  import { ModeWatcher } from 'mode-watcher';
+  
+  let { children } = $props();
 </script>
 
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
+<ModeWatcher />
+<Toaster richColors />
 
-{@render children?.()}
+<AppNav>
+  {@render children()}
+</AppNav>
