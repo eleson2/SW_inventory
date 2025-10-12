@@ -11,3 +11,7 @@ but a customer only receeives the software's that are relevant for them, is a su
 It must be possible to say that an lpar is on a certain package level.
 It must be possible to roll back individual products is case there is a problem. 
 
+Frontend shall be built using 
+Svelte5 , Sveltekit, superforms and shadcn and typescript.
+
+
