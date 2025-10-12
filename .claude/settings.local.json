@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(findstr \"\\.svelte$ \\.ts$ \\.js$ \\.json$ \\.md$ \\.txt$ \\.css$ \\.html$ \\.gitignore$\")",
+      "Bash(npm install)",
+      "Bash(npm run dev)",
+      "Bash(timeout:*)",
+      "Bash(curl:*)",
+      "Bash(npm install:*)",
+      "Bash(npx prisma init:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(psql -U postgres -c \"CREATE DATABASE sw_inventory;\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

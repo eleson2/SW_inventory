@@ -1,0 +1,173 @@
+// Prisma schema for SW Inventory Management System
+// PostgreSQL database with full support for mainframe software tracking
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Customer entity - Multi-tenant customer information
+model Customer {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(100)
+  code        String   @unique @db.VarChar(20)
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  lpars Lpar[]
+
+  @@index([active])
+  @@index([code])
+  @@map("customers")
+}
+
+// Vendor entity - Software vendor information
+model Vendor {
+  id           String   @id @default(uuid())
+  name         String   @db.VarChar(100)
+  code         String   @unique @db.VarChar(20)
+  website      String?  @db.VarChar(255)
+  contactEmail String?  @map("contact_email") @db.VarChar(255)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  software Software[]
+
+  @@index([active])
+  @@index([code])
+  @@map("vendors")
+}
+
+// Software entity - Software products with version tracking
+model Software {
+  id              String   @id @default(uuid())
+  name            String   @db.VarChar(100)
+  vendorId        String   @map("vendor_id")
+  description     String?
+  currentVersion  String   @map("current_version") @db.VarChar(50)
+  currentPtfLevel String?  @map("current_ptf_level") @db.VarChar(50)
+  versionHistory  Json     @default("[]") @map("version_history") @db.JsonB
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  vendor       Vendor        @relation(fields: [vendorId], references: [id], onDelete: Restrict)
+  packageItems PackageItem[]
+  lparSoftware LparSoftware[]
+
+  @@index([vendorId])
+  @@index([active])
+  @@index([name])
+  @@map("software")
+}
+
+// Package entity - Software package releases
+model Package {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(100)
+  code        String   @unique @db.VarChar(20)
+  description String?
+  version     String   @db.VarChar(50)
+  releaseDate DateTime @map("release_date") @db.Date
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  items PackageItem[]
+  lpars Lpar[]
+
+  @@unique([code, version])
+  @@index([active])
+  @@index([releaseDate(sort: Desc)])
+  @@index([code])
+  @@map("packages")
+}
+
+// PackageItem entity - Software items within a package
+model PackageItem {
+  id         String   @id @default(uuid())
+  packageId  String   @map("package_id")
+  softwareId String   @map("software_id")
+  version    String   @db.VarChar(50)
+  ptfLevel   String?  @map("ptf_level") @db.VarChar(50)
+  required   Boolean  @default(true)
+  orderIndex Int      @map("order_index")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  package  Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  software Software @relation(fields: [softwareId], references: [id], onDelete: Restrict)
+
+  @@unique([packageId, softwareId])
+  @@index([packageId])
+  @@index([softwareId])
+  @@index([packageId, orderIndex])
+  @@map("package_items")
+}
+
+// Lpar entity - Logical Partition configurations
+model Lpar {
+  id               String   @id @default(uuid())
+  name             String   @db.VarChar(100)
+  code             String   @unique @db.VarChar(20)
+  customerId       String   @map("customer_id")
+  description      String?
+  currentPackageId String?  @map("current_package_id")
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  customer          Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  currentPackage    Package?       @relation(fields: [currentPackageId], references: [id], onDelete: SetNull)
+  softwareInstalled LparSoftware[]
+
+  @@index([customerId])
+  @@index([currentPackageId])
+  @@index([active])
+  @@index([code])
+  @@map("lpars")
+}
+
+// LparSoftware entity - Software installed on LPARs
+model LparSoftware {
+  id               String   @id @default(uuid())
+  lparId           String   @map("lpar_id")
+  softwareId       String   @map("software_id")
+  currentVersion   String   @map("current_version") @db.VarChar(50)
+  currentPtfLevel  String?  @map("current_ptf_level") @db.VarChar(50)
+  previousVersion  String?  @map("previous_version") @db.VarChar(50)
+  previousPtfLevel String?  @map("previous_ptf_level") @db.VarChar(50)
+  installedDate    DateTime @default(now()) @map("installed_date")
+  rolledBack       Boolean  @default(false) @map("rolled_back")
+
+  lpar     Lpar     @relation(fields: [lparId], references: [id], onDelete: Cascade)
+  software Software @relation(fields: [softwareId], references: [id], onDelete: Restrict)
+
+  @@unique([lparId, softwareId])
+  @@index([lparId])
+  @@index([softwareId])
+  @@index([lparId, rolledBack])
+  @@map("lpar_software")
+}
+
+// AuditLog entity - Track all changes for compliance
+model AuditLog {
+  id         String   @id @default(uuid())
+  entityType String   @map("entity_type") @db.VarChar(50)
+  entityId   String   @map("entity_id")
+  action     String   @db.VarChar(20)
+  changes    Json     @db.JsonB
+  userId     String?  @map("user_id")
+  timestamp  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([timestamp(sort: Desc)])
+  @@index([userId])
+  @@map("audit_log")
+}

@@ -13,5 +13,5 @@ It must be possible to roll back individual products is case there is a problem.
 
 Frontend shall be built using 
 Svelte5 , Sveltekit, superforms and shadcn and typescript.
-
+Also ,build libraries or components if that helps in reducing code and keeping UI consistent.
 
