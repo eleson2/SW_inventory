@@ -7,6 +7,7 @@
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
 	import CloneDialog from '$components/common/CloneDialog.svelte';
 	import { formatDateTime } from '$utils/date-format';
+	import { createCloneHandler } from '$utils/clone-handler';
 
 	let { data }: { data: PageData } = $props();
 	const { software } = data;
@@ -19,35 +20,21 @@
 		? (software.versionHistory as any[])
 		: [];
 
-	async function handleClone(formData: Record<string, string>) {
+	const handleClone = async (formData: Record<string, string>) => {
 		cloning = true;
 		try {
-			const response = await fetch('/api/clone', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					entityType: 'software',
-					sourceId: software.id,
-					data: {
-						name: formData.name
-					}
-				})
+			const cloneHandler = createCloneHandler({
+				entityType: 'software',
+				sourceId: software.id,
+				redirectPath: (id) => `/software/${id}`,
+				errorMessage: 'Failed to clone software'
 			});
-
-			const result = await response.json();
-			if (result.success) {
-				window.location.href = `/software/${result.data.id}`;
-			} else {
-				alert(`Error: ${result.error}`);
-			}
-		} catch (error) {
-			console.error('Clone error:', error);
-			alert('Failed to clone software');
+			await cloneHandler(formData);
 		} finally {
 			cloning = false;
 			showCloneDialog = false;
 		}
-	}
+	};
 </script>
 
 <div class="space-y-6">
@@ -57,7 +44,10 @@
 			<p class="text-muted-foreground mt-2">Software Product Details</p>
 		</div>
 		<div class="flex gap-2">
-			<Button onclick={() => showCloneDialog = true}>
+			<Button onclick={() => window.location.href = `/software/${software.id}/version`}>
+				New Version
+			</Button>
+			<Button variant="outline" onclick={() => showCloneDialog = true}>
 				Clone Software
 			</Button>
 			<Button variant="outline" onclick={() => window.location.href = `/software/${software.id}/edit`}>

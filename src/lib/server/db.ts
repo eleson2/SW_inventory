@@ -66,7 +66,7 @@ export async function softDelete(model: any, id: string) {
 export async function createAuditLog(
 	entityType: string,
 	entityId: string,
-	action: 'create' | 'update' | 'delete' | 'rollback',
+	action: 'create' | 'update' | 'delete' | 'rollback' | 'version_update',
 	changes: Record<string, any>,
 	userId?: string
 ) {

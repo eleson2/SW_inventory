@@ -215,9 +215,114 @@ export async function cloneLpar(
 }
 
 /**
+ * Clone a customer
+ * Creates a new customer with metadata from the source
+ */
+export async function cloneCustomer(
+	sourceId: string,
+	newName: string,
+	newCode: string,
+	userId?: string
+) {
+	const source = await db.customer.findUnique({
+		where: { id: sourceId },
+		include: {
+			lpars: true
+		}
+	});
+
+	if (!source) {
+		throw new Error('Source customer not found');
+	}
+
+	// Check if code already exists
+	const existing = await db.customer.findUnique({
+		where: { code: newCode }
+	});
+
+	if (existing) {
+		throw new Error('Customer with this code already exists');
+	}
+
+	const cloned = await db.customer.create({
+		data: {
+			name: newName,
+			code: newCode,
+			description: `Cloned from: ${source.name} (${source.code})\n\n${source.description || ''}`.trim(),
+			active: source.active
+		}
+	});
+
+	// Create audit log
+	await createAuditLog('customer', cloned.id, 'create', {
+		action: 'clone',
+		sourceId,
+		sourceName: source.name,
+		sourceCode: source.code,
+		newName,
+		newCode
+	}, userId);
+
+	return cloned;
+}
+
+/**
+ * Clone a vendor
+ * Creates a new vendor with metadata from the source
+ */
+export async function cloneVendor(
+	sourceId: string,
+	newName: string,
+	newCode: string,
+	userId?: string
+) {
+	const source = await db.vendor.findUnique({
+		where: { id: sourceId },
+		include: {
+			software: true
+		}
+	});
+
+	if (!source) {
+		throw new Error('Source vendor not found');
+	}
+
+	// Check if code already exists
+	const existing = await db.vendor.findUnique({
+		where: { code: newCode }
+	});
+
+	if (existing) {
+		throw new Error('Vendor with this code already exists');
+	}
+
+	const cloned = await db.vendor.create({
+		data: {
+			name: newName,
+			code: newCode,
+			website: source.website,
+			contactEmail: source.contactEmail,
+			active: source.active
+		}
+	});
+
+	// Create audit log
+	await createAuditLog('vendor', cloned.id, 'create', {
+		action: 'clone',
+		sourceId,
+		sourceName: source.name,
+		sourceCode: source.code,
+		newName,
+		newCode
+	}, userId);
+
+	return cloned;
+}
+
+/**
  * Get clone preview - shows what will be cloned
  */
-export async function getClonePreview(entityType: 'software' | 'package' | 'lpar', sourceId: string) {
+export async function getClonePreview(entityType: 'software' | 'package' | 'lpar' | 'customer' | 'vendor', sourceId: string) {
 	switch (entityType) {
 		case 'software': {
 			const software = await db.software.findUnique({
@@ -260,6 +365,31 @@ export async function getClonePreview(entityType: 'software' | 'package' | 'lpar
 				customer: lpar?.customer?.name,
 				package: lpar?.currentPackage?.name,
 				softwareCount: lpar?.softwareInstalled.length || 0
+			};
+		}
+		case 'customer': {
+			const customer = await db.customer.findUnique({
+				where: { id: sourceId },
+				include: { lpars: true }
+			});
+			return {
+				name: customer?.name,
+				code: customer?.code,
+				lparCount: customer?.lpars.length || 0,
+				active: customer?.active
+			};
+		}
+		case 'vendor': {
+			const vendor = await db.vendor.findUnique({
+				where: { id: sourceId },
+				include: { software: true }
+			});
+			return {
+				name: vendor?.name,
+				code: vendor?.code,
+				website: vendor?.website,
+				softwareCount: vendor?.software.length || 0,
+				active: vendor?.active
 			};
 		}
 	}

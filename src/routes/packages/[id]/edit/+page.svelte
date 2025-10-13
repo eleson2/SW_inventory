@@ -1,49 +1,77 @@
 <script lang="ts">
-	import type { ActionData } from './$types';
+	import type { PageData, ActionData } from './$types';
 	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import Label from '$components/ui/Label.svelte';
 
-	let { form }: { form: ActionData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
+
+	// Format date for input field (YYYY-MM-DD)
+	const formatDateForInput = (date: Date) => {
+		const d = new Date(date);
+		return d.toISOString().split('T')[0];
+	};
 
 	let formData = $state({
-		name: '',
-		code: '',
-		description: '',
-		active: true
+		name: data.package.name,
+		code: data.package.code,
+		version: data.package.version,
+		description: data.package.description || '',
+		releaseDate: formatDateForInput(data.package.releaseDate),
+		active: data.package.active
 	});
 </script>
 
 <div class="space-y-6 max-w-2xl">
 	<div>
-		<h1 class="text-3xl font-bold tracking-tight">New Customer</h1>
+		<h1 class="text-3xl font-bold tracking-tight">Edit Package</h1>
 		<p class="text-muted-foreground mt-2">
-			Add a new customer to the system
+			Update package information
 		</p>
 	</div>
 
 	<Card class="p-6">
 		<form method="POST" class="space-y-6">
 			<FormField
-				label="Customer Name"
+				label="Package Name"
 				id="name"
 				name="name"
 				bind:value={formData.name}
 				required
-				placeholder="Enter customer name"
+				placeholder="Enter package name"
 				error={form?.errors?.name?.[0]}
 			/>
 
 			<FormField
-				label="Customer Code"
+				label="Package Code"
 				id="code"
 				name="code"
 				bind:value={formData.code}
 				required
-				placeholder="CUSTOMER-CODE"
+				placeholder="PKG-CODE"
 				helperText="Uppercase alphanumeric with dashes/underscores"
 				error={form?.errors?.code?.[0]}
+			/>
+
+			<FormField
+				label="Version"
+				id="version"
+				name="version"
+				bind:value={formData.version}
+				required
+				placeholder="e.g., 2025.1.0"
+				error={form?.errors?.version?.[0]}
+			/>
+
+			<FormField
+				label="Release Date"
+				id="releaseDate"
+				name="releaseDate"
+				type="date"
+				bind:value={formData.releaseDate}
+				required
+				error={form?.errors?.releaseDate?.[0]}
 			/>
 
 			<div class="space-y-2">
@@ -52,8 +80,8 @@
 					id="description"
 					name="description"
 					bind:value={formData.description}
-					placeholder="Enter customer description (optional)"
-					class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+					placeholder="Enter package description (optional)"
+					class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 				></textarea>
 			</div>
 
@@ -75,7 +103,7 @@
 			{/if}
 
 			<div class="flex gap-4">
-				<Button type="submit">Create Customer</Button>
+				<Button type="submit">Update Package</Button>
 				<Button type="button" variant="outline" onclick={() => window.history.back()}>
 					Cancel
 				</Button>

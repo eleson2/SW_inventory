@@ -19,7 +19,8 @@
       "Bash(start npx prisma studio)",
       "Bash(cmd /c \"echo postgres | I:\\Program Files\\PostgreSQL\\18\\bin\\createdb -U postgres sw_inventory\")",
       "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\createdb\" -U postgres sw_inventory)",
-      "Bash(cmd /c:*)"
+      "Bash(cmd /c:*)",
+      "Bash(npm run build)"
     ],
     "deny": [],
     "ask": []

@@ -7,6 +7,7 @@
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
 	import CloneDialog from '$components/common/CloneDialog.svelte';
 	import { formatDate } from '$utils/date-format';
+	import { createCloneHandler } from '$utils/clone-handler';
 
 	let { data }: { data: PageData } = $props();
 	const { package: pkg } = data;
@@ -14,37 +15,21 @@
 	let showCloneDialog = $state(false);
 	let cloning = $state(false);
 
-	async function handleClone(formData: Record<string, string>) {
+	const handleClone = async (formData: Record<string, string>) => {
 		cloning = true;
 		try {
-			const response = await fetch('/api/clone', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					entityType: 'package',
-					sourceId: pkg.id,
-					data: {
-						name: formData.name,
-						code: formData.code,
-						version: formData.version
-					}
-				})
+			const cloneHandler = createCloneHandler({
+				entityType: 'package',
+				sourceId: pkg.id,
+				redirectPath: (id) => `/packages/${id}`,
+				errorMessage: 'Failed to clone package'
 			});
-
-			const result = await response.json();
-			if (result.success) {
-				window.location.href = `/packages/${result.data.id}`;
-			} else {
-				alert(`Error: ${result.error}`);
-			}
-		} catch (error) {
-			console.error('Clone error:', error);
-			alert('Failed to clone package');
+			await cloneHandler(formData);
 		} finally {
 			cloning = false;
 			showCloneDialog = false;
 		}
-	}
+	};
 </script>
 
 <div class="space-y-6">

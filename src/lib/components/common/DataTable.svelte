@@ -90,7 +90,7 @@
 						onclick={() => onRowClick?.(item)}
 					>
 						{#each columns as column}
-							<td class="p-4 align-middle">
+							<td class="p-4 align-middle text-foreground">
 								{@render getCellValue(item, column)}
 							</td>
 						{/each}

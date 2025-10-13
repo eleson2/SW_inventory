@@ -1,25 +1,25 @@
 <script lang="ts">
-	import type { ActionData } from './$types';
+	import type { PageData, ActionData } from './$types';
 	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import Label from '$components/ui/Label.svelte';
 
-	let { form }: { form: ActionData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let formData = $state({
-		name: '',
-		code: '',
-		description: '',
-		active: true
+		name: data.customer.name,
+		code: data.customer.code,
+		description: data.customer.description || '',
+		active: data.customer.active
 	});
 </script>
 
 <div class="space-y-6 max-w-2xl">
 	<div>
-		<h1 class="text-3xl font-bold tracking-tight">New Customer</h1>
+		<h1 class="text-3xl font-bold tracking-tight">Edit Customer</h1>
 		<p class="text-muted-foreground mt-2">
-			Add a new customer to the system
+			Update customer information
 		</p>
 	</div>
 
@@ -75,7 +75,7 @@
 			{/if}
 
 			<div class="flex gap-4">
-				<Button type="submit">Create Customer</Button>
+				<Button type="submit">Update Customer</Button>
 				<Button type="button" variant="outline" onclick={() => window.history.back()}>
 					Cancel
 				</Button>
