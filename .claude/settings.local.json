@@ -11,7 +11,15 @@
       "Bash(npm install:*)",
       "Bash(npx prisma init:*)",
       "Bash(npx prisma generate:*)",
-      "Bash(psql -U postgres -c \"CREATE DATABASE sw_inventory;\")"
+      "Bash(psql -U postgres -c \"CREATE DATABASE sw_inventory;\")",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -c \"CREATE DATABASE sw_inventory;\")",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -l)",
+      "Bash(set PGPASSWORD=postgres)",
+      "Bash(npx prisma:*)",
+      "Bash(start npx prisma studio)",
+      "Bash(cmd /c \"echo postgres | I:\\Program Files\\PostgreSQL\\18\\bin\\createdb -U postgres sw_inventory\")",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\createdb\" -U postgres sw_inventory)",
+      "Bash(cmd /c:*)"
     ],
     "deny": [],
     "ask": []

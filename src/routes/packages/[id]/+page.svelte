@@ -1,0 +1,199 @@
+<script lang="ts">
+	import type { PageData } from './$types';
+	import Button from '$components/ui/Button.svelte';
+	import Card from '$components/ui/Card.svelte';
+	import Badge from '$components/ui/Badge.svelte';
+	import StatusBadge from '$components/common/StatusBadge.svelte';
+	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
+	import CloneDialog from '$components/common/CloneDialog.svelte';
+	import { formatDate } from '$utils/date-format';
+
+	let { data }: { data: PageData } = $props();
+	const { package: pkg } = data;
+
+	let showCloneDialog = $state(false);
+	let cloning = $state(false);
+
+	async function handleClone(formData: Record<string, string>) {
+		cloning = true;
+		try {
+			const response = await fetch('/api/clone', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					entityType: 'package',
+					sourceId: pkg.id,
+					data: {
+						name: formData.name,
+						code: formData.code,
+						version: formData.version
+					}
+				})
+			});
+
+			const result = await response.json();
+			if (result.success) {
+				window.location.href = `/packages/${result.data.id}`;
+			} else {
+				alert(`Error: ${result.error}`);
+			}
+		} catch (error) {
+			console.error('Clone error:', error);
+			alert('Failed to clone package');
+		} finally {
+			cloning = false;
+			showCloneDialog = false;
+		}
+	}
+</script>
+
+<div class="space-y-6">
+	<div class="flex items-center justify-between">
+		<div>
+			<h1 class="text-3xl font-bold tracking-tight">{pkg.name}</h1>
+			<p class="text-muted-foreground mt-2">Package Details and Software Items</p>
+		</div>
+		<div class="flex gap-2">
+			<Button onclick={() => showCloneDialog = true}>
+				Clone Package
+			</Button>
+			<Button variant="outline" onclick={() => window.location.href = `/packages/${pkg.id}/edit`}>
+				Edit
+			</Button>
+			<Button variant="outline" onclick={() => window.history.back()}>
+				Back
+			</Button>
+		</div>
+	</div>
+
+	<div class="grid gap-6 md:grid-cols-2">
+		<Card class="p-6">
+			<h2 class="text-xl font-semibold mb-4">Basic Information</h2>
+			<dl class="space-y-3">
+				<div>
+					<dt class="text-sm font-medium text-muted-foreground">Package Code</dt>
+					<dd class="mt-1">
+						<Badge variant="outline">{pkg.code}</Badge>
+					</dd>
+				</div>
+				<div>
+					<dt class="text-sm font-medium text-muted-foreground">Version</dt>
+					<dd class="mt-1">
+						<Badge>{pkg.version}</Badge>
+					</dd>
+				</div>
+				<div>
+					<dt class="text-sm font-medium text-muted-foreground">Release Date</dt>
+					<dd class="text-sm mt-1">{formatDate(pkg.releaseDate)}</dd>
+				</div>
+				<div>
+					<dt class="text-sm font-medium text-muted-foreground">Description</dt>
+					<dd class="text-sm mt-1">{pkg.description || '-'}</dd>
+				</div>
+				<div>
+					<dt class="text-sm font-medium text-muted-foreground">Status</dt>
+					<dd class="mt-1">
+						<StatusBadge active={pkg.active} />
+					</dd>
+				</div>
+			</dl>
+		</Card>
+
+		<Card class="p-6">
+			<h2 class="text-xl font-semibold mb-4">Package Statistics</h2>
+			<dl class="space-y-3">
+				<div>
+					<dt class="text-sm font-medium text-muted-foreground">Total Software Items</dt>
+					<dd class="text-2xl font-bold mt-1">{pkg.items.length}</dd>
+				</div>
+				<div>
+					<dt class="text-sm font-medium text-muted-foreground">Required Items</dt>
+					<dd class="text-2xl font-bold mt-1">
+						{pkg.items.filter(item => item.required).length}
+					</dd>
+				</div>
+				<div>
+					<dt class="text-sm font-medium text-muted-foreground">Optional Items</dt>
+					<dd class="text-2xl font-bold mt-1">
+						{pkg.items.filter(item => !item.required).length}
+					</dd>
+				</div>
+			</dl>
+		</Card>
+	</div>
+
+	<Card class="p-6">
+		<div class="flex items-center justify-between mb-4">
+			<h2 class="text-xl font-semibold">Package Items</h2>
+			<Button size="sm" onclick={() => window.location.href = `/packages/${pkg.id}/items/add`}>
+				Add Item
+			</Button>
+		</div>
+
+		{#if pkg.items.length === 0}
+			<p class="text-sm text-muted-foreground text-center py-8">No items in this package</p>
+		{:else}
+			<div class="space-y-3">
+				{#each pkg.items as item}
+					<div class="flex items-center justify-between p-4 border rounded-lg">
+						<div class="flex-1">
+							<div class="flex items-center gap-3">
+								<span class="text-sm font-medium text-muted-foreground w-8">
+									#{item.orderIndex}
+								</span>
+								<div>
+									<div class="font-medium">
+										<a
+											href="/software/{item.software.id}"
+											class="text-primary hover:underline"
+										>
+											{item.software.name}
+										</a>
+									</div>
+									<div class="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+										<span>{item.software.vendor.name}</span>
+										<span>•</span>
+										<VersionDisplay
+											version={{
+												version: item.version,
+												ptfLevel: item.ptfLevel ?? undefined
+											}}
+											showBadge={true}
+										/>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="flex items-center gap-2">
+							{#if item.required}
+								<Badge variant="default">Required</Badge>
+							{:else}
+								<Badge variant="outline">Optional</Badge>
+							{/if}
+						</div>
+					</div>
+				{/each}
+			</div>
+		{/if}
+	</Card>
+</div>
+
+<CloneDialog
+	bind:open={showCloneDialog}
+	title="Clone Package"
+	entityType="Package"
+	sourceName={pkg.name}
+	fields={[
+		{ name: 'name', label: 'New Package Name', required: true, placeholder: 'Enter new package name' },
+		{ name: 'code', label: 'New Package Code', required: true, placeholder: 'e.g., MF-Q2-2025' },
+		{ name: 'version', label: 'New Version', required: true, placeholder: 'e.g., 2025.2.0' }
+	]}
+	preview={{
+		code: pkg.code,
+		version: pkg.version,
+		'item count': pkg.items.length,
+		'required items': pkg.items.filter(i => i.required).length
+	}}
+	onClone={handleClone}
+	loading={cloning}
+/>

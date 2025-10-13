@@ -5,10 +5,46 @@
 	import Badge from '$components/ui/Badge.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
+	import CloneDialog from '$components/common/CloneDialog.svelte';
 	import { formatDateTime } from '$utils/date-format';
 
 	let { data }: { data: PageData } = $props();
 	const { lpar, compatibility } = data;
+
+	let showCloneDialog = $state(false);
+	let cloning = $state(false);
+
+	async function handleClone(formData: Record<string, string>) {
+		cloning = true;
+		try {
+			const response = await fetch('/api/clone', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					entityType: 'lpar',
+					sourceId: lpar.id,
+					data: {
+						name: formData.name,
+						code: formData.code,
+						customerId: formData.customerId || lpar.customerId
+					}
+				})
+			});
+
+			const result = await response.json();
+			if (result.success) {
+				window.location.href = `/lpars/${result.data.id}`;
+			} else {
+				alert(`Error: ${result.error}`);
+			}
+		} catch (error) {
+			console.error('Clone error:', error);
+			alert('Failed to clone LPAR');
+		} finally {
+			cloning = false;
+			showCloneDialog = false;
+		}
+	}
 </script>
 
 <div class="space-y-6">
@@ -18,6 +54,9 @@
 			<p class="text-muted-foreground mt-2">LPAR Details and Configuration</p>
 		</div>
 		<div class="flex gap-2">
+			<Button onclick={() => showCloneDialog = true}>
+				Clone LPAR
+			</Button>
 			<Button variant="outline" onclick={() => window.location.href = `/lpars/${lpar.id}/edit`}>
 				Edit
 			</Button>
@@ -153,3 +192,21 @@
 		{/if}
 	</Card>
 </div>
+
+<CloneDialog
+	bind:open={showCloneDialog}
+	title="Clone LPAR"
+	entityType="LPAR"
+	sourceName={lpar.name}
+	fields={[
+		{ name: 'name', label: 'New LPAR Name', required: true, placeholder: 'Enter new LPAR name' },
+		{ name: 'code', label: 'New LPAR Code', required: true, placeholder: 'e.g., PROD-LPAR-2' }
+	]}
+	preview={{
+		customer: lpar.customer?.name || 'N/A',
+		package: lpar.currentPackage?.name || 'N/A',
+		'software count': lpar.softwareInstalled.length
+	}}
+	onClone={handleClone}
+	loading={cloning}
+/>
