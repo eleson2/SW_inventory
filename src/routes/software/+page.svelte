@@ -19,22 +19,25 @@
 		{
 			key: 'vendor',
 			label: 'Vendor',
-			render: (item: Software) => item.vendor?.name || '-'
+			render: (item: Software) => item.vendors?.name || '-'
 		},
 		{
 			key: 'currentVersion',
 			label: 'Current Version',
 			render: (item: Software) => {
-				return VersionDisplay({ version: item.currentVersion, showBadge: true });
+				if (item.current_version) {
+					const version = item.current_version.version;
+					const ptf = item.current_version.ptf_level;
+					return ptf ? `${version} (${ptf})` : version;
+				}
+				return 'No version';
 			}
 		},
 		{
 			key: 'active',
 			label: 'Status',
 			sortable: true,
-			render: (item: Software) => {
-				return StatusBadge({ active: item.active });
-			}
+			render: (item: Software) => item.active ? 'Active' : 'Inactive'
 		}
 	];
 

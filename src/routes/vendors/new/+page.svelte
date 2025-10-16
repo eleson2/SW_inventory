@@ -11,7 +11,7 @@
 		name: '',
 		code: '',
 		website: '',
-		contactEmail: '',
+		contact_email: '',
 		active: true
 	});
 </script>
@@ -60,13 +60,13 @@
 
 			<FormField
 				label="Contact Email"
-				id="contactEmail"
-				name="contactEmail"
+				id="contact_email"
+				name="contact_email"
 				type="email"
-				bind:value={formData.contactEmail}
+				bind:value={formData.contact_email}
 				placeholder="contact@example.com"
 				helperText="Optional - main contact email for this vendor"
-				error={form?.errors?.contactEmail?.[0]}
+				error={form?.errors?.contact_email?.[0]}
 			/>
 
 			<div class="space-y-2">

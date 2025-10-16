@@ -1,7 +1,1 @@
-
-[Superforms]        (https://context7.com/ciscoheat/sveltekit-superforms/llms.txt)
-
-[Svelte 5]          (https://svelte.dev/llms-medium.txt) 
-[Svelte 5 doc]      (https://svelte.dev/docs/svelte/llms-small.txt) 
-[Sveltekit 5 doc]   (https://svelte.dev/docs/kit/llms-small.txt) 
-[Svelte CLI]        (https://svelte.dev/docs/cli/llms.txt)
+\n[Superforms]        (https://context7.com/ciscoheat/sveltekit-superforms/llms.txt)\n\n[Svelte 5]          (https://svelte.dev/llms-medium.txt) \n[Svelte 5 doc]      (https://svelte.dev/docs/svelte/llms-small.txt) \n[Sveltekit 5 doc]   (https://svelte.dev/docs/kit/llms-small.txt) \n[Svelte CLI]        (https://svelte.dev/docs/cli/llms.txt)\n

@@ -1,17 +1,1 @@
-Target is to build a Software inventory system for mainframe lpars in a multi tenant environment with multiple customers.
-Only need basic Customer info.
-Only need basic Vendor info
-
-Software's shall have a version and ptf level and tha shall be possible to extrzct from vendors designations. 
-Software is deistributed both as individual products and as packages.
-A package set of products that is well tested together and rolled out together. 
-A package includes all or almost all software's that the service provider is responsible for 
-but a customer only receeives the software's that are relevant for them, is a subset of the package. 
-
-It must be possible to say that an lpar is on a certain package level.
-It must be possible to roll back individual products is case there is a problem. 
-
-Frontend shall be built using 
-Svelte5 , Sveltekit, superforms and shadcn and typescript.
-Also ,build libraries or components if that helps in reducing code and keeping UI consistent.
-
+Target is to build a Software inventory system for mainframe lpars in a multi tenant environment with multiple customers.\nOnly need basic Customer info.\nOnly need basic Vendor info\n\nSoftware's shall have a version and ptf level and tha shall be possible to extrzct from vendors designations. \nSoftware is deistributed both as individual products and as packages.\nA package set of products that is well tested together and rolled out together. \nA package includes all or almost all software's that the service provider is responsible for \nbut a customer only receeives the software's that are relevant for them, is a subset of the package. \n\nIt must be possible to say that an lpar is on a certain package level.\nIt must be possible to roll back individual products is case there is a problem. \n\nFrontend shall be built using \nSvelte5 , Sveltekit, superforms and shadcn and typescript.\nAlso ,build libraries or components if that helps in reducing code and keeping UI consistent.\n\n

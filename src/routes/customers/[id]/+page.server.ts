@@ -1,25 +1,16 @@
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { error } from '@sveltejs/kit';
+import { createDetailLoader } from '$lib/server/route-factory';
 
-export const load: PageServerLoad = async ({ params }) => {
-	const customer = await db.customer.findUnique({
-		where: { id: params.id },
-		include: {
-			lpars: {
-				include: {
-					currentPackage: true,
-					softwareInstalled: true
-				}
+export const load: PageServerLoad = createDetailLoader({
+	model: db.customers,
+	entityName: 'Customer',
+	include: {
+		lpars: {
+			include: {
+				packages: true,
+				lpar_software: true
 			}
 		}
-	});
-
-	if (!customer) {
-		throw error(404, 'Customer not found');
 	}
-
-	return {
-		customer
-	};
-};
+});

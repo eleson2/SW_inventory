@@ -1,20 +1,17 @@
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { error } from '@sveltejs/kit';
+import { createDetailLoader } from '$lib/server/route-factory';
 
-export const load: PageServerLoad = async ({ params }) => {
-	const software = await db.software.findUnique({
-		where: { id: params.id },
-		include: {
-			vendor: true
+export const load: PageServerLoad = createDetailLoader({
+	model: db.software,
+	entityName: 'Software',
+	include: {
+		vendors: true,
+		current_version: true,
+		versions: {
+			orderBy: {
+				release_date: 'desc'
+			}
 		}
-	});
-
-	if (!software) {
-		throw error(404, 'Software not found');
 	}
-
-	return {
-		software
-	};
-};
+});

@@ -21,17 +21,15 @@
 			sortable: true
 		},
 		{
-			key: 'contactEmail',
+			key: 'contact_email',
 			label: 'Contact Email',
-			render: (item: Vendor) => item.contactEmail || '-'
+			render: (item: Vendor) => item.contact_email || '-'
 		},
 		{
 			key: 'active',
 			label: 'Status',
 			sortable: true,
-			render: (item: Vendor) => {
-				return StatusBadge({ active: item.active });
-			}
+			render: (item: Vendor) => item.active ? 'Active' : 'Inactive'
 		}
 	];
 

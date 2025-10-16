@@ -30,15 +30,13 @@
 			key: 'active',
 			label: 'Status',
 			sortable: true,
-			render: (item: Customer) => {
-				return StatusBadge({ active: item.active });
-			}
+			render: (item: Customer) => item.active ? 'Active' : 'Inactive'
 		},
 		{
-			key: 'createdAt',
+			key: 'created_at',
 			label: 'Created',
 			sortable: true,
-			render: (item: Customer) => formatDate(item.createdAt)
+			render: (item: Customer) => formatDate(item.created_at)
 		}
 	];
 

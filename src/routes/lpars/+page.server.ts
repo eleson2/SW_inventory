@@ -4,12 +4,12 @@ import { createPageLoader } from '$lib/server/page-loader';
 
 export const load: PageServerLoad = async ({ url }) => {
 	return createPageLoader({
-		model: db.lpar,
+		model: db.lpars,
 		dataKey: 'lpars',
 		include: {
-			customer: true,
-			currentPackage: true,
-			softwareInstalled: {
+			customers: true, // Relation field name from schema
+			packages: true, // Relation field name from schema (current package)
+			lpar_software: { // Relation field name from schema
 				include: {
 					software: true
 				}

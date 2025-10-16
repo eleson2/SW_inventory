@@ -70,11 +70,11 @@
 				</div>
 				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Created</dt>
-					<dd class="text-sm mt-1">{formatDateTime(customer.createdAt)}</dd>
+					<dd class="text-sm mt-1">{formatDateTime(new Date(customer.created_at))}</dd>
 				</div>
 				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Last Updated</dt>
-					<dd class="text-sm mt-1">{formatDateTime(customer.updatedAt)}</dd>
+					<dd class="text-sm mt-1">{formatDateTime(new Date(customer.updated_at))}</dd>
 				</div>
 			</dl>
 		</Card>
@@ -118,17 +118,17 @@
 							</div>
 							<div class="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
 								<span class="font-mono">{lpar.code}</span>
-								{#if lpar.currentPackage}
+								{#if lpar.packages}
 									<span>•</span>
 									<Badge variant="outline">
-										{lpar.currentPackage.code} ({lpar.currentPackage.version})
+										{lpar.packages.code} ({lpar.packages.version})
 									</Badge>
 								{/if}
 							</div>
 						</div>
 						<div class="flex items-center gap-4">
 							<div class="text-sm text-muted-foreground">
-								{lpar.softwareInstalled.length} software installed
+								{lpar.lpar_software?.length || 0} software installed
 							</div>
 							<StatusBadge active={lpar.active} />
 						</div>

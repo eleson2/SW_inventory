@@ -1,11 +1,11 @@
 import type { PageServerLoad, Actions } from './$types';
-import { fail, redirect } from '@sveltejs/kit';
-import { db, createAuditLog } from '$lib/server/db';
+import { db } from '$lib/server/db';
+import { createCreateAction } from '$lib/server/route-factory';
 import { z } from 'zod';
 
 // Load vendors for dropdown
 export const load: PageServerLoad = async () => {
-	const vendors = await db.vendor.findMany({
+	const vendors = await db.vendors.findMany({
 		where: { active: true },
 		orderBy: { name: 'asc' },
 		select: {
@@ -31,48 +31,27 @@ const softwareCreateSchema = z.object({
 });
 
 export const actions: Actions = {
-	default: async ({ request }) => {
-		const formData = await request.formData();
-		const data = {
+	default: createCreateAction({
+		schema: softwareCreateSchema,
+		model: db.software,
+		entityType: 'software',
+		redirectPath: '/software',
+		extractFormData: (formData) => ({
 			name: formData.get('name'),
-			vendorId: formData.get('vendorId'),
+			vendorId: formData.get('vendor_id'),
 			description: formData.get('description') || '',
 			currentVersion: formData.get('currentVersion'),
 			currentPtfLevel: formData.get('currentPtfLevel') || '',
 			active: formData.get('active') === 'on'
-		};
-
-		try {
-			// Validate the form data
-			const validated = softwareCreateSchema.parse(data);
-
-			// Create software in database
-			const software = await db.software.create({
-				data: {
-					name: validated.name,
-					vendorId: validated.vendorId,
-					description: validated.description || null,
-					currentVersion: validated.currentVersion,
-					currentPtfLevel: validated.currentPtfLevel || null,
-					versionHistory: [],
-					active: validated.active
-				}
-			});
-
-			// Create audit log
-			await createAuditLog('software', software.id, 'create', { software });
-
-			// Redirect to software list
-			throw redirect(303, '/software');
-		} catch (error) {
-			if (error instanceof z.ZodError) {
-				const errors = error.flatten().fieldErrors;
-				return fail(400, {
-					errors,
-					message: 'Validation failed. Please check the form.'
-				});
-			}
-			throw error;
-		}
-	}
+		}),
+		transformData: (validated) => ({
+			name: validated.name,
+			vendorId: validated.vendorId,
+			description: validated.description || null,
+			currentVersion: validated.currentVersion,
+			currentPtfLevel: validated.currentPtfLevel || null,
+			versionHistory: [],
+			active: validated.active
+		})
+	})
 };

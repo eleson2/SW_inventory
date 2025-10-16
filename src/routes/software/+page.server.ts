@@ -8,7 +8,8 @@ export const load: PageServerLoad = async ({ url }) => {
 		dataKey: 'software',
 		searchFields: ['name'], // Only search by name for software
 		include: {
-			vendor: true
+			vendors: true, // Relation field name from schema
+			current_version: true // Include current version details
 		}
 	})(url);
 };

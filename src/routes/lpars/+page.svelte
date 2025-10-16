@@ -24,33 +24,28 @@
 		{
 			key: 'customer',
 			label: 'Customer',
-			render: (item: Lpar) => item.customer?.name || '-'
+			render: (item: Lpar) => item.customers?.name || '-'
 		},
 		{
 			key: 'currentPackage',
 			label: 'Package Level',
 			render: (item: Lpar) => {
-				if (item.currentPackage) {
-					return Badge({
-						variant: 'default',
-						children: () => `${item.currentPackage.code} (${item.currentPackage.version})`
-					});
+				if (item.packages) {
+					return `${item.packages.code} (${item.packages.version})`;
 				}
 				return '-';
 			}
 		},
 		{
-			key: 'softwareInstalled',
+			key: 'lpar_software',
 			label: 'Software Count',
-			render: (item: Lpar) => item.softwareInstalled.length
+			render: (item: Lpar) => item.lpar_software?.length || 0
 		},
 		{
 			key: 'active',
 			label: 'Status',
 			sortable: true,
-			render: (item: Lpar) => {
-				return StatusBadge({ active: item.active });
-			}
+			render: (item: Lpar) => item.active ? 'Active' : 'Inactive'
 		}
 	];
 

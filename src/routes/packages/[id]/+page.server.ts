@@ -1,31 +1,22 @@
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { error } from '@sveltejs/kit';
+import { createDetailLoader } from '$lib/server/route-factory';
 
-export const load: PageServerLoad = async ({ params }) => {
-	const pkg = await db.package.findUnique({
-		where: { id: params.id },
-		include: {
-			items: {
-				include: {
-					software: {
-						include: {
-							vendor: true
-						}
+export const load: PageServerLoad = createDetailLoader({
+	model: db.packages,
+	entityName: 'Package',
+	include: {
+		package_items: {
+			include: {
+				software: {
+					include: {
+						vendors: true
 					}
-				},
-				orderBy: {
-					orderIndex: 'asc'
 				}
+			},
+			orderBy: {
+				order_index: 'asc'
 			}
 		}
-	});
-
-	if (!pkg) {
-		throw error(404, 'Package not found');
 	}
-
-	return {
-		package: pkg
-	};
-};
+});

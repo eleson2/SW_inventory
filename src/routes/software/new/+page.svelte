@@ -40,9 +40,9 @@
 			<div class="space-y-2">
 				<Label for="vendorId">Vendor <span class="text-destructive">*</span></Label>
 				<select
-					id="vendorId"
-					name="vendorId"
-					bind:value={formData.vendorId}
+					id="vendor_id"
+					name="vendor_id"
+					bind:value={formData.vendor_id}
 					required
 					class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 				>
@@ -51,7 +51,7 @@
 						<option value={vendor.id}>{vendor.name} ({vendor.code})</option>
 					{/each}
 				</select>
-				{#if form?.errors?.vendorId?.[0]}
+				{#if form?.errors?.vendor_id?.[0]}
 					<p class="text-sm text-destructive">{form.errors.vendorId[0]}</p>
 				{/if}
 			</div>

@@ -4,12 +4,12 @@ import { createPageLoader } from '$lib/server/page-loader';
 
 export const load: PageServerLoad = async ({ url }) => {
 	return createPageLoader({
-		model: db.package,
+		model: db.packages,
 		dataKey: 'packages',
-		defaultSortField: 'releaseDate',
+		defaultSortField: 'release_date',
 		defaultSortDirection: 'desc',
 		include: {
-			items: true
+			package_items: true // Relation field name from schema
 		}
 	})(url);
 };

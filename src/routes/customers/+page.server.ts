@@ -4,7 +4,7 @@ import { createPageLoader } from '$lib/server/page-loader';
 
 export const load: PageServerLoad = async ({ url }) => {
 	return createPageLoader({
-		model: db.customer,
+		model: db.customers,
 		dataKey: 'customers'
 	})(url);
 };

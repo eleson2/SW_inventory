@@ -1,6 +1,1 @@
-import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
-
-export default defineConfig({
-	plugins: [sveltekit()]
-});
+import { sveltekit } from '@sveltejs/kit/vite';\nimport { defineConfig } from 'vite';\n\nexport default defineConfig({\n	plugins: [sveltekit()]\n});\n

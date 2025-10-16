@@ -25,28 +25,24 @@
 		{
 			key: 'version',
 			label: 'Version',
-			render: (item: Package) => {
-				return Badge({ variant: 'outline', children: () => item.version });
-			}
+			render: (item: Package) => item.version
 		},
 		{
 			key: 'items',
 			label: 'Software Count',
-			render: (item: Package) => item.items.length
+			render: (item: Package) => item.package_items?.length || 0
 		},
 		{
 			key: 'releaseDate',
 			label: 'Release Date',
 			sortable: true,
-			render: (item: Package) => formatDate(item.releaseDate)
+			render: (item: Package) => formatDate(item.release_date)
 		},
 		{
 			key: 'active',
 			label: 'Status',
 			sortable: true,
-			render: (item: Package) => {
-				return StatusBadge({ active: item.active });
-			}
+			render: (item: Package) => item.active ? 'Active' : 'Inactive'
 		}
 	];
 

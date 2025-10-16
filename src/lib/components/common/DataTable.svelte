@@ -81,17 +81,18 @@
 					</td>
 				</tr>
 			{:else}
-				{#each data as item}
+				{#each data as item, index}
 					<tr
 						class={cn(
 							'border-b transition-colors',
-							onRowClick && 'cursor-pointer hover:bg-muted/50'
+							index % 2 === 0 ? 'bg-background' : 'bg-muted/20',
+							onRowClick && 'cursor-pointer hover:bg-accent/50'
 						)}
 						onclick={() => onRowClick?.(item)}
 					>
 						{#each columns as column}
-							<td class="p-4 align-middle text-foreground">
-								{@render getCellValue(item, column)}
+							<td class="p-4 align-middle">
+								{getCellValue(item, column)}
 							</td>
 						{/each}
 					</tr>

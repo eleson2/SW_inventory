@@ -12,7 +12,7 @@
 		code: '',
 		version: '',
 		description: '',
-		releaseDate: '',
+		release_date: '',
 		active: true
 	});
 </script>
@@ -61,12 +61,12 @@
 
 			<FormField
 				label="Release Date"
-				id="releaseDate"
-				name="releaseDate"
+				id="release_date"
+				name="release_date"
 				type="date"
-				bind:value={formData.releaseDate}
+				bind:value={formData.release_date}
 				required
-				error={form?.errors?.releaseDate?.[0]}
+				error={form?.errors?.release_date?.[0]}
 			/>
 
 			<div class="space-y-2">

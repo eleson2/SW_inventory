@@ -10,9 +10,9 @@
 	let formData = $state({
 		name: data.lpar.name,
 		code: data.lpar.code,
-		customerId: data.lpar.customerId,
+		customer_id: data.lpar.customerId,
 		description: data.lpar.description || '',
-		currentPackageId: data.lpar.currentPackageId || '',
+		current_package_id: data.lpar.currentPackageId || '',
 		active: data.lpar.active
 	});
 </script>
@@ -51,9 +51,9 @@
 			<div class="space-y-2">
 				<Label for="customerId">Customer <span class="text-destructive">*</span></Label>
 				<select
-					id="customerId"
-					name="customerId"
-					bind:value={formData.customerId}
+					id="customer_id"
+					name="customer_id"
+					bind:value={formData.customer_id}
 					required
 					class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 				>
@@ -61,7 +61,7 @@
 						<option value={customer.id}>{customer.name} ({customer.code})</option>
 					{/each}
 				</select>
-				{#if form?.errors?.customerId?.[0]}
+				{#if form?.errors?.customer_id?.[0]}
 					<p class="text-sm text-destructive">{form.errors.customerId[0]}</p>
 				{/if}
 			</div>
@@ -69,9 +69,9 @@
 			<div class="space-y-2">
 				<Label for="currentPackageId">Current Package</Label>
 				<select
-					id="currentPackageId"
-					name="currentPackageId"
-					bind:value={formData.currentPackageId}
+					id="current_package_id"
+					name="current_package_id"
+					bind:value={formData.current_package_id}
 					class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 				>
 					<option value="">None</option>
@@ -80,7 +80,7 @@
 					{/each}
 				</select>
 				<p class="text-sm text-muted-foreground">Optional - can be changed later</p>
-				{#if form?.errors?.currentPackageId?.[0]}
+				{#if form?.errors?.current_package_id?.[0]}
 					<p class="text-sm text-destructive">{form.errors.currentPackageId[0]}</p>
 				{/if}
 			</div>

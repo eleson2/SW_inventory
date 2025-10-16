@@ -5,27 +5,27 @@ import { error } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ params }) => {
 	// Fetch LPAR from database with all relations
-	const lpar = await db.lpar.findUnique({
+	const lpar = await db.lpars.findUnique({
 		where: { id: params.id },
 		include: {
-			customer: true,
-			currentPackage: {
+			customers: true,
+			packages: {
 				include: {
-					items: {
+					package_items: {
 						include: {
 							software: true
 						},
 						orderBy: {
-							orderIndex: 'asc'
+							order_index: 'asc'
 						}
 					}
 				}
 			},
-			softwareInstalled: {
+			lpar_software: {
 				include: {
 					software: {
 						include: {
-							vendor: true
+							vendors: true
 						}
 					}
 				}
@@ -41,31 +41,31 @@ export const load: PageServerLoad = async ({ params }) => {
 	// Convert Prisma format to application format
 	const transformedLpar = {
 		...lpar,
-		softwareInstalled: lpar.softwareInstalled.map(sw => ({
-			softwareId: sw.softwareId,
+		softwareInstalled: lpar.lpar_software.map(sw => ({
+			softwareId: sw.software_id,
 			software: sw.software,
 			version: {
-				version: sw.currentVersion,
-				ptfLevel: sw.currentPtfLevel ?? undefined
+				version: sw.current_version,
+				ptfLevel: sw.current_ptf_level ?? undefined
 			},
-			installedDate: sw.installedDate,
-			previousVersion: sw.previousVersion ? {
-				version: sw.previousVersion,
-				ptfLevel: sw.previousPtfLevel ?? undefined
+			installedDate: sw.installed_date,
+			previousVersion: sw.previous_version ? {
+				version: sw.previous_version,
+				ptfLevel: sw.previous_ptf_level ?? undefined
 			} : undefined,
-			rolledBack: sw.rolledBack
+			rolledBack: sw.rolled_back
 		})),
-		currentPackage: lpar.currentPackage ? {
-			...lpar.currentPackage,
-			items: lpar.currentPackage.items.map(item => ({
-				softwareId: item.softwareId,
+		currentPackage: lpar.packages ? {
+			...lpar.packages,
+			items: lpar.packages.package_items.map(item => ({
+				softwareId: item.software_id,
 				software: item.software,
 				version: {
 					version: item.version,
-					ptfLevel: item.ptfLevel ?? undefined
+					ptfLevel: item.ptf_level ?? undefined
 				},
 				required: item.required,
-				order: item.orderIndex
+				order: item.order_index
 			}))
 		} : undefined
 	};

@@ -74,9 +74,9 @@
 				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Contact Email</dt>
 					<dd class="text-sm mt-1">
-						{#if vendor.contactEmail}
-							<a href="mailto:{vendor.contactEmail}" class="text-primary hover:underline">
-								{vendor.contactEmail}
+						{#if vendor.contact_email}
+							<a href="mailto:{vendor.contact_email}" class="text-primary hover:underline">
+								{vendor.contact_email}
 							</a>
 						{:else}
 							-
@@ -107,11 +107,11 @@
 				</div>
 				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Created</dt>
-					<dd class="text-sm mt-1">{formatDateTime(vendor.createdAt)}</dd>
+					<dd class="text-sm mt-1">{formatDateTime(new Date(vendor.created_at))}</dd>
 				</div>
 				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Last Updated</dt>
-					<dd class="text-sm mt-1">{formatDateTime(vendor.updatedAt)}</dd>
+					<dd class="text-sm mt-1">{formatDateTime(new Date(vendor.updated_at))}</dd>
 				</div>
 			</dl>
 		</Card>
@@ -138,13 +138,17 @@
 								</a>
 							</div>
 							<div class="flex items-center gap-3 mt-1">
-								<VersionDisplay
-									version={{
-										version: software.currentVersion,
-										ptfLevel: software.currentPtfLevel ?? undefined
-									}}
-									showBadge={true}
-								/>
+								{#if software.current_version}
+									<VersionDisplay
+										version={{
+											version: software.current_version.version,
+											ptfLevel: software.current_version.ptf_level ?? undefined
+										}}
+										showBadge={true}
+									/>
+								{:else}
+									<span class="text-xs text-muted-foreground">No version set</span>
+								{/if}
 								{#if software.description}
 									<span class="text-sm text-muted-foreground">
 										{software.description.substring(0, 100)}{software.description.length > 100 ? '...' : ''}

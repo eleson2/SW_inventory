@@ -62,9 +62,9 @@
 				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Customer</dt>
 					<dd class="text-sm mt-1">
-						{#if lpar.customer}
-							<a href="/customers/{lpar.customer.id}" class="text-primary hover:underline">
-								{lpar.customer.name}
+						{#if lpar.customers}
+							<a href="/customers/{lpar.customers.id}" class="text-primary hover:underline">
+								{lpar.customers.name}
 							</a>
 						{:else}
 							-
@@ -86,26 +86,26 @@
 
 		<Card class="p-6">
 			<h2 class="text-xl font-semibold mb-4">Package Information</h2>
-			{#if lpar.currentPackage}
+			{#if lpar.packages}
 				<dl class="space-y-3">
 					<div>
 						<dt class="text-sm font-medium text-muted-foreground">Current Package</dt>
 						<dd class="text-sm mt-1">
-							<a href="/packages/{lpar.currentPackage.id}" class="text-primary hover:underline">
-								{lpar.currentPackage.name}
+							<a href="/packages/{lpar.packages.id}" class="text-primary hover:underline">
+								{lpar.packages.name}
 							</a>
 						</dd>
 					</div>
 					<div>
 						<dt class="text-sm font-medium text-muted-foreground">Package Code</dt>
 						<dd class="mt-1">
-							<Badge variant="outline">{lpar.currentPackage.code}</Badge>
+							<Badge variant="outline">{lpar.packages.code}</Badge>
 						</dd>
 					</div>
 					<div>
 						<dt class="text-sm font-medium text-muted-foreground">Package Version</dt>
 						<dd class="mt-1">
-							<Badge>{lpar.currentPackage.version}</Badge>
+							<Badge>{lpar.packages.version}</Badge>
 						</dd>
 					</div>
 					<div>
@@ -137,11 +137,11 @@
 			</Button>
 		</div>
 
-		{#if lpar.softwareInstalled.length === 0}
+		{#if lpar.lpar_software.length === 0}
 			<p class="text-sm text-muted-foreground text-center py-8">No software installed</p>
 		{:else}
 			<div class="space-y-3">
-				{#each lpar.softwareInstalled as software}
+				{#each lpar.lpar_software as software}
 					<div class="flex items-center justify-between p-4 border rounded-lg">
 						<div class="flex-1">
 							<div class="font-medium">
@@ -156,7 +156,7 @@
 						</div>
 						<div class="flex flex-col items-end gap-2">
 							<span class="text-xs text-muted-foreground">
-								Installed: {formatDateTime(software.installedDate)}
+								Installed: {formatDateTime(new Date(software.installed_date))}
 							</span>
 							{#if software.previousVersion}
 								<Button
@@ -189,8 +189,8 @@
 	]}
 	preview={{
 		customer: lpar.customer?.name || 'N/A',
-		package: lpar.currentPackage?.name || 'N/A',
-		'software count': lpar.softwareInstalled.length
+		package: lpar.packages?.name || 'N/A',
+		'software count': lpar.lpar_software.length
 	}}
 	onClone={handleClone}
 	loading={cloning}

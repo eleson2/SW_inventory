@@ -69,7 +69,7 @@
 				</div>
 				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Release Date</dt>
-					<dd class="text-sm mt-1">{formatDate(pkg.releaseDate)}</dd>
+					<dd class="text-sm mt-1">{formatDate(new Date(pkg.release_date))}</dd>
 				</div>
 				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Description</dt>
@@ -89,18 +89,18 @@
 			<dl class="space-y-3">
 				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Total Software Items</dt>
-					<dd class="text-2xl font-bold mt-1">{pkg.items.length}</dd>
+					<dd class="text-2xl font-bold mt-1">{pkg.package_items.length}</dd>
 				</div>
 				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Required Items</dt>
 					<dd class="text-2xl font-bold mt-1">
-						{pkg.items.filter(item => item.required).length}
+						{pkg.package_items.filter(item => item.required).length}
 					</dd>
 				</div>
 				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Optional Items</dt>
 					<dd class="text-2xl font-bold mt-1">
-						{pkg.items.filter(item => !item.required).length}
+						{pkg.package_items.filter(item => !item.required).length}
 					</dd>
 				</div>
 			</dl>
@@ -115,11 +115,11 @@
 			</Button>
 		</div>
 
-		{#if pkg.items.length === 0}
+		{#if pkg.package_items.length === 0}
 			<p class="text-sm text-muted-foreground text-center py-8">No items in this package</p>
 		{:else}
 			<div class="space-y-3">
-				{#each pkg.items as item}
+				{#each pkg.package_items as item}
 					<div class="flex items-center justify-between p-4 border rounded-lg">
 						<div class="flex-1">
 							<div class="flex items-center gap-3">
@@ -136,12 +136,12 @@
 										</a>
 									</div>
 									<div class="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-										<span>{item.software.vendor.name}</span>
+										<span>{item.software.vendors.name}</span>
 										<span>•</span>
 										<VersionDisplay
 											version={{
 												version: item.version,
-												ptfLevel: item.ptfLevel ?? undefined
+												ptfLevel: item.ptf_level ?? undefined
 											}}
 											showBadge={true}
 										/>
@@ -176,8 +176,8 @@
 	preview={{
 		code: pkg.code,
 		version: pkg.version,
-		'item count': pkg.items.length,
-		'required items': pkg.items.filter(i => i.required).length
+		'item count': pkg.package_items.length,
+		'required items': pkg.package_items.filter(i => i.required).length
 	}}
 	onClone={handleClone}
 	loading={cloning}

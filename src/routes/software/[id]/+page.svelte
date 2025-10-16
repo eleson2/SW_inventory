@@ -15,11 +15,6 @@
 	let showCloneDialog = $state(false);
 	let cloning = $state(false);
 
-	// Parse version history from JSONB
-	const versionHistory = Array.isArray(software.versionHistory)
-		? (software.versionHistory as any[])
-		: [];
-
 	const handleClone = async (formData: Record<string, string>) => {
 		cloning = true;
 		try {
@@ -66,9 +61,13 @@
 				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Vendor</dt>
 					<dd class="text-sm mt-1">
-						<a href="/vendors/{software.vendor.id}" class="text-primary hover:underline">
-							{software.vendor.name}
-						</a>
+						{#if software.vendors}
+							<a href="/vendors/{software.vendors.id}" class="text-primary hover:underline">
+								{software.vendors.name}
+							</a>
+						{:else}
+							-
+						{/if}
 					</dd>
 				</div>
 				<div>
@@ -87,15 +86,27 @@
 		<Card class="p-6">
 			<h2 class="text-xl font-semibold mb-4">Current Version</h2>
 			<div class="space-y-3">
-				<VersionDisplay
-					version={{
-						version: software.currentVersion,
-						ptfLevel: software.currentPtfLevel ?? undefined
-					}}
-					showBadge={true}
-				/>
+				{#if software.current_version}
+					<VersionDisplay
+						version={{
+							version: software.current_version.version,
+							ptfLevel: software.current_version.ptf_level ?? undefined
+						}}
+						showBadge={true}
+					/>
+					<div class="text-sm text-muted-foreground mt-2">
+						Released: {formatDateTime(new Date(software.current_version.release_date))}
+					</div>
+					{#if software.current_version.end_of_support}
+						<div class="text-sm text-muted-foreground">
+							Support ends: {formatDateTime(new Date(software.current_version.end_of_support))}
+						</div>
+					{/if}
+				{:else}
+					<p class="text-sm text-muted-foreground">No current version set</p>
+				{/if}
 				<div class="flex items-center gap-2 text-sm text-muted-foreground mt-4">
-					<span>Last updated: {formatDateTime(software.updatedAt)}</span>
+					<span>Last updated: {formatDateTime(new Date(software.updated_at))}</span>
 				</div>
 			</div>
 		</Card>
@@ -103,23 +114,40 @@
 
 	<Card class="p-6">
 		<h2 class="text-xl font-semibold mb-4">Version History</h2>
-		{#if versionHistory.length === 0}
+		{#if software.versions.length === 0}
 			<p class="text-sm text-muted-foreground text-center py-8">No version history available</p>
 		{:else}
 			<div class="space-y-3">
-				{#each versionHistory as version}
+				{#each software.versions as version}
 					<div class="flex items-center justify-between p-4 border rounded-lg">
 						<div class="flex-1">
-							<VersionDisplay
-								version={{
-									version: version.version,
-									ptfLevel: version.ptfLevel
-								}}
-								showBadge={true}
-							/>
+							<div class="flex items-center gap-3">
+								<VersionDisplay
+									version={{
+										version: version.version,
+										ptfLevel: version.ptf_level ?? undefined
+									}}
+									showBadge={true}
+								/>
+								{#if version.is_current}
+									<Badge variant="default">Current</Badge>
+								{/if}
+							</div>
+							{#if version.release_notes}
+								<div class="text-sm text-muted-foreground mt-2">
+									{version.release_notes}
+								</div>
+							{/if}
 						</div>
-						<div class="text-xs text-muted-foreground">
-							{version.date ? formatDateTime(new Date(version.date)) : 'Unknown date'}
+						<div class="text-right">
+							<div class="text-sm text-muted-foreground">
+								{formatDateTime(new Date(version.release_date))}
+							</div>
+							{#if version.end_of_support}
+								<div class="text-xs text-muted-foreground mt-1">
+									EOS: {formatDateTime(new Date(version.end_of_support))}
+								</div>
+							{/if}
 						</div>
 					</div>
 				{/each}
@@ -137,10 +165,10 @@
 		{ name: 'name', label: 'New Software Name', required: true, placeholder: 'Enter new software name' }
 	]}
 	preview={{
-		vendor: software.vendor.name,
-		version: software.currentVersion,
-		ptfLevel: software.currentPtfLevel || 'N/A',
-		'version history': versionHistory.length
+		vendor: software.vendors?.name || 'Unknown',
+		version: software.current_version?.version || 'N/A',
+		ptfLevel: software.current_version?.ptf_level || 'N/A',
+		'version history': software.versions.length
 	}}
 	onClone={handleClone}
 	loading={cloning}

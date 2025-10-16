@@ -1,24 +1,18 @@
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { error } from '@sveltejs/kit';
+import { createDetailLoader } from '$lib/server/route-factory';
 
-export const load: PageServerLoad = async ({ params }) => {
-	const vendor = await db.vendor.findUnique({
-		where: { id: params.id },
-		include: {
-			software: {
-				orderBy: {
-					name: 'asc'
-				}
+export const load: PageServerLoad = createDetailLoader({
+	model: db.vendors,
+	entityName: 'Vendor',
+	include: {
+		software: {
+			include: {
+				current_version: true
+			},
+			orderBy: {
+				name: 'asc'
 			}
 		}
-	});
-
-	if (!vendor) {
-		throw error(404, 'Vendor not found');
 	}
-
-	return {
-		vendor
-	};
-};
+});

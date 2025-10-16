@@ -7,66 +7,81 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Audit logging for all entity changes
 model audit_log {
-  id          String   @id
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   entity_type String   @db.VarChar(50)
-  entity_id   String
+  entity_id   String   @db.Uuid
   action      String   @db.VarChar(20)
   changes     Json
-  user_id     String?
+  user_id     String?  @db.Uuid
   timestamp   DateTime @default(now())
 
   @@index([entity_type, entity_id])
+  @@index([entity_type])
   @@index([timestamp(sort: Desc)])
   @@index([user_id])
 }
 
+// Multi-tenant customer management
 model customers {
-  id          String   @id
-  name        String   @db.VarChar(100)
-  code        String   @unique @db.VarChar(20)
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String    @db.VarChar(100)
+  code        String    @unique @db.VarChar(20)
   description String?
-  active      Boolean  @default(true)
-  created_at  DateTime @default(now())
-  updated_at  DateTime
+  active      Boolean   @default(true)
+  deleted_at  DateTime?
+  deleted_by  String?   @db.Uuid
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
   lpars       lpars[]
 
   @@index([active])
   @@index([code])
+  @@index([name])
 }
 
+// Junction table: tracks software installed on each LPAR
 model lpar_software {
-  id                 String   @id
-  lpar_id            String
-  software_id        String
-  current_version    String   @db.VarChar(50)
-  current_ptf_level  String?  @db.VarChar(50)
-  previous_version   String?  @db.VarChar(50)
-  previous_ptf_level String?  @db.VarChar(50)
-  installed_date     DateTime @default(now())
-  rolled_back        Boolean  @default(false)
-  lpars              lpars    @relation(fields: [lpar_id], references: [id], onDelete: Cascade)
-  software           software @relation(fields: [software_id], references: [id])
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lpar_id            String    @db.Uuid
+  software_id        String    @db.Uuid
+  current_version    String    @db.VarChar(50)
+  current_ptf_level  String?   @db.VarChar(50)
+  previous_version   String?   @db.VarChar(50)
+  previous_ptf_level String?   @db.VarChar(50)
+  installed_date     DateTime  @default(now())
+  rolled_back        Boolean   @default(false)
+  rolled_back_at     DateTime?
+  rollback_reason    String?   @db.VarChar(500)
+  lpars              lpars     @relation(fields: [lpar_id], references: [id], onDelete: Cascade)
+  software           software  @relation(fields: [software_id], references: [id], onDelete: Restrict)
 
   @@unique([lpar_id, software_id])
   @@index([lpar_id])
   @@index([lpar_id, rolled_back])
   @@index([software_id])
+  @@index([software_id, rolled_back])
+  @@index([installed_date(sort: Desc)])
+  @@index([rolled_back_at(sort: Desc)])
 }
 
+// Logical partitions (customer environments)
 model lpars {
-  id                 String          @id
+  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name               String          @db.VarChar(100)
   code               String          @unique @db.VarChar(20)
-  customer_id        String
+  customer_id        String          @db.Uuid
   description        String?
-  current_package_id String?
+  current_package_id String?         @db.Uuid
   active             Boolean         @default(true)
+  deleted_at         DateTime?
+  deleted_by         String?         @db.Uuid
   created_at         DateTime        @default(now())
-  updated_at         DateTime
+  updated_at         DateTime        @updatedAt
   lpar_software      lpar_software[]
-  packages           packages?       @relation(fields: [current_package_id], references: [id])
-  customers          customers       @relation(fields: [customer_id], references: [id])
+  packages           packages?       @relation(fields: [current_package_id], references: [id], onDelete: SetNull)
+  customers          customers       @relation(fields: [customer_id], references: [id], onDelete: Restrict)
 
   @@index([active])
   @@index([code])
@@ -74,74 +89,113 @@ model lpars {
   @@index([customer_id])
 }
 
+// Junction table: software items in each package
+// NOTE: version/ptf_level are intentionally denormalized for historical package snapshots
 model package_items {
-  id          String   @id
-  package_id  String
-  software_id String
-  version     String   @db.VarChar(50)
-  ptf_level   String?  @db.VarChar(50)
-  required    Boolean  @default(true)
-  order_index Int
-  created_at  DateTime @default(now())
-  packages    packages @relation(fields: [package_id], references: [id], onDelete: Cascade)
-  software    software @relation(fields: [software_id], references: [id])
+  id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  package_id          String             @db.Uuid
+  software_id         String             @db.Uuid
+  software_version_id String             @db.Uuid
+  required            Boolean            @default(true)
+  order_index         Int
+  created_at          DateTime           @default(now())
+  packages            packages           @relation(fields: [package_id], references: [id], onDelete: Cascade)
+  software            software           @relation(fields: [software_id], references: [id], onDelete: Restrict)
+  software_version    software_versions  @relation(fields: [software_version_id], references: [id], onDelete: Restrict)
 
   @@unique([package_id, software_id])
+  @@unique([package_id, order_index])
   @@index([package_id])
   @@index([package_id, order_index])
   @@index([software_id])
+  @@index([software_version_id])
 }
 
+// Coordinated software package releases
 model packages {
-  id            String          @id
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name          String          @db.VarChar(100)
   code          String          @unique @db.VarChar(20)
   description   String?
   version       String          @db.VarChar(50)
   release_date  DateTime        @db.Date
   active        Boolean         @default(true)
+  deleted_at    DateTime?
+  deleted_by    String?         @db.Uuid
   created_at    DateTime        @default(now())
-  updated_at    DateTime
+  updated_at    DateTime        @updatedAt
   lpars         lpars[]
   package_items package_items[]
 
   @@unique([code, version])
   @@index([active])
   @@index([code])
+  @@index([version])
   @@index([release_date(sort: Desc)])
 }
 
+// Software products (e.g., CICS, DB2, Endevor)
 model software {
-  id                String          @id
-  name              String          @db.VarChar(100)
-  vendor_id         String
-  description       String?
-  current_version   String          @db.VarChar(50)
-  current_ptf_level String?         @db.VarChar(50)
-  version_history   Json            @default("[]")
-  active            Boolean         @default(true)
-  created_at        DateTime        @default(now())
-  updated_at        DateTime
-  lpar_software     lpar_software[]
-  package_items     package_items[]
-  vendors           vendors         @relation(fields: [vendor_id], references: [id])
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name               String              @db.VarChar(100)
+  vendor_id          String              @db.Uuid
+  description        String?
+  current_version_id String?             @db.Uuid
+  active             Boolean             @default(true)
+  deleted_at         DateTime?
+  deleted_by         String?             @db.Uuid
+  created_at         DateTime            @default(now())
+  updated_at         DateTime            @updatedAt
+  current_version    software_versions?  @relation("CurrentVersion", fields: [current_version_id], references: [id], onDelete: SetNull)
+  versions           software_versions[] @relation("AllVersions")
+  lpar_software      lpar_software[]
+  package_items      package_items[]
+  vendors            vendors             @relation(fields: [vendor_id], references: [id], onDelete: Restrict)
 
+  @@unique([vendor_id, name])
   @@index([active])
   @@index([name])
   @@index([vendor_id])
+  @@index([current_version_id])
 }
 
+// Version history for software products (normalized)
+model software_versions {
+  id                    String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  software_id           String     @db.Uuid
+  version               String     @db.VarChar(50)
+  ptf_level             String?    @db.VarChar(50)
+  release_date          DateTime
+  end_of_support        DateTime?
+  release_notes         String?
+  is_current            Boolean    @default(false)
+  created_at            DateTime   @default(now())
+  software              software   @relation("AllVersions", fields: [software_id], references: [id], onDelete: Cascade)
+  software_as_current   software[] @relation("CurrentVersion")
+  package_items         package_items[]
+
+  @@unique([software_id, version, ptf_level])
+  @@index([software_id])
+  @@index([software_id, is_current])
+  @@index([release_date(sort: Desc)])
+  @@index([is_current])
+}
+
+// Software vendors
 model vendors {
-  id            String     @id
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name          String     @db.VarChar(100)
   code          String     @unique @db.VarChar(20)
   website       String?    @db.VarChar(255)
   contact_email String?    @db.VarChar(255)
   active        Boolean    @default(true)
+  deleted_at    DateTime?
+  deleted_by    String?    @db.Uuid
   created_at    DateTime   @default(now())
-  updated_at    DateTime
+  updated_at    DateTime   @updatedAt
   software      software[]
 
   @@index([active])
   @@index([code])
+  @@index([name])
 }
