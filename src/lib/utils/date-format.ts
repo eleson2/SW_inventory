@@ -1,1 +1,39 @@
-/**\n * Date formatting utilities\n */\n\nexport function formatDate(date: Date | string): string {\n	const d = typeof date === 'string' ? new Date(date) : date;\n	return d.toLocaleDateString('en-US', {\n		year: 'numeric',\n		month: 'short',\n		day: 'numeric'\n	});\n}\n\nexport function formatDateTime(date: Date | string): string {\n	const d = typeof date === 'string' ? new Date(date) : date;\n	return d.toLocaleString('en-US', {\n		year: 'numeric',\n		month: 'short',\n		day: 'numeric',\n		hour: '2-digit',\n		minute: '2-digit'\n	});\n}\n\nexport function formatRelativeTime(date: Date | string): string {\n	const d = typeof date === 'string' ? new Date(date) : date;\n	const now = new Date();\n	const diffMs = now.getTime() - d.getTime();\n	const diffMins = Math.floor(diffMs / 60000);\n	const diffHours = Math.floor(diffMs / 3600000);\n	const diffDays = Math.floor(diffMs / 86400000);\n\n	if (diffMins < 1) return 'just now';\n	if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;\n	if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;\n	if (diffDays < 30) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;\n\n	return formatDate(d);\n}\n
+/**
+ * Date formatting utilities
+ */
+
+export function formatDate(date: Date | string): string {
+	const d = typeof date === 'string' ? new Date(date) : date;
+	return d.toLocaleDateString('en-US', {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric'
+	});
+}
+
+export function formatDateTime(date: Date | string): string {
+	const d = typeof date === 'string' ? new Date(date) : date;
+	return d.toLocaleString('en-US', {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric',
+		hour: '2-digit',
+		minute: '2-digit'
+	});
+}
+
+export function formatRelativeTime(date: Date | string): string {
+	const d = typeof date === 'string' ? new Date(date) : date;
+	const now = new Date();
+	const diffMs = now.getTime() - d.getTime();
+	const diffMins = Math.floor(diffMs / 60000);
+	const diffHours = Math.floor(diffMs / 3600000);
+	const diffDays = Math.floor(diffMs / 86400000);
+
+	if (diffMins < 1) return 'just now';
+	if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
+	if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+	if (diffDays < 30) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+
+	return formatDate(d);
+}

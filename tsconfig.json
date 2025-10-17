@@ -1,1 +1,14 @@
-{\n	"extends": "./.svelte-kit/tsconfig.json",\n	"compilerOptions": {\n		"allowJs": true,\n		"checkJs": true,\n		"esModuleInterop": true,\n		"forceConsistentCasingInFileNames": true,\n		"resolveJsonModule": true,\n		"skipLibCheck": true,\n		"sourceMap": true,\n		"strict": true,\n		"moduleResolution": "bundler"\n	}\n}\n
+{
+	"extends": "./.svelte-kit/tsconfig.json",
+	"compilerOptions": {
+		"allowJs": true,
+		"checkJs": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"sourceMap": true,
+		"strict": true,
+		"moduleResolution": "bundler"
+	}
+}

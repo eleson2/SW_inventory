@@ -1,1 +1,43 @@
-import { PrismaClient } from '@prisma/client';\n\nconst prisma = new PrismaClient();\n\nasync function cleanup() {\n	console.log('🧹 Cleaning up database...');\n\n	// Delete in correct order due to foreign key constraints\n	await prisma.audit_log.deleteMany({});\n	console.log('✓ Deleted audit logs');\n\n	await prisma.lpar_software.deleteMany({});\n	console.log('✓ Deleted LPAR software installations');\n\n	await prisma.lpars.deleteMany({});\n	console.log('✓ Deleted LPARs');\n\n	await prisma.package_items.deleteMany({});\n	console.log('✓ Deleted package items');\n\n	await prisma.packages.deleteMany({});\n	console.log('✓ Deleted packages');\n\n	await prisma.software.deleteMany({});\n	console.log('✓ Deleted software');\n\n	await prisma.vendors.deleteMany({});\n	console.log('✓ Deleted vendors');\n\n	await prisma.customers.deleteMany({});\n	console.log('✓ Deleted customers');\n\n	console.log('✅ Database cleaned successfully!');\n}\n\ncleanup()\n	.catch((e) => {\n		console.error('❌ Error cleaning database:', e);\n		process.exit(1);\n	})\n	.finally(async () => {\n		await prisma.$disconnect();\n	});\n
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+async function cleanup() {
+	console.log('🧹 Cleaning up database...');
+
+	// Delete in correct order due to foreign key constraints
+	await prisma.audit_log.deleteMany({});
+	console.log('✓ Deleted audit logs');
+
+	await prisma.lpar_software.deleteMany({});
+	console.log('✓ Deleted LPAR software installations');
+
+	await prisma.lpars.deleteMany({});
+	console.log('✓ Deleted LPARs');
+
+	await prisma.package_items.deleteMany({});
+	console.log('✓ Deleted package items');
+
+	await prisma.packages.deleteMany({});
+	console.log('✓ Deleted packages');
+
+	await prisma.software.deleteMany({});
+	console.log('✓ Deleted software');
+
+	await prisma.vendors.deleteMany({});
+	console.log('✓ Deleted vendors');
+
+	await prisma.customers.deleteMany({});
+	console.log('✓ Deleted customers');
+
+	console.log('✅ Database cleaned successfully!');
+}
+
+cleanup()
+	.catch((e) => {
+		console.error('❌ Error cleaning database:', e);
+		process.exit(1);
+	})
+	.finally(async () => {
+		await prisma.$disconnect();
+	});

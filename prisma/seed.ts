@@ -1,1 +1,416 @@
-import { PrismaClient } from '@prisma/client';\n\nconst prisma = new PrismaClient();\n\nasync function main() {\n	console.log('🌱 Starting database seed...');\n\n	// Create vendors\n	console.log('Creating vendors...');\n	const ibm = await prisma.vendors.create({\n		data: {\n			name: 'IBM',\n			code: 'IBM',\n			website: 'https://www.ibm.com',\n			contact_email: 'support@ibm.com',\n			active: true,\n			created_at: new Date()\n		}\n	});\n\n	const broadcom = await prisma.vendors.create({\n		data: {\n			name: 'Broadcom',\n			code: 'BROADCOM',\n			website: 'https://www.broadcom.com',\n			contact_email: 'support@broadcom.com',\n			active: true,\n			created_at: new Date()\n		}\n	});\n\n	// Create customers\n	console.log('Creating customers...');\n	const acme = await prisma.customers.create({\n		data: {\n			name: 'Acme Corporation',\n			code: 'ACME',\n			description: 'Large manufacturing company',\n			active: true,\n			created_at: new Date()\n		}\n	});\n\n	const globex = await prisma.customers.create({\n		data: {\n			name: 'Globex Industries',\n			code: 'GLOBEX',\n			description: 'International conglomerate',\n			active: true,\n			created_at: new Date()\n		}\n	});\n\n	// Create software products (without versions yet)\n	console.log('Creating software products...');\n	const cics = await prisma.software.create({\n		data: {\n			name: 'CICS Transaction Server',\n			vendor_id: ibm.id,\n			description: 'Enterprise transaction processing system',\n			active: true,\n			created_at: new Date()\n		}\n	});\n\n	const db2 = await prisma.software.create({\n		data: {\n			name: 'DB2 for z/OS',\n			vendor_id: ibm.id,\n			description: 'Relational database management system',\n			active: true,\n			created_at: new Date()\n		}\n	});\n\n	const endevor = await prisma.software.create({\n		data: {\n			name: 'Endevor',\n			vendor_id: broadcom.id,\n			description: 'Software change management system',\n			active: true,\n			created_at: new Date()\n		}\n	});\n\n	// Create software versions\n	console.log('Creating software versions...');\n\n	// CICS versions\n	const cicsV5R4M0 = await prisma.software_versions.create({\n		data: {\n			software_id: cics.id,\n			version: 'V5R4M0',\n			ptf_level: 'PTF10000',\n			release_date: new Date('2023-03-01'),\n			release_notes: 'CICS TS 5.4 - Baseline release',\n			is_current: false,\n			created_at: new Date()\n		}\n	});\n\n	const cicsV5R5M0 = await prisma.software_versions.create({\n		data: {\n			software_id: cics.id,\n			version: 'V5R5M0',\n			ptf_level: 'PTF11111',\n			release_date: new Date('2024-06-15'),\n			release_notes: 'CICS TS 5.5 - Enhanced security features',\n			is_current: false,\n			created_at: new Date()\n		}\n	});\n\n	const cicsV5R6M0 = await prisma.software_versions.create({\n		data: {\n			software_id: cics.id,\n			version: 'V5R6M0',\n			ptf_level: 'PTF12345',\n			release_date: new Date('2025-01-10'),\n			release_notes: 'CICS TS 5.6 - Performance improvements and cloud integration',\n			is_current: true,\n			created_at: new Date()\n		}\n	});\n\n	// DB2 versions\n	const db2V12R1M0 = await prisma.software_versions.create({\n		data: {\n			software_id: db2.id,\n			version: 'V12R1M0',\n			ptf_level: 'PTF50000',\n			release_date: new Date('2023-09-01'),\n			release_notes: 'DB2 12 - Baseline release',\n			is_current: false,\n			created_at: new Date()\n		}\n	});\n\n	const db2V13R1M0 = await prisma.software_versions.create({\n		data: {\n			software_id: db2.id,\n			version: 'V13R1M0',\n			ptf_level: 'PTF54321',\n			release_date: new Date('2025-01-05'),\n			release_notes: 'DB2 13 - AI-powered query optimization',\n			is_current: true,\n			created_at: new Date()\n		}\n	});\n\n	// Endevor versions\n	const endevorV18R1M0 = await prisma.software_versions.create({\n		data: {\n			software_id: endevor.id,\n			version: 'V18R1M0',\n			ptf_level: 'SO11111',\n			release_date: new Date('2024-04-01'),\n			release_notes: 'Endevor 18.1 - DevOps integration',\n			is_current: false,\n			created_at: new Date()\n		}\n	});\n\n	const endevorV18R2M0 = await prisma.software_versions.create({\n		data: {\n			software_id: endevor.id,\n			version: 'V18R2M0',\n			ptf_level: 'SO12345',\n			release_date: new Date('2025-01-08'),\n			release_notes: 'Endevor 18.2 - Enhanced Git bridge and API improvements',\n			is_current: true,\n			created_at: new Date()\n		}\n	});\n\n	// Update software to point to current versions\n	await prisma.software.update({\n		where: { id: cics.id },\n		data: { current_version_id: cicsV5R6M0.id }\n	});\n\n	await prisma.software.update({\n		where: { id: db2.id },\n		data: { current_version_id: db2V13R1M0.id }\n	});\n\n	await prisma.software.update({\n		where: { id: endevor.id },\n		data: { current_version_id: endevorV18R2M0.id }\n	});\n\n	// Create packages\n	console.log('Creating packages...');\n	const package2025Q1 = await prisma.packages.create({\n		data: {\n			name: 'Mainframe Suite Q1 2025',\n			code: 'MF-Q1-2025',\n			version: '2025.1.0',\n			description: 'Q1 2025 mainframe software package release',\n			release_date: new Date('2025-01-15'),\n			active: true,\n			created_at: new Date(),\n			package_items: {\n				create: [\n					{\n						software_id: cics.id,\n						software_version_id: cicsV5R6M0.id,\n						required: true,\n						order_index: 1,\n						created_at: new Date()\n					},\n					{\n						software_id: db2.id,\n						software_version_id: db2V13R1M0.id,\n						required: true,\n						order_index: 2,\n						created_at: new Date()\n					},\n					{\n						software_id: endevor.id,\n						software_version_id: endevorV18R2M0.id,\n						required: false,\n						order_index: 3,\n						created_at: new Date()\n					}\n				]\n			}\n		}\n	});\n\n	const package2024Q4 = await prisma.packages.create({\n		data: {\n			name: 'Mainframe Suite Q4 2024',\n			code: 'MF-Q4-2024',\n			version: '2024.4.0',\n			description: 'Q4 2024 mainframe software package release',\n			release_date: new Date('2024-10-01'),\n			active: true,\n			created_at: new Date(),\n			package_items: {\n				create: [\n					{\n						software_id: cics.id,\n						software_version_id: cicsV5R5M0.id,\n						required: true,\n						order_index: 1,\n						created_at: new Date()\n					},\n					{\n						software_id: db2.id,\n						software_version_id: db2V12R1M0.id,\n						required: true,\n						order_index: 2,\n						created_at: new Date()\n					}\n				]\n			}\n		}\n	});\n\n	// Create LPARs\n	console.log('Creating LPARs...');\n	const prodLpar1 = await prisma.lpars.create({\n		data: {\n			name: 'Production LPAR 1',\n			code: 'PROD-LPAR-1',\n			customer_id: acme.id,\n			description: 'Primary production LPAR for Acme Corporation',\n			current_package_id: package2025Q1.id,\n			active: true,\n			created_at: new Date(),\n			lpar_software: {\n				create: [\n					{\n						software_id: cics.id,\n						current_version: 'V5R6M0',\n						current_ptf_level: 'PTF12345',\n						previous_version: 'V5R5M0',\n						previous_ptf_level: 'PTF11111',\n						installed_date: new Date('2025-01-20'),\n						rolled_back: false\n					},\n					{\n						software_id: db2.id,\n						current_version: 'V13R1M0',\n						current_ptf_level: 'PTF54321',\n						previous_version: 'V12R1M0',\n						previous_ptf_level: 'PTF50000',\n						installed_date: new Date('2025-01-20'),\n						rolled_back: false\n					},\n					{\n						software_id: endevor.id,\n						current_version: 'V18R2M0',\n						current_ptf_level: 'SO12345',\n						installed_date: new Date('2025-01-22'),\n						rolled_back: false\n					}\n				]\n			}\n		}\n	});\n\n	const testLpar1 = await prisma.lpars.create({\n		data: {\n			name: 'Test LPAR 1',\n			code: 'TEST-LPAR-1',\n			customer_id: acme.id,\n			description: 'Test environment for Acme Corporation',\n			current_package_id: package2024Q4.id,\n			active: true,\n			created_at: new Date(),\n			lpar_software: {\n				create: [\n					{\n						software_id: cics.id,\n						current_version: 'V5R5M0',\n						current_ptf_level: 'PTF11111',\n						installed_date: new Date('2024-10-15'),\n						rolled_back: false\n					},\n					{\n						software_id: db2.id,\n						current_version: 'V12R1M0',\n						current_ptf_level: 'PTF50000',\n						installed_date: new Date('2024-10-15'),\n						rolled_back: false\n					}\n				]\n			}\n		}\n	});\n\n	const globexProd = await prisma.lpars.create({\n		data: {\n			name: 'Globex Production',\n			code: 'GLOBEX-PROD',\n			customer_id: globex.id,\n			description: 'Production LPAR for Globex Industries',\n			current_package_id: package2025Q1.id,\n			active: true,\n			created_at: new Date(),\n			lpar_software: {\n				create: [\n					{\n						software_id: cics.id,\n						current_version: 'V5R6M0',\n						current_ptf_level: 'PTF12345',\n						installed_date: new Date('2025-01-25'),\n						rolled_back: false\n					},\n					{\n						software_id: db2.id,\n						current_version: 'V13R1M0',\n						current_ptf_level: 'PTF54321',\n						installed_date: new Date('2025-01-25'),\n						rolled_back: false\n					}\n				]\n			}\n		}\n	});\n\n	// Create audit logs\n	console.log('Creating audit logs...');\n	await prisma.audit_log.create({\n		data: {\n			entity_type: 'lpar',\n			entity_id: prodLpar1.id,\n			action: 'create',\n			changes: {\n				name: 'Production LPAR 1',\n				code: 'PROD-LPAR-1',\n				customerId: acme.id\n			},\n			timestamp: new Date()\n		}\n	});\n\n	await prisma.audit_log.create({\n		data: {\n			entity_type: 'lpar',\n			entity_id: prodLpar1.id,\n			action: 'update',\n			changes: {\n				before: { packageId: package2024Q4.id },\n				after: { packageId: package2025Q1.id }\n			},\n			timestamp: new Date('2025-01-20')\n		}\n	});\n\n	console.log('✅ Seed data created successfully!');\n	console.log('');\n	console.log('📊 Summary:');\n	console.log(`   - ${2} Vendors created`);\n	console.log(`   - ${2} Customers created`);\n	console.log(`   - ${3} Software products created`);\n	console.log(`   - ${8} Software versions created`);\n	console.log(`   - ${2} Packages created`);\n	console.log(`   - ${3} LPARs created`);\n	console.log(`   - ${2} Audit log entries created`);\n	console.log('');\n	console.log('🌐 View your data:');\n	console.log('   - Prisma Studio: http://localhost:5556');\n	console.log('   - Application: http://localhost:5173');\n}\n\nmain()\n	.catch((e) => {\n		console.error('❌ Error seeding database:', e);\n		process.exit(1);\n	})\n	.finally(async () => {\n		await prisma.$disconnect();\n	});\n
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+async function main() {
+	console.log('🌱 Starting database seed...');
+
+	// Create vendors
+	console.log('Creating vendors...');
+	const ibm = await prisma.vendors.create({
+		data: {
+			name: 'IBM',
+			code: 'IBM',
+			website: 'https://www.ibm.com',
+			contact_email: 'support@ibm.com',
+			active: true,
+			created_at: new Date()
+		}
+	});
+
+	const broadcom = await prisma.vendors.create({
+		data: {
+			name: 'Broadcom',
+			code: 'BROADCOM',
+			website: 'https://www.broadcom.com',
+			contact_email: 'support@broadcom.com',
+			active: true,
+			created_at: new Date()
+		}
+	});
+
+	// Create customers
+	console.log('Creating customers...');
+	const acme = await prisma.customers.create({
+		data: {
+			name: 'Acme Corporation',
+			code: 'ACME',
+			description: 'Large manufacturing company',
+			active: true,
+			created_at: new Date()
+		}
+	});
+
+	const globex = await prisma.customers.create({
+		data: {
+			name: 'Globex Industries',
+			code: 'GLOBEX',
+			description: 'International conglomerate',
+			active: true,
+			created_at: new Date()
+		}
+	});
+
+	// Create software products (without versions yet)
+	console.log('Creating software products...');
+	const cics = await prisma.software.create({
+		data: {
+			name: 'CICS Transaction Server',
+			vendor_id: ibm.id,
+			description: 'Enterprise transaction processing system',
+			active: true,
+			created_at: new Date()
+		}
+	});
+
+	const db2 = await prisma.software.create({
+		data: {
+			name: 'DB2 for z/OS',
+			vendor_id: ibm.id,
+			description: 'Relational database management system',
+			active: true,
+			created_at: new Date()
+		}
+	});
+
+	const endevor = await prisma.software.create({
+		data: {
+			name: 'Endevor',
+			vendor_id: broadcom.id,
+			description: 'Software change management system',
+			active: true,
+			created_at: new Date()
+		}
+	});
+
+	// Create software versions
+	console.log('Creating software versions...');
+
+	// CICS versions
+	const cicsV5R4M0 = await prisma.software_versions.create({
+		data: {
+			software_id: cics.id,
+			version: 'V5R4M0',
+			ptf_level: 'PTF10000',
+			release_date: new Date('2023-03-01'),
+			release_notes: 'CICS TS 5.4 - Baseline release',
+			is_current: false,
+			created_at: new Date()
+		}
+	});
+
+	const cicsV5R5M0 = await prisma.software_versions.create({
+		data: {
+			software_id: cics.id,
+			version: 'V5R5M0',
+			ptf_level: 'PTF11111',
+			release_date: new Date('2024-06-15'),
+			release_notes: 'CICS TS 5.5 - Enhanced security features',
+			is_current: false,
+			created_at: new Date()
+		}
+	});
+
+	const cicsV5R6M0 = await prisma.software_versions.create({
+		data: {
+			software_id: cics.id,
+			version: 'V5R6M0',
+			ptf_level: 'PTF12345',
+			release_date: new Date('2025-01-10'),
+			release_notes: 'CICS TS 5.6 - Performance improvements and cloud integration',
+			is_current: true,
+			created_at: new Date()
+		}
+	});
+
+	// DB2 versions
+	const db2V12R1M0 = await prisma.software_versions.create({
+		data: {
+			software_id: db2.id,
+			version: 'V12R1M0',
+			ptf_level: 'PTF50000',
+			release_date: new Date('2023-09-01'),
+			release_notes: 'DB2 12 - Baseline release',
+			is_current: false,
+			created_at: new Date()
+		}
+	});
+
+	const db2V13R1M0 = await prisma.software_versions.create({
+		data: {
+			software_id: db2.id,
+			version: 'V13R1M0',
+			ptf_level: 'PTF54321',
+			release_date: new Date('2025-01-05'),
+			release_notes: 'DB2 13 - AI-powered query optimization',
+			is_current: true,
+			created_at: new Date()
+		}
+	});
+
+	// Endevor versions
+	const endevorV18R1M0 = await prisma.software_versions.create({
+		data: {
+			software_id: endevor.id,
+			version: 'V18R1M0',
+			ptf_level: 'SO11111',
+			release_date: new Date('2024-04-01'),
+			release_notes: 'Endevor 18.1 - DevOps integration',
+			is_current: false,
+			created_at: new Date()
+		}
+	});
+
+	const endevorV18R2M0 = await prisma.software_versions.create({
+		data: {
+			software_id: endevor.id,
+			version: 'V18R2M0',
+			ptf_level: 'SO12345',
+			release_date: new Date('2025-01-08'),
+			release_notes: 'Endevor 18.2 - Enhanced Git bridge and API improvements',
+			is_current: true,
+			created_at: new Date()
+		}
+	});
+
+	// Update software to point to current versions
+	await prisma.software.update({
+		where: { id: cics.id },
+		data: { current_version_id: cicsV5R6M0.id }
+	});
+
+	await prisma.software.update({
+		where: { id: db2.id },
+		data: { current_version_id: db2V13R1M0.id }
+	});
+
+	await prisma.software.update({
+		where: { id: endevor.id },
+		data: { current_version_id: endevorV18R2M0.id }
+	});
+
+	// Create packages
+	console.log('Creating packages...');
+	const package2025Q1 = await prisma.packages.create({
+		data: {
+			name: 'Mainframe Suite Q1 2025',
+			code: 'MF-Q1-2025',
+			version: '2025.1.0',
+			description: 'Q1 2025 mainframe software package release',
+			release_date: new Date('2025-01-15'),
+			active: true,
+			created_at: new Date(),
+			package_items: {
+				create: [
+					{
+						software_id: cics.id,
+						software_version_id: cicsV5R6M0.id,
+						required: true,
+						order_index: 1,
+						created_at: new Date()
+					},
+					{
+						software_id: db2.id,
+						software_version_id: db2V13R1M0.id,
+						required: true,
+						order_index: 2,
+						created_at: new Date()
+					},
+					{
+						software_id: endevor.id,
+						software_version_id: endevorV18R2M0.id,
+						required: false,
+						order_index: 3,
+						created_at: new Date()
+					}
+				]
+			}
+		}
+	});
+
+	const package2024Q4 = await prisma.packages.create({
+		data: {
+			name: 'Mainframe Suite Q4 2024',
+			code: 'MF-Q4-2024',
+			version: '2024.4.0',
+			description: 'Q4 2024 mainframe software package release',
+			release_date: new Date('2024-10-01'),
+			active: true,
+			created_at: new Date(),
+			package_items: {
+				create: [
+					{
+						software_id: cics.id,
+						software_version_id: cicsV5R5M0.id,
+						required: true,
+						order_index: 1,
+						created_at: new Date()
+					},
+					{
+						software_id: db2.id,
+						software_version_id: db2V12R1M0.id,
+						required: true,
+						order_index: 2,
+						created_at: new Date()
+					}
+				]
+			}
+		}
+	});
+
+	// Create LPARs
+	console.log('Creating LPARs...');
+	const prodLpar1 = await prisma.lpars.create({
+		data: {
+			name: 'Production LPAR 1',
+			code: 'PROD-LPAR-1',
+			customer_id: acme.id,
+			description: 'Primary production LPAR for Acme Corporation',
+			current_package_id: package2025Q1.id,
+			active: true,
+			created_at: new Date(),
+			lpar_software: {
+				create: [
+					{
+						software_id: cics.id,
+						current_version: 'V5R6M0',
+						current_ptf_level: 'PTF12345',
+						previous_version: 'V5R5M0',
+						previous_ptf_level: 'PTF11111',
+						installed_date: new Date('2025-01-20'),
+						rolled_back: false
+					},
+					{
+						software_id: db2.id,
+						current_version: 'V13R1M0',
+						current_ptf_level: 'PTF54321',
+						previous_version: 'V12R1M0',
+						previous_ptf_level: 'PTF50000',
+						installed_date: new Date('2025-01-20'),
+						rolled_back: false
+					},
+					{
+						software_id: endevor.id,
+						current_version: 'V18R2M0',
+						current_ptf_level: 'SO12345',
+						installed_date: new Date('2025-01-22'),
+						rolled_back: false
+					}
+				]
+			}
+		}
+	});
+
+	const testLpar1 = await prisma.lpars.create({
+		data: {
+			name: 'Test LPAR 1',
+			code: 'TEST-LPAR-1',
+			customer_id: acme.id,
+			description: 'Test environment for Acme Corporation',
+			current_package_id: package2024Q4.id,
+			active: true,
+			created_at: new Date(),
+			lpar_software: {
+				create: [
+					{
+						software_id: cics.id,
+						current_version: 'V5R5M0',
+						current_ptf_level: 'PTF11111',
+						installed_date: new Date('2024-10-15'),
+						rolled_back: false
+					},
+					{
+						software_id: db2.id,
+						current_version: 'V12R1M0',
+						current_ptf_level: 'PTF50000',
+						installed_date: new Date('2024-10-15'),
+						rolled_back: false
+					}
+				]
+			}
+		}
+	});
+
+	const globexProd = await prisma.lpars.create({
+		data: {
+			name: 'Globex Production',
+			code: 'GLOBEX-PROD',
+			customer_id: globex.id,
+			description: 'Production LPAR for Globex Industries',
+			current_package_id: package2025Q1.id,
+			active: true,
+			created_at: new Date(),
+			lpar_software: {
+				create: [
+					{
+						software_id: cics.id,
+						current_version: 'V5R6M0',
+						current_ptf_level: 'PTF12345',
+						installed_date: new Date('2025-01-25'),
+						rolled_back: false
+					},
+					{
+						software_id: db2.id,
+						current_version: 'V13R1M0',
+						current_ptf_level: 'PTF54321',
+						installed_date: new Date('2025-01-25'),
+						rolled_back: false
+					}
+				]
+			}
+		}
+	});
+
+	// Create audit logs
+	console.log('Creating audit logs...');
+	await prisma.audit_log.create({
+		data: {
+			entity_type: 'lpar',
+			entity_id: prodLpar1.id,
+			action: 'create',
+			changes: {
+				name: 'Production LPAR 1',
+				code: 'PROD-LPAR-1',
+				customerId: acme.id
+			},
+			timestamp: new Date()
+		}
+	});
+
+	await prisma.audit_log.create({
+		data: {
+			entity_type: 'lpar',
+			entity_id: prodLpar1.id,
+			action: 'update',
+			changes: {
+				before: { packageId: package2024Q4.id },
+				after: { packageId: package2025Q1.id }
+			},
+			timestamp: new Date('2025-01-20')
+		}
+	});
+
+	console.log('✅ Seed data created successfully!');
+	console.log('');
+	console.log('📊 Summary:');
+	console.log(`   - ${2} Vendors created`);
+	console.log(`   - ${2} Customers created`);
+	console.log(`   - ${3} Software products created`);
+	console.log(`   - ${8} Software versions created`);
+	console.log(`   - ${2} Packages created`);
+	console.log(`   - ${3} LPARs created`);
+	console.log(`   - ${2} Audit log entries created`);
+	console.log('');
+	console.log('🌐 View your data:');
+	console.log('   - Prisma Studio: http://localhost:5556');
+	console.log('   - Application: http://localhost:5173');
+}
+
+main()
+	.catch((e) => {
+		console.error('❌ Error seeding database:', e);
+		process.exit(1);
+	})
+	.finally(async () => {
+		await prisma.$disconnect();
+	});

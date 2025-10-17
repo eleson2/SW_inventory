@@ -1,1 +1,550 @@
--- ============================================================================\n-- TEST DATA SCRIPT - Load sample data for development and testing\n-- ============================================================================\n-- Purpose: Populate database with realistic test data\n-- Use Case: Development, testing, demos\n-- Prerequisites: Empty tables (run reset.sql first if needed)\n-- ============================================================================\n\n-- ============================================================================\n-- VENDORS\n-- ============================================================================\n\nINSERT INTO vendors (id, name, code, website, contact_email, active, created_at, updated_at)\nVALUES\n    (gen_random_uuid(), 'IBM', 'IBM', 'https://www.ibm.com', 'support@ibm.com', true, NOW(), NOW()),\n    (gen_random_uuid(), 'Broadcom', 'BROADCOM', 'https://www.broadcom.com', 'support@broadcom.com', true, NOW(), NOW());\n\n-- Store vendor IDs for later use\nDO $$\nDECLARE\n    v_ibm_id UUID;\n    v_broadcom_id UUID;\nBEGIN\n    SELECT id INTO v_ibm_id FROM vendors WHERE code = 'IBM';\n    SELECT id INTO v_broadcom_id FROM vendors WHERE code = 'BROADCOM';\n\n    -- Create temporary table to store IDs for this session\n    CREATE TEMP TABLE temp_ids (\n        ibm_id UUID,\n        broadcom_id UUID,\n        acme_id UUID,\n        globex_id UUID,\n        cics_id UUID,\n        db2_id UUID,\n        endevor_id UUID,\n        cics_v5r4m0_id UUID,\n        cics_v5r5m0_id UUID,\n        cics_v5r6m0_id UUID,\n        db2_v12r1m0_id UUID,\n        db2_v13r1m0_id UUID,\n        endevor_v18r1m0_id UUID,\n        endevor_v18r2m0_id UUID,\n        package_2025q1_id UUID,\n        package_2024q4_id UUID,\n        prod_lpar1_id UUID,\n        test_lpar1_id UUID,\n        globex_prod_id UUID\n    );\n\n    INSERT INTO temp_ids (ibm_id, broadcom_id)\n    VALUES (v_ibm_id, v_broadcom_id);\nEND $$;\n\n-- ============================================================================\n-- CUSTOMERS\n-- ============================================================================\n\nINSERT INTO customers (id, name, code, description, active, created_at, updated_at)\nVALUES\n    (gen_random_uuid(), 'Acme Corporation', 'ACME', 'Large manufacturing company', true, NOW(), NOW()),\n    (gen_random_uuid(), 'Globex Industries', 'GLOBEX', 'International conglomerate', true, NOW(), NOW());\n\n-- Store customer IDs\nDO $$\nDECLARE\n    v_acme_id UUID;\n    v_globex_id UUID;\nBEGIN\n    SELECT id INTO v_acme_id FROM customers WHERE code = 'ACME';\n    SELECT id INTO v_globex_id FROM customers WHERE code = 'GLOBEX';\n\n    UPDATE temp_ids SET acme_id = v_acme_id, globex_id = v_globex_id;\nEND $$;\n\n-- ============================================================================\n-- SOFTWARE\n-- ============================================================================\n\nINSERT INTO software (id, name, vendor_id, description, active, created_at, updated_at)\nSELECT\n    gen_random_uuid(),\n    'CICS Transaction Server',\n    ibm_id,\n    'Enterprise transaction processing system',\n    true,\n    NOW(),\n    NOW()\nFROM temp_ids;\n\nINSERT INTO software (id, name, vendor_id, description, active, created_at, updated_at)\nSELECT\n    gen_random_uuid(),\n    'DB2 for z/OS',\n    ibm_id,\n    'Relational database management system',\n    true,\n    NOW(),\n    NOW()\nFROM temp_ids;\n\nINSERT INTO software (id, name, vendor_id, description, active, created_at, updated_at)\nSELECT\n    gen_random_uuid(),\n    'Endevor',\n    broadcom_id,\n    'Software change management system',\n    true,\n    NOW(),\n    NOW()\nFROM temp_ids;\n\n-- Store software IDs\nDO $$\nDECLARE\n    v_cics_id UUID;\n    v_db2_id UUID;\n    v_endevor_id UUID;\nBEGIN\n    SELECT id INTO v_cics_id FROM software WHERE name = 'CICS Transaction Server';\n    SELECT id INTO v_db2_id FROM software WHERE name = 'DB2 for z/OS';\n    SELECT id INTO v_endevor_id FROM software WHERE name = 'Endevor';\n\n    UPDATE temp_ids SET cics_id = v_cics_id, db2_id = v_db2_id, endevor_id = v_endevor_id;\nEND $$;\n\n-- ============================================================================\n-- SOFTWARE VERSIONS\n-- ============================================================================\n\n-- CICS Versions\nINSERT INTO software_versions (id, software_id, version, ptf_level, release_date, release_notes, is_current, created_at)\nSELECT\n    gen_random_uuid(),\n    cics_id,\n    'V5R4M0',\n    'PTF10000',\n    '2023-03-01'::DATE,\n    'CICS TS 5.4 - Baseline release',\n    false,\n    NOW()\nFROM temp_ids;\n\nINSERT INTO software_versions (id, software_id, version, ptf_level, release_date, release_notes, is_current, created_at)\nSELECT\n    gen_random_uuid(),\n    cics_id,\n    'V5R5M0',\n    'PTF11111',\n    '2024-06-15'::DATE,\n    'CICS TS 5.5 - Enhanced security features',\n    false,\n    NOW()\nFROM temp_ids;\n\nINSERT INTO software_versions (id, software_id, version, ptf_level, release_date, release_notes, is_current, created_at)\nSELECT\n    gen_random_uuid(),\n    cics_id,\n    'V5R6M0',\n    'PTF12345',\n    '2025-01-10'::DATE,\n    'CICS TS 5.6 - Performance improvements and cloud integration',\n    true,\n    NOW()\nFROM temp_ids;\n\n-- DB2 Versions\nINSERT INTO software_versions (id, software_id, version, ptf_level, release_date, release_notes, is_current, created_at)\nSELECT\n    gen_random_uuid(),\n    db2_id,\n    'V12R1M0',\n    'PTF50000',\n    '2023-09-01'::DATE,\n    'DB2 12 - Baseline release',\n    false,\n    NOW()\nFROM temp_ids;\n\nINSERT INTO software_versions (id, software_id, version, ptf_level, release_date, release_notes, is_current, created_at)\nSELECT\n    gen_random_uuid(),\n    db2_id,\n    'V13R1M0',\n    'PTF54321',\n    '2025-01-05'::DATE,\n    'DB2 13 - AI-powered query optimization',\n    true,\n    NOW()\nFROM temp_ids;\n\n-- Endevor Versions\nINSERT INTO software_versions (id, software_id, version, ptf_level, release_date, release_notes, is_current, created_at)\nSELECT\n    gen_random_uuid(),\n    endevor_id,\n    'V18R1M0',\n    'SO11111',\n    '2024-04-01'::DATE,\n    'Endevor 18.1 - DevOps integration',\n    false,\n    NOW()\nFROM temp_ids;\n\nINSERT INTO software_versions (id, software_id, version, ptf_level, release_date, release_notes, is_current, created_at)\nSELECT\n    gen_random_uuid(),\n    endevor_id,\n    'V18R2M0',\n    'SO12345',\n    '2025-01-08'::DATE,\n    'Endevor 18.2 - Enhanced Git bridge and API improvements',\n    true,\n    NOW()\nFROM temp_ids;\n\n-- Store version IDs\nDO $$\nDECLARE\n    v_cics_v5r4m0_id UUID;\n    v_cics_v5r5m0_id UUID;\n    v_cics_v5r6m0_id UUID;\n    v_db2_v12r1m0_id UUID;\n    v_db2_v13r1m0_id UUID;\n    v_endevor_v18r1m0_id UUID;\n    v_endevor_v18r2m0_id UUID;\nBEGIN\n    SELECT id INTO v_cics_v5r4m0_id FROM software_versions WHERE version = 'V5R4M0' AND ptf_level = 'PTF10000';\n    SELECT id INTO v_cics_v5r5m0_id FROM software_versions WHERE version = 'V5R5M0' AND ptf_level = 'PTF11111';\n    SELECT id INTO v_cics_v5r6m0_id FROM software_versions WHERE version = 'V5R6M0' AND ptf_level = 'PTF12345';\n    SELECT id INTO v_db2_v12r1m0_id FROM software_versions WHERE version = 'V12R1M0' AND ptf_level = 'PTF50000';\n    SELECT id INTO v_db2_v13r1m0_id FROM software_versions WHERE version = 'V13R1M0' AND ptf_level = 'PTF54321';\n    SELECT id INTO v_endevor_v18r1m0_id FROM software_versions WHERE version = 'V18R1M0' AND ptf_level = 'SO11111';\n    SELECT id INTO v_endevor_v18r2m0_id FROM software_versions WHERE version = 'V18R2M0' AND ptf_level = 'SO12345';\n\n    UPDATE temp_ids SET\n        cics_v5r4m0_id = v_cics_v5r4m0_id,\n        cics_v5r5m0_id = v_cics_v5r5m0_id,\n        cics_v5r6m0_id = v_cics_v5r6m0_id,\n        db2_v12r1m0_id = v_db2_v12r1m0_id,\n        db2_v13r1m0_id = v_db2_v13r1m0_id,\n        endevor_v18r1m0_id = v_endevor_v18r1m0_id,\n        endevor_v18r2m0_id = v_endevor_v18r2m0_id;\nEND $$;\n\n-- Update software to point to current versions\nUPDATE software s\nSET current_version_id = t.cics_v5r6m0_id\nFROM temp_ids t\nWHERE s.name = 'CICS Transaction Server';\n\nUPDATE software s\nSET current_version_id = t.db2_v13r1m0_id\nFROM temp_ids t\nWHERE s.name = 'DB2 for z/OS';\n\nUPDATE software s\nSET current_version_id = t.endevor_v18r2m0_id\nFROM temp_ids t\nWHERE s.name = 'Endevor';\n\n-- ============================================================================\n-- PACKAGES\n-- ============================================================================\n\nINSERT INTO packages (id, name, code, version, description, release_date, active, created_at, updated_at)\nVALUES\n    (gen_random_uuid(), 'Mainframe Suite Q1 2025', 'MF-Q1-2025', '2025.1.0', 'Q1 2025 mainframe software package release', '2025-01-15'::DATE, true, NOW(), NOW()),\n    (gen_random_uuid(), 'Mainframe Suite Q4 2024', 'MF-Q4-2024', '2024.4.0', 'Q4 2024 mainframe software package release', '2024-10-01'::DATE, true, NOW(), NOW());\n\n-- Store package IDs\nDO $$\nDECLARE\n    v_package_2025q1_id UUID;\n    v_package_2024q4_id UUID;\nBEGIN\n    SELECT id INTO v_package_2025q1_id FROM packages WHERE code = 'MF-Q1-2025';\n    SELECT id INTO v_package_2024q4_id FROM packages WHERE code = 'MF-Q4-2024';\n\n    UPDATE temp_ids SET package_2025q1_id = v_package_2025q1_id, package_2024q4_id = v_package_2024q4_id;\nEND $$;\n\n-- ============================================================================\n-- PACKAGE ITEMS\n-- ============================================================================\n\n-- Package 2025 Q1 Items\nINSERT INTO package_items (id, package_id, software_id, software_version_id, required, order_index, created_at)\nSELECT\n    gen_random_uuid(),\n    package_2025q1_id,\n    cics_id,\n    cics_v5r6m0_id,\n    true,\n    1,\n    NOW()\nFROM temp_ids;\n\nINSERT INTO package_items (id, package_id, software_id, software_version_id, required, order_index, created_at)\nSELECT\n    gen_random_uuid(),\n    package_2025q1_id,\n    db2_id,\n    db2_v13r1m0_id,\n    true,\n    2,\n    NOW()\nFROM temp_ids;\n\nINSERT INTO package_items (id, package_id, software_id, software_version_id, required, order_index, created_at)\nSELECT\n    gen_random_uuid(),\n    package_2025q1_id,\n    endevor_id,\n    endevor_v18r2m0_id,\n    false,\n    3,\n    NOW()\nFROM temp_ids;\n\n-- Package 2024 Q4 Items\nINSERT INTO package_items (id, package_id, software_id, software_version_id, required, order_index, created_at)\nSELECT\n    gen_random_uuid(),\n    package_2024q4_id,\n    cics_id,\n    cics_v5r5m0_id,\n    true,\n    1,\n    NOW()\nFROM temp_ids;\n\nINSERT INTO package_items (id, package_id, software_id, software_version_id, required, order_index, created_at)\nSELECT\n    gen_random_uuid(),\n    package_2024q4_id,\n    db2_id,\n    db2_v12r1m0_id,\n    true,\n    2,\n    NOW()\nFROM temp_ids;\n\n-- ============================================================================\n-- LPARS\n-- ============================================================================\n\nINSERT INTO lpars (id, name, code, customer_id, description, current_package_id, active, created_at, updated_at)\nSELECT\n    gen_random_uuid(),\n    'Production LPAR 1',\n    'PROD-LPAR-1',\n    acme_id,\n    'Primary production LPAR for Acme Corporation',\n    package_2025q1_id,\n    true,\n    NOW(),\n    NOW()\nFROM temp_ids;\n\nINSERT INTO lpars (id, name, code, customer_id, description, current_package_id, active, created_at, updated_at)\nSELECT\n    gen_random_uuid(),\n    'Test LPAR 1',\n    'TEST-LPAR-1',\n    acme_id,\n    'Test environment for Acme Corporation',\n    package_2024q4_id,\n    true,\n    NOW(),\n    NOW()\nFROM temp_ids;\n\nINSERT INTO lpars (id, name, code, customer_id, description, current_package_id, active, created_at, updated_at)\nSELECT\n    gen_random_uuid(),\n    'Globex Production',\n    'GLOBEX-PROD',\n    globex_id,\n    'Production LPAR for Globex Industries',\n    package_2025q1_id,\n    true,\n    NOW(),\n    NOW()\nFROM temp_ids;\n\n-- Store LPAR IDs\nDO $$\nDECLARE\n    v_prod_lpar1_id UUID;\n    v_test_lpar1_id UUID;\n    v_globex_prod_id UUID;\nBEGIN\n    SELECT id INTO v_prod_lpar1_id FROM lpars WHERE code = 'PROD-LPAR-1';\n    SELECT id INTO v_test_lpar1_id FROM lpars WHERE code = 'TEST-LPAR-1';\n    SELECT id INTO v_globex_prod_id FROM lpars WHERE code = 'GLOBEX-PROD';\n\n    UPDATE temp_ids SET prod_lpar1_id = v_prod_lpar1_id, test_lpar1_id = v_test_lpar1_id, globex_prod_id = v_globex_prod_id;\nEND $$;\n\n-- ============================================================================\n-- LPAR SOFTWARE\n-- ============================================================================\n\n-- Production LPAR 1 Software\nINSERT INTO lpar_software (id, lpar_id, software_id, current_version, current_ptf_level, previous_version, previous_ptf_level, installed_date, rolled_back)\nSELECT\n    gen_random_uuid(),\n    prod_lpar1_id,\n    cics_id,\n    'V5R6M0',\n    'PTF12345',\n    'V5R5M0',\n    'PTF11111',\n    '2025-01-20'::TIMESTAMP,\n    false\nFROM temp_ids;\n\nINSERT INTO lpar_software (id, lpar_id, software_id, current_version, current_ptf_level, previous_version, previous_ptf_level, installed_date, rolled_back)\nSELECT\n    gen_random_uuid(),\n    prod_lpar1_id,\n    db2_id,\n    'V13R1M0',\n    'PTF54321',\n    'V12R1M0',\n    'PTF50000',\n    '2025-01-20'::TIMESTAMP,\n    false\nFROM temp_ids;\n\nINSERT INTO lpar_software (id, lpar_id, software_id, current_version, current_ptf_level, installed_date, rolled_back)\nSELECT\n    gen_random_uuid(),\n    prod_lpar1_id,\n    endevor_id,\n    'V18R2M0',\n    'SO12345',\n    '2025-01-22'::TIMESTAMP,\n    false\nFROM temp_ids;\n\n-- Test LPAR 1 Software\nINSERT INTO lpar_software (id, lpar_id, software_id, current_version, current_ptf_level, installed_date, rolled_back)\nSELECT\n    gen_random_uuid(),\n    test_lpar1_id,\n    cics_id,\n    'V5R5M0',\n    'PTF11111',\n    '2024-10-15'::TIMESTAMP,\n    false\nFROM temp_ids;\n\nINSERT INTO lpar_software (id, lpar_id, software_id, current_version, current_ptf_level, installed_date, rolled_back)\nSELECT\n    gen_random_uuid(),\n    test_lpar1_id,\n    db2_id,\n    'V12R1M0',\n    'PTF50000',\n    '2024-10-15'::TIMESTAMP,\n    false\nFROM temp_ids;\n\n-- Globex Production Software\nINSERT INTO lpar_software (id, lpar_id, software_id, current_version, current_ptf_level, installed_date, rolled_back)\nSELECT\n    gen_random_uuid(),\n    globex_prod_id,\n    cics_id,\n    'V5R6M0',\n    'PTF12345',\n    '2025-01-25'::TIMESTAMP,\n    false\nFROM temp_ids;\n\nINSERT INTO lpar_software (id, lpar_id, software_id, current_version, current_ptf_level, installed_date, rolled_back)\nSELECT\n    gen_random_uuid(),\n    globex_prod_id,\n    db2_id,\n    'V13R1M0',\n    'PTF54321',\n    '2025-01-25'::TIMESTAMP,\n    false\nFROM temp_ids;\n\n-- ============================================================================\n-- AUDIT LOGS\n-- ============================================================================\n\nINSERT INTO audit_log (id, entity_type, entity_id, action, changes, timestamp)\nSELECT\n    gen_random_uuid(),\n    'lpar',\n    prod_lpar1_id,\n    'create',\n    jsonb_build_object(\n        'name', 'Production LPAR 1',\n        'code', 'PROD-LPAR-1',\n        'customerId', acme_id\n    ),\n    NOW()\nFROM temp_ids;\n\nINSERT INTO audit_log (id, entity_type, entity_id, action, changes, timestamp)\nSELECT\n    gen_random_uuid(),\n    'lpar',\n    prod_lpar1_id,\n    'update',\n    jsonb_build_object(\n        'before', jsonb_build_object('packageId', package_2024q4_id),\n        'after', jsonb_build_object('packageId', package_2025q1_id)\n    ),\n    '2025-01-20'::TIMESTAMP\nFROM temp_ids;\n\n-- ============================================================================\n-- REFRESH MATERIALIZED VIEW\n-- ============================================================================\n\nREFRESH MATERIALIZED VIEW lpar_dashboard;\n\n-- ============================================================================\n-- CLEANUP AND REPORT\n-- ============================================================================\n\n-- Clean up temporary table\nDROP TABLE IF EXISTS temp_ids;\n\n-- Report success\nDO $$\nBEGIN\n    RAISE NOTICE '✅ Test data loaded successfully!';\n    RAISE NOTICE '';\n    RAISE NOTICE '📊 Summary:';\n    RAISE NOTICE '   - % Vendors created', (SELECT COUNT(*) FROM vendors);\n    RAISE NOTICE '   - % Customers created', (SELECT COUNT(*) FROM customers);\n    RAISE NOTICE '   - % Software products created', (SELECT COUNT(*) FROM software);\n    RAISE NOTICE '   - % Software versions created', (SELECT COUNT(*) FROM software_versions);\n    RAISE NOTICE '   - % Packages created', (SELECT COUNT(*) FROM packages);\n    RAISE NOTICE '   - % Package items created', (SELECT COUNT(*) FROM package_items);\n    RAISE NOTICE '   - % LPARs created', (SELECT COUNT(*) FROM lpars);\n    RAISE NOTICE '   - % LPAR software installations', (SELECT COUNT(*) FROM lpar_software);\n    RAISE NOTICE '   - % Audit log entries created', (SELECT COUNT(*) FROM audit_log);\n    RAISE NOTICE '';\n    RAISE NOTICE 'Materialized view refreshed: lpar_dashboard';\nEND $$;\n
+-- ============================================================================
+-- TEST DATA SCRIPT - Load sample data for development and testing
+-- ============================================================================
+-- Purpose: Populate database with realistic test data
+-- Use Case: Development, testing, demos
+-- Prerequisites: Empty tables (run reset.sql first if needed)
+-- ============================================================================
+
+-- ============================================================================
+-- VENDORS
+-- ============================================================================
+
+INSERT INTO vendors (id, name, code, website, contact_email, active, created_at, updated_at)
+VALUES
+    (gen_random_uuid(), 'IBM', 'IBM', 'https://www.ibm.com', 'support@ibm.com', true, NOW(), NOW()),
+    (gen_random_uuid(), 'Broadcom', 'BROADCOM', 'https://www.broadcom.com', 'support@broadcom.com', true, NOW(), NOW());
+
+-- Store vendor IDs for later use
+DO $$
+DECLARE
+    v_ibm_id UUID;
+    v_broadcom_id UUID;
+BEGIN
+    SELECT id INTO v_ibm_id FROM vendors WHERE code = 'IBM';
+    SELECT id INTO v_broadcom_id FROM vendors WHERE code = 'BROADCOM';
+
+    -- Create temporary table to store IDs for this session
+    CREATE TEMP TABLE temp_ids (
+        ibm_id UUID,
+        broadcom_id UUID,
+        acme_id UUID,
+        globex_id UUID,
+        cics_id UUID,
+        db2_id UUID,
+        endevor_id UUID,
+        cics_v5r4m0_id UUID,
+        cics_v5r5m0_id UUID,
+        cics_v5r6m0_id UUID,
+        db2_v12r1m0_id UUID,
+        db2_v13r1m0_id UUID,
+        endevor_v18r1m0_id UUID,
+        endevor_v18r2m0_id UUID,
+        package_2025q1_id UUID,
+        package_2024q4_id UUID,
+        prod_lpar1_id UUID,
+        test_lpar1_id UUID,
+        globex_prod_id UUID
+    );
+
+    INSERT INTO temp_ids (ibm_id, broadcom_id)
+    VALUES (v_ibm_id, v_broadcom_id);
+END $$;
+
+-- ============================================================================
+-- CUSTOMERS
+-- ============================================================================
+
+INSERT INTO customers (id, name, code, description, active, created_at, updated_at)
+VALUES
+    (gen_random_uuid(), 'Acme Corporation', 'ACME', 'Large manufacturing company', true, NOW(), NOW()),
+    (gen_random_uuid(), 'Globex Industries', 'GLOBEX', 'International conglomerate', true, NOW(), NOW());
+
+-- Store customer IDs
+DO $$
+DECLARE
+    v_acme_id UUID;
+    v_globex_id UUID;
+BEGIN
+    SELECT id INTO v_acme_id FROM customers WHERE code = 'ACME';
+    SELECT id INTO v_globex_id FROM customers WHERE code = 'GLOBEX';
+
+    UPDATE temp_ids SET acme_id = v_acme_id, globex_id = v_globex_id;
+END $$;
+
+-- ============================================================================
+-- SOFTWARE
+-- ============================================================================
+
+INSERT INTO software (id, name, vendor_id, description, active, created_at, updated_at)
+SELECT
+    gen_random_uuid(),
+    'CICS Transaction Server',
+    ibm_id,
+    'Enterprise transaction processing system',
+    true,
+    NOW(),
+    NOW()
+FROM temp_ids;
+
+INSERT INTO software (id, name, vendor_id, description, active, created_at, updated_at)
+SELECT
+    gen_random_uuid(),
+    'DB2 for z/OS',
+    ibm_id,
+    'Relational database management system',
+    true,
+    NOW(),
+    NOW()
+FROM temp_ids;
+
+INSERT INTO software (id, name, vendor_id, description, active, created_at, updated_at)
+SELECT
+    gen_random_uuid(),
+    'Endevor',
+    broadcom_id,
+    'Software change management system',
+    true,
+    NOW(),
+    NOW()
+FROM temp_ids;
+
+-- Store software IDs
+DO $$
+DECLARE
+    v_cics_id UUID;
+    v_db2_id UUID;
+    v_endevor_id UUID;
+BEGIN
+    SELECT id INTO v_cics_id FROM software WHERE name = 'CICS Transaction Server';
+    SELECT id INTO v_db2_id FROM software WHERE name = 'DB2 for z/OS';
+    SELECT id INTO v_endevor_id FROM software WHERE name = 'Endevor';
+
+    UPDATE temp_ids SET cics_id = v_cics_id, db2_id = v_db2_id, endevor_id = v_endevor_id;
+END $$;
+
+-- ============================================================================
+-- SOFTWARE VERSIONS
+-- ============================================================================
+
+-- CICS Versions
+INSERT INTO software_versions (id, software_id, version, ptf_level, release_date, release_notes, is_current, created_at)
+SELECT
+    gen_random_uuid(),
+    cics_id,
+    'V5R4M0',
+    'PTF10000',
+    '2023-03-01'::DATE,
+    'CICS TS 5.4 - Baseline release',
+    false,
+    NOW()
+FROM temp_ids;
+
+INSERT INTO software_versions (id, software_id, version, ptf_level, release_date, release_notes, is_current, created_at)
+SELECT
+    gen_random_uuid(),
+    cics_id,
+    'V5R5M0',
+    'PTF11111',
+    '2024-06-15'::DATE,
+    'CICS TS 5.5 - Enhanced security features',
+    false,
+    NOW()
+FROM temp_ids;
+
+INSERT INTO software_versions (id, software_id, version, ptf_level, release_date, release_notes, is_current, created_at)
+SELECT
+    gen_random_uuid(),
+    cics_id,
+    'V5R6M0',
+    'PTF12345',
+    '2025-01-10'::DATE,
+    'CICS TS 5.6 - Performance improvements and cloud integration',
+    true,
+    NOW()
+FROM temp_ids;
+
+-- DB2 Versions
+INSERT INTO software_versions (id, software_id, version, ptf_level, release_date, release_notes, is_current, created_at)
+SELECT
+    gen_random_uuid(),
+    db2_id,
+    'V12R1M0',
+    'PTF50000',
+    '2023-09-01'::DATE,
+    'DB2 12 - Baseline release',
+    false,
+    NOW()
+FROM temp_ids;
+
+INSERT INTO software_versions (id, software_id, version, ptf_level, release_date, release_notes, is_current, created_at)
+SELECT
+    gen_random_uuid(),
+    db2_id,
+    'V13R1M0',
+    'PTF54321',
+    '2025-01-05'::DATE,
+    'DB2 13 - AI-powered query optimization',
+    true,
+    NOW()
+FROM temp_ids;
+
+-- Endevor Versions
+INSERT INTO software_versions (id, software_id, version, ptf_level, release_date, release_notes, is_current, created_at)
+SELECT
+    gen_random_uuid(),
+    endevor_id,
+    'V18R1M0',
+    'SO11111',
+    '2024-04-01'::DATE,
+    'Endevor 18.1 - DevOps integration',
+    false,
+    NOW()
+FROM temp_ids;
+
+INSERT INTO software_versions (id, software_id, version, ptf_level, release_date, release_notes, is_current, created_at)
+SELECT
+    gen_random_uuid(),
+    endevor_id,
+    'V18R2M0',
+    'SO12345',
+    '2025-01-08'::DATE,
+    'Endevor 18.2 - Enhanced Git bridge and API improvements',
+    true,
+    NOW()
+FROM temp_ids;
+
+-- Store version IDs
+DO $$
+DECLARE
+    v_cics_v5r4m0_id UUID;
+    v_cics_v5r5m0_id UUID;
+    v_cics_v5r6m0_id UUID;
+    v_db2_v12r1m0_id UUID;
+    v_db2_v13r1m0_id UUID;
+    v_endevor_v18r1m0_id UUID;
+    v_endevor_v18r2m0_id UUID;
+BEGIN
+    SELECT id INTO v_cics_v5r4m0_id FROM software_versions WHERE version = 'V5R4M0' AND ptf_level = 'PTF10000';
+    SELECT id INTO v_cics_v5r5m0_id FROM software_versions WHERE version = 'V5R5M0' AND ptf_level = 'PTF11111';
+    SELECT id INTO v_cics_v5r6m0_id FROM software_versions WHERE version = 'V5R6M0' AND ptf_level = 'PTF12345';
+    SELECT id INTO v_db2_v12r1m0_id FROM software_versions WHERE version = 'V12R1M0' AND ptf_level = 'PTF50000';
+    SELECT id INTO v_db2_v13r1m0_id FROM software_versions WHERE version = 'V13R1M0' AND ptf_level = 'PTF54321';
+    SELECT id INTO v_endevor_v18r1m0_id FROM software_versions WHERE version = 'V18R1M0' AND ptf_level = 'SO11111';
+    SELECT id INTO v_endevor_v18r2m0_id FROM software_versions WHERE version = 'V18R2M0' AND ptf_level = 'SO12345';
+
+    UPDATE temp_ids SET
+        cics_v5r4m0_id = v_cics_v5r4m0_id,
+        cics_v5r5m0_id = v_cics_v5r5m0_id,
+        cics_v5r6m0_id = v_cics_v5r6m0_id,
+        db2_v12r1m0_id = v_db2_v12r1m0_id,
+        db2_v13r1m0_id = v_db2_v13r1m0_id,
+        endevor_v18r1m0_id = v_endevor_v18r1m0_id,
+        endevor_v18r2m0_id = v_endevor_v18r2m0_id;
+END $$;
+
+-- Update software to point to current versions
+UPDATE software s
+SET current_version_id = t.cics_v5r6m0_id
+FROM temp_ids t
+WHERE s.name = 'CICS Transaction Server';
+
+UPDATE software s
+SET current_version_id = t.db2_v13r1m0_id
+FROM temp_ids t
+WHERE s.name = 'DB2 for z/OS';
+
+UPDATE software s
+SET current_version_id = t.endevor_v18r2m0_id
+FROM temp_ids t
+WHERE s.name = 'Endevor';
+
+-- ============================================================================
+-- PACKAGES
+-- ============================================================================
+
+INSERT INTO packages (id, name, code, version, description, release_date, active, created_at, updated_at)
+VALUES
+    (gen_random_uuid(), 'Mainframe Suite Q1 2025', 'MF-Q1-2025', '2025.1.0', 'Q1 2025 mainframe software package release', '2025-01-15'::DATE, true, NOW(), NOW()),
+    (gen_random_uuid(), 'Mainframe Suite Q4 2024', 'MF-Q4-2024', '2024.4.0', 'Q4 2024 mainframe software package release', '2024-10-01'::DATE, true, NOW(), NOW());
+
+-- Store package IDs
+DO $$
+DECLARE
+    v_package_2025q1_id UUID;
+    v_package_2024q4_id UUID;
+BEGIN
+    SELECT id INTO v_package_2025q1_id FROM packages WHERE code = 'MF-Q1-2025';
+    SELECT id INTO v_package_2024q4_id FROM packages WHERE code = 'MF-Q4-2024';
+
+    UPDATE temp_ids SET package_2025q1_id = v_package_2025q1_id, package_2024q4_id = v_package_2024q4_id;
+END $$;
+
+-- ============================================================================
+-- PACKAGE ITEMS
+-- ============================================================================
+
+-- Package 2025 Q1 Items
+INSERT INTO package_items (id, package_id, software_id, software_version_id, required, order_index, created_at)
+SELECT
+    gen_random_uuid(),
+    package_2025q1_id,
+    cics_id,
+    cics_v5r6m0_id,
+    true,
+    1,
+    NOW()
+FROM temp_ids;
+
+INSERT INTO package_items (id, package_id, software_id, software_version_id, required, order_index, created_at)
+SELECT
+    gen_random_uuid(),
+    package_2025q1_id,
+    db2_id,
+    db2_v13r1m0_id,
+    true,
+    2,
+    NOW()
+FROM temp_ids;
+
+INSERT INTO package_items (id, package_id, software_id, software_version_id, required, order_index, created_at)
+SELECT
+    gen_random_uuid(),
+    package_2025q1_id,
+    endevor_id,
+    endevor_v18r2m0_id,
+    false,
+    3,
+    NOW()
+FROM temp_ids;
+
+-- Package 2024 Q4 Items
+INSERT INTO package_items (id, package_id, software_id, software_version_id, required, order_index, created_at)
+SELECT
+    gen_random_uuid(),
+    package_2024q4_id,
+    cics_id,
+    cics_v5r5m0_id,
+    true,
+    1,
+    NOW()
+FROM temp_ids;
+
+INSERT INTO package_items (id, package_id, software_id, software_version_id, required, order_index, created_at)
+SELECT
+    gen_random_uuid(),
+    package_2024q4_id,
+    db2_id,
+    db2_v12r1m0_id,
+    true,
+    2,
+    NOW()
+FROM temp_ids;
+
+-- ============================================================================
+-- LPARS
+-- ============================================================================
+
+INSERT INTO lpars (id, name, code, customer_id, description, current_package_id, active, created_at, updated_at)
+SELECT
+    gen_random_uuid(),
+    'Production LPAR 1',
+    'PROD-LPAR-1',
+    acme_id,
+    'Primary production LPAR for Acme Corporation',
+    package_2025q1_id,
+    true,
+    NOW(),
+    NOW()
+FROM temp_ids;
+
+INSERT INTO lpars (id, name, code, customer_id, description, current_package_id, active, created_at, updated_at)
+SELECT
+    gen_random_uuid(),
+    'Test LPAR 1',
+    'TEST-LPAR-1',
+    acme_id,
+    'Test environment for Acme Corporation',
+    package_2024q4_id,
+    true,
+    NOW(),
+    NOW()
+FROM temp_ids;
+
+INSERT INTO lpars (id, name, code, customer_id, description, current_package_id, active, created_at, updated_at)
+SELECT
+    gen_random_uuid(),
+    'Globex Production',
+    'GLOBEX-PROD',
+    globex_id,
+    'Production LPAR for Globex Industries',
+    package_2025q1_id,
+    true,
+    NOW(),
+    NOW()
+FROM temp_ids;
+
+-- Store LPAR IDs
+DO $$
+DECLARE
+    v_prod_lpar1_id UUID;
+    v_test_lpar1_id UUID;
+    v_globex_prod_id UUID;
+BEGIN
+    SELECT id INTO v_prod_lpar1_id FROM lpars WHERE code = 'PROD-LPAR-1';
+    SELECT id INTO v_test_lpar1_id FROM lpars WHERE code = 'TEST-LPAR-1';
+    SELECT id INTO v_globex_prod_id FROM lpars WHERE code = 'GLOBEX-PROD';
+
+    UPDATE temp_ids SET prod_lpar1_id = v_prod_lpar1_id, test_lpar1_id = v_test_lpar1_id, globex_prod_id = v_globex_prod_id;
+END $$;
+
+-- ============================================================================
+-- LPAR SOFTWARE
+-- ============================================================================
+
+-- Production LPAR 1 Software
+INSERT INTO lpar_software (id, lpar_id, software_id, current_version, current_ptf_level, previous_version, previous_ptf_level, installed_date, rolled_back)
+SELECT
+    gen_random_uuid(),
+    prod_lpar1_id,
+    cics_id,
+    'V5R6M0',
+    'PTF12345',
+    'V5R5M0',
+    'PTF11111',
+    '2025-01-20'::TIMESTAMP,
+    false
+FROM temp_ids;
+
+INSERT INTO lpar_software (id, lpar_id, software_id, current_version, current_ptf_level, previous_version, previous_ptf_level, installed_date, rolled_back)
+SELECT
+    gen_random_uuid(),
+    prod_lpar1_id,
+    db2_id,
+    'V13R1M0',
+    'PTF54321',
+    'V12R1M0',
+    'PTF50000',
+    '2025-01-20'::TIMESTAMP,
+    false
+FROM temp_ids;
+
+INSERT INTO lpar_software (id, lpar_id, software_id, current_version, current_ptf_level, installed_date, rolled_back)
+SELECT
+    gen_random_uuid(),
+    prod_lpar1_id,
+    endevor_id,
+    'V18R2M0',
+    'SO12345',
+    '2025-01-22'::TIMESTAMP,
+    false
+FROM temp_ids;
+
+-- Test LPAR 1 Software
+INSERT INTO lpar_software (id, lpar_id, software_id, current_version, current_ptf_level, installed_date, rolled_back)
+SELECT
+    gen_random_uuid(),
+    test_lpar1_id,
+    cics_id,
+    'V5R5M0',
+    'PTF11111',
+    '2024-10-15'::TIMESTAMP,
+    false
+FROM temp_ids;
+
+INSERT INTO lpar_software (id, lpar_id, software_id, current_version, current_ptf_level, installed_date, rolled_back)
+SELECT
+    gen_random_uuid(),
+    test_lpar1_id,
+    db2_id,
+    'V12R1M0',
+    'PTF50000',
+    '2024-10-15'::TIMESTAMP,
+    false
+FROM temp_ids;
+
+-- Globex Production Software
+INSERT INTO lpar_software (id, lpar_id, software_id, current_version, current_ptf_level, installed_date, rolled_back)
+SELECT
+    gen_random_uuid(),
+    globex_prod_id,
+    cics_id,
+    'V5R6M0',
+    'PTF12345',
+    '2025-01-25'::TIMESTAMP,
+    false
+FROM temp_ids;
+
+INSERT INTO lpar_software (id, lpar_id, software_id, current_version, current_ptf_level, installed_date, rolled_back)
+SELECT
+    gen_random_uuid(),
+    globex_prod_id,
+    db2_id,
+    'V13R1M0',
+    'PTF54321',
+    '2025-01-25'::TIMESTAMP,
+    false
+FROM temp_ids;
+
+-- ============================================================================
+-- AUDIT LOGS
+-- ============================================================================
+
+INSERT INTO audit_log (id, entity_type, entity_id, action, changes, timestamp)
+SELECT
+    gen_random_uuid(),
+    'lpar',
+    prod_lpar1_id,
+    'create',
+    jsonb_build_object(
+        'name', 'Production LPAR 1',
+        'code', 'PROD-LPAR-1',
+        'customerId', acme_id
+    ),
+    NOW()
+FROM temp_ids;
+
+INSERT INTO audit_log (id, entity_type, entity_id, action, changes, timestamp)
+SELECT
+    gen_random_uuid(),
+    'lpar',
+    prod_lpar1_id,
+    'update',
+    jsonb_build_object(
+        'before', jsonb_build_object('packageId', package_2024q4_id),
+        'after', jsonb_build_object('packageId', package_2025q1_id)
+    ),
+    '2025-01-20'::TIMESTAMP
+FROM temp_ids;
+
+-- ============================================================================
+-- REFRESH MATERIALIZED VIEW
+-- ============================================================================
+
+REFRESH MATERIALIZED VIEW lpar_dashboard;
+
+-- ============================================================================
+-- CLEANUP AND REPORT
+-- ============================================================================
+
+-- Clean up temporary table
+DROP TABLE IF EXISTS temp_ids;
+
+-- Report success
+DO $$
+BEGIN
+    RAISE NOTICE '✅ Test data loaded successfully!';
+    RAISE NOTICE '';
+    RAISE NOTICE '📊 Summary:';
+    RAISE NOTICE '   - % Vendors created', (SELECT COUNT(*) FROM vendors);
+    RAISE NOTICE '   - % Customers created', (SELECT COUNT(*) FROM customers);
+    RAISE NOTICE '   - % Software products created', (SELECT COUNT(*) FROM software);
+    RAISE NOTICE '   - % Software versions created', (SELECT COUNT(*) FROM software_versions);
+    RAISE NOTICE '   - % Packages created', (SELECT COUNT(*) FROM packages);
+    RAISE NOTICE '   - % Package items created', (SELECT COUNT(*) FROM package_items);
+    RAISE NOTICE '   - % LPARs created', (SELECT COUNT(*) FROM lpars);
+    RAISE NOTICE '   - % LPAR software installations', (SELECT COUNT(*) FROM lpar_software);
+    RAISE NOTICE '   - % Audit log entries created', (SELECT COUNT(*) FROM audit_log);
+    RAISE NOTICE '';
+    RAISE NOTICE 'Materialized view refreshed: lpar_dashboard';
+END $$;

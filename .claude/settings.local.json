@@ -20,7 +20,17 @@
       "Bash(npm run dev:*)",
       "Bash(curl:*)",
       "Bash(npm run build:*)",
-      "Bash(timeout 10 npm run dev:*)"
+      "Bash(timeout 10 npm run dev:*)",
+      "Bash(timeout:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(node fix-newlines.js:*)",
+      "Bash(node:*)",
+      "Bash(for page in \"\" \"vendors\" \"software\" \"packages\" \"lpars\" \"customers\")",
+      "Bash(do echo \"Testing /$page\")",
+      "Bash(done)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

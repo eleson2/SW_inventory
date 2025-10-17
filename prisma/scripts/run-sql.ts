@@ -1,1 +1,70 @@
-import { PrismaClient } from '@prisma/client';\nimport { readFileSync } from 'fs';\nimport { join, dirname } from 'path';\nimport { fileURLToPath } from 'url';\n\nconst __filename = fileURLToPath(import.meta.url);\nconst __dirname = dirname(__filename);\n\nconst prisma = new PrismaClient();\n\nasync function runSqlFile(filename: string) {\n	console.log(`📄 Running ${filename}...`);\n\n	try {\n		const sql = readFileSync(join(__dirname, filename), 'utf-8');\n\n		// Execute as a single transaction\n		await prisma.$executeRawUnsafe(sql);\n\n		console.log(`✅ ${filename} executed successfully!`);\n	} catch (error: any) {\n		console.error(`❌ Error executing ${filename}:`, error.message);\n		throw error;\n	}\n}\n\nasync function main() {\n	const command = process.argv[2];\n\n	try {\n		switch (command) {\n			case 'reset':\n				await runSqlFile('reset.sql');\n				break;\n\n			case 'test-data':\n				await runSqlFile('test-data.sql');\n				break;\n\n			case 'reset-and-load':\n				await runSqlFile('reset.sql');\n				await runSqlFile('test-data.sql');\n				break;\n\n			default:\n				console.log(`\nUsage:\n  npx tsx prisma/scripts/run-sql.ts <command>\n\nCommands:\n  reset            - Empty all tables (preserves schema/views)\n  test-data        - Load test data (requires empty tables)\n  reset-and-load   - Reset then load test data (full refresh)\n\nExamples:\n  npx tsx prisma/scripts/run-sql.ts reset\n  npx tsx prisma/scripts/run-sql.ts test-data\n  npx tsx prisma/scripts/run-sql.ts reset-and-load\n				`);\n				process.exit(1);\n		}\n	} catch (error) {\n		console.error('Failed to execute SQL script');\n		process.exit(1);\n	} finally {\n		await prisma.$disconnect();\n	}\n}\n\nmain();\n
+import { PrismaClient } from '@prisma/client';
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const prisma = new PrismaClient();
+
+async function runSqlFile(filename: string) {
+	console.log(`📄 Running ${filename}...`);
+
+	try {
+		const sql = readFileSync(join(__dirname, filename), 'utf-8');
+
+		// Execute as a single transaction
+		await prisma.$executeRawUnsafe(sql);
+
+		console.log(`✅ ${filename} executed successfully!`);
+	} catch (error: any) {
+		console.error(`❌ Error executing ${filename}:`, error.message);
+		throw error;
+	}
+}
+
+async function main() {
+	const command = process.argv[2];
+
+	try {
+		switch (command) {
+			case 'reset':
+				await runSqlFile('reset.sql');
+				break;
+
+			case 'test-data':
+				await runSqlFile('test-data.sql');
+				break;
+
+			case 'reset-and-load':
+				await runSqlFile('reset.sql');
+				await runSqlFile('test-data.sql');
+				break;
+
+			default:
+				console.log(`
+Usage:
+  npx tsx prisma/scripts/run-sql.ts <command>
+
+Commands:
+  reset            - Empty all tables (preserves schema/views)
+  test-data        - Load test data (requires empty tables)
+  reset-and-load   - Reset then load test data (full refresh)
+
+Examples:
+  npx tsx prisma/scripts/run-sql.ts reset
+  npx tsx prisma/scripts/run-sql.ts test-data
+  npx tsx prisma/scripts/run-sql.ts reset-and-load
+				`);
+				process.exit(1);
+		}
+	} catch (error) {
+		console.error('Failed to execute SQL script');
+		process.exit(1);
+	} finally {
+		await prisma.$disconnect();
+	}
+}
+
+main();

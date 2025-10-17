@@ -1,1 +1,41 @@
-/* Override all text colors to dark grey */\n* {\n	color: #333333 !important;\n}\n\nbody, html {\n	background-color: white !important;\n	color: #333333 !important;\n}\n\n/* Specific overrides for all text elements */\np, span, div, td, th, label, input, textarea, select,\nh1, h2, h3, h4, h5, h6, a, button, li, dd, dt {\n	color: #333333 !important;\n}\n\n/* Table cells */\ntable td, table th {\n	color: #333333 !important;\n}\n\n/* Form inputs */\ninput[type="text"],\ninput[type="email"],\ninput[type="password"],\ninput[type="number"],\ninput[type="date"],\ntextarea,\nselect {\n	color: #333333 !important;\n	background-color: white !important;\n}\n\n/* Links should be visible */\na {\n	color: #2563eb !important;\n}\n\na:hover {\n	color: #1d4ed8 !important;\n}\n
+/* Override all text colors to dark grey */
+* {
+	color: #333333 !important;
+}
+
+body, html {
+	background-color: white !important;
+	color: #333333 !important;
+}
+
+/* Specific overrides for all text elements */
+p, span, div, td, th, label, input, textarea, select,
+h1, h2, h3, h4, h5, h6, a, button, li, dd, dt {
+	color: #333333 !important;
+}
+
+/* Table cells */
+table td, table th {
+	color: #333333 !important;
+}
+
+/* Form inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+textarea,
+select {
+	color: #333333 !important;
+	background-color: white !important;
+}
+
+/* Links should be visible */
+a {
+	color: #2563eb !important;
+}
+
+a:hover {
+	color: #1d4ed8 !important;
+}

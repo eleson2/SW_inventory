@@ -1,1 +1,63 @@
-/**\n * Core domain types for the Software Inventory System\n * Uses Prisma-generated types as source of truth\n */\nimport type {\n	customers,\n	vendors,\n	software,\n	packages,\n	package_items,\n	lpars,\n	lpar_software,\n	audit_log\n} from '@prisma/client';\n\n// Export Prisma types directly\nexport type Customer = customers;\nexport type Vendor = vendors;\nexport type Software = software & { vendors?: Vendor };\nexport type Package = packages & { items?: PackageItem[] };\nexport type PackageItem = package_items;\nexport type Lpar = lpars & {\n	customers?: Customer;\n	packages?: Package;\n	lpar_software?: LparSoftware[];\n};\nexport type LparSoftware = lpar_software;\nexport type AuditLog = audit_log;\n\n// Helper type for version information\nexport interface SoftwareVersion {\n	version: string;\n	ptfLevel?: string;\n}\n\n// Form types for creating/updating entities\nexport type CustomerInput = Omit<Customer, 'id' | 'created_at' | 'updated_at'>;\nexport type VendorInput = Omit<Vendor, 'id' | 'created_at' | 'updated_at'>;\nexport type SoftwareInput = Omit<Software, 'id' | 'created_at' | 'updated_at' | 'vendors'>;\nexport type PackageInput = Omit<Package, 'id' | 'created_at' | 'updated_at'>;\nexport type LparInput = Omit<Lpar, 'id' | 'created_at' | 'updated_at'>;\n\n// List view types\nexport interface PaginatedResult<T> {\n	items: T[];\n	total: number;\n	page: number;\n	pageSize: number;\n	totalPages: number;\n}\n\nexport interface SortOptions {\n	field: string;\n	direction: 'asc' | 'desc';\n}\n\nexport interface FilterOptions {\n	search?: string;\n	active?: boolean;\n	customer_id?: string;\n	vendor_id?: string;\n	package_id?: string;\n}\n
+/**
+ * Core domain types for the Software Inventory System
+ * Uses Prisma-generated types as source of truth
+ */
+import type {
+	customers,
+	vendors,
+	software,
+	packages,
+	package_items,
+	lpars,
+	lpar_software,
+	audit_log
+} from '@prisma/client';
+
+// Export Prisma types directly
+export type Customer = customers;
+export type Vendor = vendors;
+export type Software = software & { vendors?: Vendor };
+export type Package = packages & { items?: PackageItem[] };
+export type PackageItem = package_items;
+export type Lpar = lpars & {
+	customers?: Customer;
+	packages?: Package;
+	lpar_software?: LparSoftware[];
+};
+export type LparSoftware = lpar_software;
+export type AuditLog = audit_log;
+
+// Helper type for version information
+export interface SoftwareVersion {
+	version: string;
+	ptfLevel?: string;
+}
+
+// Form types for creating/updating entities
+export type CustomerInput = Omit<Customer, 'id' | 'created_at' | 'updated_at'>;
+export type VendorInput = Omit<Vendor, 'id' | 'created_at' | 'updated_at'>;
+export type SoftwareInput = Omit<Software, 'id' | 'created_at' | 'updated_at' | 'vendors'>;
+export type PackageInput = Omit<Package, 'id' | 'created_at' | 'updated_at'>;
+export type LparInput = Omit<Lpar, 'id' | 'created_at' | 'updated_at'>;
+
+// List view types
+export interface PaginatedResult<T> {
+	items: T[];
+	total: number;
+	page: number;
+	pageSize: number;
+	totalPages: number;
+}
+
+export interface SortOptions {
+	field: string;
+	direction: 'asc' | 'desc';
+}
+
+export interface FilterOptions {
+	search?: string;
+	active?: boolean;
+	customer_id?: string;
+	vendor_id?: string;
+	package_id?: string;
+}

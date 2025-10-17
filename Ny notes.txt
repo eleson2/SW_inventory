@@ -1,1 +1,21 @@
-README notes TODO: many +page.server.ts files currently use mock data. \nPrisma is present but not fully integrated in route handlers.\n\nNo import features (CSV/Excel) or connectors to discover installed \nsoftware from systems. For inventory at scale, automated discovery \nor import is useful.\n\nUX polish and data volume handling\n\n\nWire up Prisma and replace mock data in route handlers (+page.server.ts) \nwith real DB queries; \nadd basic seeds (prisma/seed.ts exists).\n\n\n\n\n
+README notes TODO: many +page.server.ts files currently use mock data.
+
+Prisma is present but not fully integrated in route handlers.
+
+
+
+No import features (CSV/Excel) or connectors to discover installed 
+
+software from systems. For inventory at scale, automated discovery 
+
+or import is useful.
+
+UX polish and data volume handling
+
+
+
+Wire up Prisma and replace mock data in route handlers (+page.server.ts) 
+
+with real DB queries; 
+
+add basic seeds (prisma/seed.ts exists).

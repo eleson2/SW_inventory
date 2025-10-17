@@ -1,1 +1,95 @@
-# Software Inventory Management System\n\nA comprehensive SvelteKit application for managing mainframe software inventory in a multi-tenant environment.\n\n## Features\n\n- **Customer Management**: Track customer information in multi-tenant environment\n- **Vendor Management**: Manage software vendors and contact information\n- **Software Products**: Track software with versions and PTF levels\n- **Package Management**: Create coordinated software package releases\n- **LPAR Monitoring**: Monitor LPAR configurations and installed software\n- **Version Parsing**: Extract version and PTF level from vendor designations\n- **Rollback Support**: Individual product rollback capabilities\n\n## Tech Stack\n\n- **Frontend**: Svelte 5, SvelteKit, TypeScript\n- **Forms**: Superforms with Zod validation\n- **UI Components**: Custom components based on shadcn design system\n- **Styling**: Tailwind CSS\n\n## Project Structure\n\n```\nsrc/\n├── lib/\n│   ├── components/\n│   │   ├── ui/           # Base UI components (Button, Card, Input, etc.)\n│   │   ├── common/       # Reusable components (DataTable, Pagination, FormField)\n│   │   └── domain/       # Domain-specific components (VersionDisplay)\n│   ├── types/            # TypeScript type definitions\n│   ├── schemas/          # Zod validation schemas\n│   ├── utils/            # Utility functions (version parsing, date formatting, cn)\n│   └── stores/           # Svelte stores (if needed)\n└── routes/\n    ├── customers/        # Customer management pages\n    ├── vendors/          # Vendor management pages\n    ├── software/         # Software product pages\n    ├── packages/         # Package management pages\n    └── lpars/            # LPAR monitoring pages\n```\n\n## Getting Started\n\n1. Install dependencies:\n```bash\nnpm install\n```\n\n2. Start the development server:\n```bash\nnpm run dev\n```\n\n3. Open your browser to `http://localhost:5173`\n\n## Key Concepts\n\n### Software Versions\nSoftware versions are parsed from vendor designations and include:\n- Version number (e.g., "V2R4M0" or "2.4.0")\n- PTF level (e.g., "PTF12345" or "SP1")\n\n### Packages\nPackages are collections of software products tested and deployed together:\n- Include all software the service provider is responsible for\n- Customers receive relevant subsets of the package\n- Each LPAR can be assigned to a specific package level\n\n### Rollback\nIndividual software products can be rolled back if issues occur:\n- Previous version is tracked\n- Rollback history is maintained\n- Does not affect other software in the package\n\n## Development Notes\n\n- TODO markers indicate where database integration is needed\n- Mock data is currently used in +page.server.ts files\n- API routes can be added in src/routes/api/\n- Validation schemas should be kept in sync with types\n\n## Database Integration\n\nTo integrate a database:\n\n1. Add your database library (e.g., Prisma, Drizzle, etc.)\n2. Update the mock data in +page.server.ts files\n3. Implement actual CRUD operations\n4. Add authentication and authorization\n5. Implement audit logging\n\n## License\n\nProprietary - Internal use only\n
+# Software Inventory Management System
+
+A comprehensive SvelteKit application for managing mainframe software inventory in a multi-tenant environment.
+
+## Features
+
+- **Customer Management**: Track customer information in multi-tenant environment
+- **Vendor Management**: Manage software vendors and contact information
+- **Software Products**: Track software with versions and PTF levels
+- **Package Management**: Create coordinated software package releases
+- **LPAR Monitoring**: Monitor LPAR configurations and installed software
+- **Version Parsing**: Extract version and PTF level from vendor designations
+- **Rollback Support**: Individual product rollback capabilities
+
+## Tech Stack
+
+- **Frontend**: Svelte 5, SvelteKit, TypeScript
+- **Forms**: Superforms with Zod validation
+- **UI Components**: Custom components based on shadcn design system
+- **Styling**: Tailwind CSS
+
+## Project Structure
+
+```
+src/
+├── lib/
+│   ├── components/
+│   │   ├── ui/           # Base UI components (Button, Card, Input, etc.)
+│   │   ├── common/       # Reusable components (DataTable, Pagination, FormField)
+│   │   └── domain/       # Domain-specific components (VersionDisplay)
+│   ├── types/            # TypeScript type definitions
+│   ├── schemas/          # Zod validation schemas
+│   ├── utils/            # Utility functions (version parsing, date formatting, cn)
+│   └── stores/           # Svelte stores (if needed)
+└── routes/
+    ├── customers/        # Customer management pages
+    ├── vendors/          # Vendor management pages
+    ├── software/         # Software product pages
+    ├── packages/         # Package management pages
+    └── lpars/            # LPAR monitoring pages
+```
+
+## Getting Started
+
+1. Install dependencies:
+```bash
+npm install
+```
+
+2. Start the development server:
+```bash
+npm run dev
+```
+
+3. Open your browser to `http://localhost:5173`
+
+## Key Concepts
+
+### Software Versions
+Software versions are parsed from vendor designations and include:
+- Version number (e.g., "V2R4M0" or "2.4.0")
+- PTF level (e.g., "PTF12345" or "SP1")
+
+### Packages
+Packages are collections of software products tested and deployed together:
+- Include all software the service provider is responsible for
+- Customers receive relevant subsets of the package
+- Each LPAR can be assigned to a specific package level
+
+### Rollback
+Individual software products can be rolled back if issues occur:
+- Previous version is tracked
+- Rollback history is maintained
+- Does not affect other software in the package
+
+## Development Notes
+
+- TODO markers indicate where database integration is needed
+- Mock data is currently used in +page.server.ts files
+- API routes can be added in src/routes/api/
+- Validation schemas should be kept in sync with types
+
+## Database Integration
+
+To integrate a database:
+
+1. Add your database library (e.g., Prisma, Drizzle, etc.)
+2. Update the mock data in +page.server.ts files
+3. Implement actual CRUD operations
+4. Add authentication and authorization
+5. Implement audit logging
+
+## License
+
+Proprietary - Internal use only

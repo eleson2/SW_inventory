@@ -1,1 +1,52 @@
--- ============================================================================\n-- RESET SCRIPT - Empty all tables\n-- ============================================================================\n-- Purpose: Remove all data from tables while preserving schema and views\n-- Use Case: Clean slate for testing, preparing for production data load\n-- WARNING: This will DELETE ALL DATA - use with caution!\n-- ============================================================================\n\n-- Disable foreign key checks temporarily for faster truncation\nSET session_replication_role = 'replica';\n\n-- Truncate all tables in dependency order (children first, parents last)\n-- This ensures no foreign key violations\n\nTRUNCATE TABLE audit_log CASCADE;\nTRUNCATE TABLE lpar_software CASCADE;\nTRUNCATE TABLE package_items CASCADE;\nTRUNCATE TABLE lpars CASCADE;\nTRUNCATE TABLE packages CASCADE;\nTRUNCATE TABLE software_versions CASCADE;\nTRUNCATE TABLE software CASCADE;\nTRUNCATE TABLE customers CASCADE;\nTRUNCATE TABLE vendors CASCADE;\n\n-- Re-enable foreign key checks\nSET session_replication_role = 'origin';\n\n-- Reset sequences (if using SERIAL instead of UUID, this would matter)\n-- For UUID-based tables, this doesn't reset the UUID generation\n\n-- Refresh materialized view to clear dashboard data\nREFRESH MATERIALIZED VIEW lpar_dashboard;\n\n-- Report success\nDO $$\nBEGIN\n    RAISE NOTICE '✅ All tables have been emptied successfully';\n    RAISE NOTICE 'Tables affected:';\n    RAISE NOTICE '  - vendors';\n    RAISE NOTICE '  - customers';\n    RAISE NOTICE '  - software';\n    RAISE NOTICE '  - software_versions';\n    RAISE NOTICE '  - packages';\n    RAISE NOTICE '  - package_items';\n    RAISE NOTICE '  - lpars';\n    RAISE NOTICE '  - lpar_software';\n    RAISE NOTICE '  - audit_log';\n    RAISE NOTICE '';\n    RAISE NOTICE 'Materialized view refreshed: lpar_dashboard';\n    RAISE NOTICE '';\n    RAISE NOTICE 'Schema, views, and functions remain intact';\nEND $$;\n
+-- ============================================================================
+-- RESET SCRIPT - Empty all tables
+-- ============================================================================
+-- Purpose: Remove all data from tables while preserving schema and views
+-- Use Case: Clean slate for testing, preparing for production data load
+-- WARNING: This will DELETE ALL DATA - use with caution!
+-- ============================================================================
+
+-- Disable foreign key checks temporarily for faster truncation
+SET session_replication_role = 'replica';
+
+-- Truncate all tables in dependency order (children first, parents last)
+-- This ensures no foreign key violations
+
+TRUNCATE TABLE audit_log CASCADE;
+TRUNCATE TABLE lpar_software CASCADE;
+TRUNCATE TABLE package_items CASCADE;
+TRUNCATE TABLE lpars CASCADE;
+TRUNCATE TABLE packages CASCADE;
+TRUNCATE TABLE software_versions CASCADE;
+TRUNCATE TABLE software CASCADE;
+TRUNCATE TABLE customers CASCADE;
+TRUNCATE TABLE vendors CASCADE;
+
+-- Re-enable foreign key checks
+SET session_replication_role = 'origin';
+
+-- Reset sequences (if using SERIAL instead of UUID, this would matter)
+-- For UUID-based tables, this doesn't reset the UUID generation
+
+-- Refresh materialized view to clear dashboard data
+REFRESH MATERIALIZED VIEW lpar_dashboard;
+
+-- Report success
+DO $$
+BEGIN
+    RAISE NOTICE '✅ All tables have been emptied successfully';
+    RAISE NOTICE 'Tables affected:';
+    RAISE NOTICE '  - vendors';
+    RAISE NOTICE '  - customers';
+    RAISE NOTICE '  - software';
+    RAISE NOTICE '  - software_versions';
+    RAISE NOTICE '  - packages';
+    RAISE NOTICE '  - package_items';
+    RAISE NOTICE '  - lpars';
+    RAISE NOTICE '  - lpar_software';
+    RAISE NOTICE '  - audit_log';
+    RAISE NOTICE '';
+    RAISE NOTICE 'Materialized view refreshed: lpar_dashboard';
+    RAISE NOTICE '';
+    RAISE NOTICE 'Schema, views, and functions remain intact';
+END $$;

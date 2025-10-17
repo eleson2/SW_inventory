@@ -1,1 +1,21 @@
-import adapter from '@sveltejs/adapter-auto';\nimport { vitePreprocess } from '@sveltejs/vite-plugin-svelte';\n\n/** @type {import('@sveltejs/kit').Config} */\nconst config = {\n	preprocess: vitePreprocess(),\n\n	kit: {\n		adapter: adapter(),\n		alias: {\n			$lib: './src/lib',\n			$components: './src/lib/components',\n			$types: './src/lib/types',\n			$utils: './src/lib/utils',\n			$stores: './src/lib/stores',\n			$schemas: './src/lib/schemas'\n		}\n	}\n};\n\nexport default config;\n
+import adapter from '@sveltejs/adapter-auto';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+
+/** @type {import('@sveltejs/kit').Config} */
+const config = {
+	preprocess: vitePreprocess(),
+
+	kit: {
+		adapter: adapter(),
+		alias: {
+			$lib: './src/lib',
+			$components: './src/lib/components',
+			$types: './src/lib/types',
+			$utils: './src/lib/utils',
+			$stores: './src/lib/stores',
+			$schemas: './src/lib/schemas'
+		}
+	}
+};
+
+export default config;

@@ -1,1 +1,5 @@
-export * from './cn';\nexport * from './date-format';\nexport * from './version-parser';\nexport * from './clone-handler';\nexport * from './errors';\n
+export * from './cn';
+export * from './date-format';
+export * from './version-parser';
+export * from './clone-handler';
+export * from './errors';

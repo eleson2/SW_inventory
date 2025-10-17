@@ -1,1 +1,41 @@
-import { PrismaClient } from '@prisma/client';\n\nconst prisma = new PrismaClient();\n\nasync function reset() {\n	console.log('🗑️  Resetting database...');\n\n	try {\n		// Truncate in dependency order\n		console.log('Truncating tables...');\n\n		await prisma.$executeRaw`TRUNCATE TABLE audit_log CASCADE`;\n		await prisma.$executeRaw`TRUNCATE TABLE lpar_software CASCADE`;\n		await prisma.$executeRaw`TRUNCATE TABLE package_items CASCADE`;\n		await prisma.$executeRaw`TRUNCATE TABLE lpars CASCADE`;\n		await prisma.$executeRaw`TRUNCATE TABLE packages CASCADE`;\n		await prisma.$executeRaw`TRUNCATE TABLE software_versions CASCADE`;\n		await prisma.$executeRaw`TRUNCATE TABLE software CASCADE`;\n		await prisma.$executeRaw`TRUNCATE TABLE customers CASCADE`;\n		await prisma.$executeRaw`TRUNCATE TABLE vendors CASCADE`;\n\n		// Refresh materialized view if it exists\n		try {\n			await prisma.$executeRaw`REFRESH MATERIALIZED VIEW lpar_dashboard`;\n		} catch (error: any) {\n			// View doesn't exist yet, that's OK\n			console.log('   (materialized view not yet created)');\n		}\n\n		console.log('✅ Database reset successfully!');\n		console.log('   All tables have been emptied');\n		console.log('   Schema, views, and functions remain intact');\n	} catch (error: any) {\n		console.error('❌ Error resetting database:', error.message);\n		throw error;\n	} finally {\n		await prisma.$disconnect();\n	}\n}\n\nreset();\n
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+async function reset() {
+	console.log('🗑️  Resetting database...');
+
+	try {
+		// Truncate in dependency order
+		console.log('Truncating tables...');
+
+		await prisma.$executeRaw`TRUNCATE TABLE audit_log CASCADE`;
+		await prisma.$executeRaw`TRUNCATE TABLE lpar_software CASCADE`;
+		await prisma.$executeRaw`TRUNCATE TABLE package_items CASCADE`;
+		await prisma.$executeRaw`TRUNCATE TABLE lpars CASCADE`;
+		await prisma.$executeRaw`TRUNCATE TABLE packages CASCADE`;
+		await prisma.$executeRaw`TRUNCATE TABLE software_versions CASCADE`;
+		await prisma.$executeRaw`TRUNCATE TABLE software CASCADE`;
+		await prisma.$executeRaw`TRUNCATE TABLE customers CASCADE`;
+		await prisma.$executeRaw`TRUNCATE TABLE vendors CASCADE`;
+
+		// Refresh materialized view if it exists
+		try {
+			await prisma.$executeRaw`REFRESH MATERIALIZED VIEW lpar_dashboard`;
+		} catch (error: any) {
+			// View doesn't exist yet, that's OK
+			console.log('   (materialized view not yet created)');
+		}
+
+		console.log('✅ Database reset successfully!');
+		console.log('   All tables have been emptied');
+		console.log('   Schema, views, and functions remain intact');
+	} catch (error: any) {
+		console.error('❌ Error resetting database:', error.message);
+		throw error;
+	} finally {
+		await prisma.$disconnect();
+	}
+}
+
+reset();

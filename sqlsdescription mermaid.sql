@@ -1,1 +1,78 @@
-erDiagram\n    CUSTOMER ||--o{ LPAR : "owns"\n    VENDOR ||--o{ SOFTWARE_PRODUCT : "supplies"\n    PACKAGE ||--o{ PACKAGE_PRODUCT : "contains"\n    SOFTWARE_PRODUCT ||--o{ PACKAGE_PRODUCT : "included in"\n    LPAR ||--o{ LPAR_PACKAGE_HISTORY : "has history"\n    PACKAGE ||--o{ LPAR_PACKAGE_HISTORY : "installed on"\n    LPAR ||--o{ LPAR_SOFTWARE : "runs"\n    SOFTWARE_PRODUCT ||--o{ LPAR_SOFTWARE : "installed as"\n\n    CUSTOMER {\n        int customer_id PK\n        string customer_name\n        string contact_info\n        string status\n    }\n\n    VENDOR {\n        int vendor_id PK\n        string vendor_name\n        string contact_info\n    }\n\n    SOFTWARE_PRODUCT {\n        int product_id PK\n        int vendor_id FK\n        string product_name\n        string vendor_designation\n        string version\n        string ptf_level\n        string description\n    }\n\n    PACKAGE {\n        int package_id PK\n        string package_name\n        string package_version\n        date release_date\n        string description\n    }\n\n    PACKAGE_PRODUCT {\n        int package_product_id PK\n        int package_id FK\n        int product_id FK\n        boolean is_mandatory\n        string notes\n    }\n\n    LPAR {\n        int lpar_id PK\n        int customer_id FK\n        string lpar_name\n        string environment\n        string status\n    }\n\n    LPAR_PACKAGE_HISTORY {\n        int history_id PK\n        int lpar_id FK\n        int package_id FK\n        date install_date\n        date end_date\n        boolean is_current\n        string installed_by\n        string notes\n    }\n\n    LPAR_SOFTWARE {\n        int lpar_software_id PK\n        int lpar_id FK\n        int product_id FK\n        date install_date\n        date removed_date\n        boolean is_active\n        string deviation_reason\n        string installed_by\n    }
+erDiagram
+    CUSTOMER ||--o{ LPAR : "owns"
+    VENDOR ||--o{ SOFTWARE_PRODUCT : "supplies"
+    PACKAGE ||--o{ PACKAGE_PRODUCT : "contains"
+    SOFTWARE_PRODUCT ||--o{ PACKAGE_PRODUCT : "included in"
+    LPAR ||--o{ LPAR_PACKAGE_HISTORY : "has history"
+    PACKAGE ||--o{ LPAR_PACKAGE_HISTORY : "installed on"
+    LPAR ||--o{ LPAR_SOFTWARE : "runs"
+    SOFTWARE_PRODUCT ||--o{ LPAR_SOFTWARE : "installed as"
+
+    CUSTOMER {
+        int customer_id PK
+        string customer_name
+        string contact_info
+        string status
+    }
+
+    VENDOR {
+        int vendor_id PK
+        string vendor_name
+        string contact_info
+    }
+
+    SOFTWARE_PRODUCT {
+        int product_id PK
+        int vendor_id FK
+        string product_name
+        string vendor_designation
+        string version
+        string ptf_level
+        string description
+    }
+
+    PACKAGE {
+        int package_id PK
+        string package_name
+        string package_version
+        date release_date
+        string description
+    }
+
+    PACKAGE_PRODUCT {
+        int package_product_id PK
+        int package_id FK
+        int product_id FK
+        boolean is_mandatory
+        string notes
+    }
+
+    LPAR {
+        int lpar_id PK
+        int customer_id FK
+        string lpar_name
+        string environment
+        string status
+    }
+
+    LPAR_PACKAGE_HISTORY {
+        int history_id PK
+        int lpar_id FK
+        int package_id FK
+        date install_date
+        date end_date
+        boolean is_current
+        string installed_by
+        string notes
+    }
+
+    LPAR_SOFTWARE {
+        int lpar_software_id PK
+        int lpar_id FK
+        int product_id FK
+        date install_date
+        date removed_date
+        boolean is_active
+        string deviation_reason
+        string installed_by
+    }
