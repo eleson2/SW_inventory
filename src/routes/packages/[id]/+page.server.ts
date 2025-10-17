@@ -12,7 +12,8 @@ export const load: PageServerLoad = createDetailLoader({
 					include: {
 						vendors: true
 					}
-				}
+				},
+				software_version: true
 			},
 			orderBy: {
 				order_index: 'asc'

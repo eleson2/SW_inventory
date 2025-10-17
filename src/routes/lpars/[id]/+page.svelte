@@ -145,11 +145,11 @@
 					<div class="flex items-center justify-between p-4 border rounded-lg">
 						<div class="flex-1">
 							<div class="font-medium">
-								{software.software?.name || `Software ${software.softwareId}`}
+								{software.software?.name || `Software ${software.software_id}`}
 							</div>
 							<div class="flex items-center gap-3 mt-1">
-								<VersionDisplay version={software.version} showBadge={true} />
-								{#if software.rolledBack}
+								<VersionDisplay version={{ version: software.current_version, ptfLevel: software.current_ptf_level }} showBadge={true} />
+								{#if software.rolled_back}
 									<Badge variant="destructive">Rolled Back</Badge>
 								{/if}
 							</div>
@@ -158,13 +158,13 @@
 							<span class="text-xs text-muted-foreground">
 								Installed: {formatDateTime(new Date(software.installed_date))}
 							</span>
-							{#if software.previousVersion}
+							{#if software.previous_version}
 								<Button
 									size="sm"
 									variant="outline"
 									onclick={() => {
 										// TODO: Implement rollback
-										console.log('Rollback', software.softwareId);
+										console.log('Rollback', software.software_id);
 									}}
 								>
 									Rollback

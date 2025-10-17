@@ -91,7 +91,8 @@ export function compareSoftwareVersions(sv1: SoftwareVersion, sv2: SoftwareVersi
 /**
  * Format a software version for display
  */
-export function formatSoftwareVersion(sv: SoftwareVersion): string {
+export function formatSoftwareVersion(sv: SoftwareVersion | null | undefined): string {
+	if (!sv) return 'N/A';
 	const ptf = (sv as any).ptfLevel || (sv as any).ptf_level;
 	if (ptf) {
 		return `${sv.version} (${ptf})`;

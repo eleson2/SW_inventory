@@ -7,7 +7,7 @@
 		version,
 		showBadge = false
 	}: {
-		version: SoftwareVersion;
+		version: SoftwareVersion | null | undefined;
 		showBadge?: boolean;
 	} = $props();
 

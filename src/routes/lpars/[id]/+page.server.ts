@@ -13,7 +13,8 @@ export const load: PageServerLoad = async ({ params }) => {
 				include: {
 					package_items: {
 						include: {
-							software: true
+							software: true,
+							software_version: true
 						},
 						orderBy: {
 							order_index: 'asc'
@@ -61,8 +62,8 @@ export const load: PageServerLoad = async ({ params }) => {
 				softwareId: item.software_id,
 				software: item.software,
 				version: {
-					version: item.version,
-					ptfLevel: item.ptf_level ?? undefined
+					version: item.software_version.version,
+					ptfLevel: item.software_version.ptf_level ?? undefined
 				},
 				required: item.required,
 				order: item.order_index
