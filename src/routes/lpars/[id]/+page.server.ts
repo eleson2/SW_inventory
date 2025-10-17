@@ -43,47 +43,21 @@ export const load: PageServerLoad = async ({ params }) => {
 		throw error(404, 'LPAR not found');
 	}
 
-	// Transform data to match TypeScript types
-	// Convert Prisma format to application format
-	const transformedLpar = {
-		...lpar,
-		softwareInstalled: lpar.lpar_software.map(sw => ({
-			softwareId: sw.software_id,
-			software: sw.software,
-			version: {
-				version: sw.current_version,
-				ptfLevel: sw.current_ptf_level ?? undefined
-			},
-			installedDate: sw.installed_date,
-			previousVersion: sw.previous_version ? {
-				version: sw.previous_version,
-				ptfLevel: sw.previous_ptf_level ?? undefined
-			} : undefined,
-			rolledBack: sw.rolled_back
-		})),
-		currentPackage: lpar.packages ? {
-			...lpar.packages,
-			items: lpar.packages.package_items.map(item => ({
-				softwareId: item.software_id,
-				software: item.software,
-				version: {
-					version: item.software_version.version,
-					ptfLevel: item.software_version.ptf_level ?? undefined
-				},
-				required: item.required,
-				order: item.order_index
-			}))
-		} : undefined
-	};
-
 	// Calculate compatibility score if package is assigned
 	let compatibility = 100;
-	if (transformedLpar.currentPackage) {
-		compatibility = calculateCompatibilityScore(transformedLpar as any, transformedLpar.currentPackage as any);
+	if (lpar.packages && lpar.packages.package_items) {
+		// Simple compatibility calculation based on matching software versions
+		const packageSoftwareIds = new Set(lpar.packages.package_items.map(item => item.software_id));
+		const installedSoftwareIds = new Set(lpar.lpar_software.map(sw => sw.software_id));
+
+		const matchCount = Array.from(packageSoftwareIds).filter(id => installedSoftwareIds.has(id)).length;
+		compatibility = packageSoftwareIds.size > 0
+			? Math.round((matchCount / packageSoftwareIds.size) * 100)
+			: 100;
 	}
 
 	return {
-		lpar: transformedLpar,
+		lpar,
 		compatibility
 	};
 };
