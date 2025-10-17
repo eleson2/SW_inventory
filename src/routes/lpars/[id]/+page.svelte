@@ -6,6 +6,7 @@
 	import StatusBadge from '$components/common/StatusBadge.svelte';
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
 	import CloneDialog from '$components/common/CloneDialog.svelte';
+	import RollbackDialog from '$components/common/RollbackDialog.svelte';
 	import { formatDateTime } from '$utils/date-format';
 	import { createCloneHandler } from '$utils/clone-handler';
 
@@ -14,6 +15,8 @@
 
 	let showCloneDialog = $state(false);
 	let cloning = $state(false);
+	let showRollbackDialog = $state(false);
+	let selectedSoftware = $state<any>(null);
 
 	const handleClone = async (formData: Record<string, string>) => {
 		cloning = true;
@@ -29,6 +32,11 @@
 			cloning = false;
 			showCloneDialog = false;
 		}
+	};
+
+	const openRollbackDialog = (software: any) => {
+		selectedSoftware = software;
+		showRollbackDialog = true;
 	};
 </script>
 
@@ -158,19 +166,14 @@
 							<span class="text-xs text-muted-foreground">
 								Installed: {formatDateTime(new Date(software.installed_date))}
 							</span>
-							{#if software.previous_version}
-								<form method="POST" action="?/rollback" class="inline">
-									<input type="hidden" name="software_id" value={software.software_id} />
-									<input type="hidden" name="reason" value="User-initiated rollback from UI" />
-									<Button
-										size="sm"
-										variant="outline"
-										type="submit"
-										disabled={software.rolled_back}
-									>
-										{software.rolled_back ? 'Already Rolled Back' : 'Rollback'}
-									</Button>
-								</form>
+							{#if software.software?.versions && software.software.versions.length > 1}
+								<Button
+									size="sm"
+									variant="outline"
+									onclick={() => openRollbackDialog(software)}
+								>
+									Rollback
+								</Button>
 							{/if}
 						</div>
 					</div>
@@ -197,3 +200,15 @@
 	onClone={handleClone}
 	loading={cloning}
 />
+
+{#if selectedSoftware}
+	<RollbackDialog
+		bind:open={showRollbackDialog}
+		softwareName={selectedSoftware.software?.name || 'Unknown Software'}
+		softwareId={selectedSoftware.software_id}
+		lparId={lpar.id}
+		currentVersion={selectedSoftware.current_version}
+		currentPtfLevel={selectedSoftware.current_ptf_level}
+		versions={selectedSoftware.software?.versions || []}
+	/>
+{/if}

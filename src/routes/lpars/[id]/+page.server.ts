@@ -26,7 +26,12 @@ export const load: PageServerLoad = async ({ params }) => {
 				include: {
 					software: {
 						include: {
-							vendors: true
+							vendors: true,
+							versions: {
+								orderBy: {
+									release_date: 'desc'
+								}
+							}
 						}
 					}
 				}
@@ -88,11 +93,18 @@ export const actions: Actions = {
 		const lparId = params.id;
 		const formData = await request.formData();
 		const softwareId = formData.get('software_id')?.toString();
+		const targetVersionId = formData.get('target_version_id')?.toString();
 		const reason = formData.get('reason')?.toString() || 'User-initiated rollback';
 
 		if (!softwareId) {
 			return fail(400, {
 				message: 'Software ID is required'
+			});
+		}
+
+		if (!targetVersionId) {
+			return fail(400, {
+				message: 'Target version ID is required'
 			});
 		}
 
@@ -113,19 +125,28 @@ export const actions: Actions = {
 				});
 			}
 
-			if (!installation.previous_version) {
+			// Get the target version from software_versions table
+			const targetVersion = await db.software_versions.findUnique({
+				where: {
+					id: targetVersionId
+				}
+			});
+
+			if (!targetVersion || targetVersion.software_id !== softwareId) {
 				return fail(400, {
-					message: 'No previous version available to rollback to'
+					message: 'Invalid target version'
 				});
 			}
 
-			if (installation.rolled_back) {
+			// Check if trying to rollback to the current version
+			if (targetVersion.version === installation.current_version &&
+			    targetVersion.ptf_level === installation.current_ptf_level) {
 				return fail(400, {
-					message: 'This software has already been rolled back'
+					message: 'Cannot rollback to the currently installed version'
 				});
 			}
 
-			// Perform the rollback by swapping current and previous versions
+			// Perform the rollback by updating to target version
 			const currentVersion = installation.current_version;
 			const currentPtfLevel = installation.current_ptf_level;
 
@@ -137,8 +158,8 @@ export const actions: Actions = {
 					}
 				},
 				data: {
-					current_version: installation.previous_version,
-					current_ptf_level: installation.previous_ptf_level,
+					current_version: targetVersion.version,
+					current_ptf_level: targetVersion.ptf_level,
 					previous_version: currentVersion,
 					previous_ptf_level: currentPtfLevel,
 					rolled_back: true,
@@ -157,8 +178,8 @@ export const actions: Actions = {
 						software_id: softwareId,
 						from_version: currentVersion,
 						from_ptf: currentPtfLevel,
-						to_version: installation.previous_version,
-						to_ptf: installation.previous_ptf_level,
+						to_version: targetVersion.version,
+						to_ptf: targetVersion.ptf_level,
 						reason
 					}
 				}
