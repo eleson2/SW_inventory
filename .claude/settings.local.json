@@ -35,7 +35,14 @@
       "Bash(npx svelte-check:*)",
       "Bash(for route in \"\" \"software\" \"vendors\" \"lpars\" \"customers\" \"packages\")",
       "Bash(do echo \"Testing /$route:\")",
-      "Bash(for route in \"software/new\" \"vendors/new\" \"customers/new\" \"lpars/new\" \"packages/new\")"
+      "Bash(for route in \"software/new\" \"vendors/new\" \"customers/new\" \"lpars/new\" \"packages/new\")",
+      "Bash(for file in src/routes/*/[id]/edit/+page.svelte)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(cat:*)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\":*)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT id FROM software LIMIT 1\" -t)",
+      "Bash(xargs -I {} curl -s -o /dev/null -w \"software edit: %{http_code}\\n\" \"http://localhost:5175{}\")",
+      "Bash(bash:*)"
     ],
     "deny": [],
     "ask": []

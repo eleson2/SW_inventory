@@ -168,7 +168,10 @@
 					class="border rounded-lg p-4 hover:bg-accent/5 transition-colors {error ? 'bg-destructive/5' : 'bg-card'} {status === 'new' ? 'border-blue-500' : ''} {status === 'modified' ? 'border-amber-500' : ''}"
 					draggable="true"
 					ondragstart={() => handleDragStart(index)}
-					ondragover={(e) => handleDragOver(e, index)}
+					ondragover={(e) => {
+						e.preventDefault();
+						handleDragOver(e, index);
+					}}
 					ondragend={handleDragEnd}
 				>
 					<div class="flex items-start gap-4">

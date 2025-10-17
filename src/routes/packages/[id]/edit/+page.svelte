@@ -1,11 +1,11 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
 	import type { PackageItem } from '$lib/schemas/package';
-	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import Label from '$components/ui/Label.svelte';
 	import PackageItemsManager from '$components/domain/PackageItemsManager.svelte';
+	import FormButtons from '$components/common/FormButtons.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -170,19 +170,7 @@
 				</div>
 			{/if}
 
-			<div class="flex gap-4">
-				<Button type="submit" disabled={submitting}>
-					{submitting ? 'Updating...' : 'Update Package'}
-				</Button>
-				<Button
-					type="button"
-					variant="outline"
-					disabled={submitting}
-					onclick={() => window.history.back()}
-				>
-					Cancel
-				</Button>
-			</div>
+			<FormButtons loading={submitting} />
 		</Card>
 	</form>
 </div>

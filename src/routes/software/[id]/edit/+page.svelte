@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
-	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import Label from '$components/ui/Label.svelte';
 	import VersionManager from '$components/domain/VersionManager.svelte';
+	import FormButtons from '$components/common/FormButtons.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -126,11 +126,6 @@
 			</div>
 		{/if}
 
-		<div class="flex gap-4">
-			<Button type="submit">Update Software & Versions</Button>
-			<Button type="button" variant="outline" onclick={() => window.history.back()}>
-				Cancel
-			</Button>
-		</div>
+		<FormButtons />
 	</form>
 </div>
