@@ -48,14 +48,27 @@ export function validateLparPackageCompliance(
 				missingSoftware.push(packageItem);
 			}
 		} else {
-			// Check if version is compatible - using current_version from lpar_software
-			const installedVersion = {
-				version: installed.current_version,
-				ptfLevel: installed.current_ptf_level || undefined
-			};
-			// Note: packageItem should have software_version relation loaded for comparison
-			// For now, skip version comparison as structure changed
-			// TODO: Update this to use software_version_id comparison
+			// Check if version is compatible - compare installed version with package requirement
+			// Package items reference software_version via software_version_id
+			// LPAR software stores version strings (current_version, current_ptf_level)
+			// We need the software_version relation to be loaded on packageItem for comparison
+			if (packageItem.software_version) {
+				const installedVersion = {
+					version: installed.current_version,
+					ptfLevel: installed.current_ptf_level || undefined
+				};
+				const requiredVersion = {
+					version: packageItem.software_version.version,
+					ptfLevel: packageItem.software_version.ptf_level || undefined
+				};
+
+				// Use version comparison utility
+				const comparison = compareSoftwareVersions(installedVersion, requiredVersion);
+				if (comparison < 0) {
+					// Installed version is older than required
+					outdatedSoftware.push({ item: packageItem, installed: installedVersion });
+				}
+			}
 		}
 	}
 
@@ -101,10 +114,29 @@ export function generateDeploymentPlan(
 		if (!installed) {
 			toInstall.push(packageItem);
 		} else {
-			// Compare versions using software_version_id
-			// For now, mark as no change if already installed
-			// TODO: Implement proper version comparison using software_version_id
-			noChange.push(installed);
+			// Compare versions - package item has software_version relation
+			if (packageItem.software_version) {
+				const installedVersion = {
+					version: installed.current_version,
+					ptfLevel: installed.current_ptf_level || undefined
+				};
+				const requiredVersion = {
+					version: packageItem.software_version.version,
+					ptfLevel: packageItem.software_version.ptf_level || undefined
+				};
+
+				const comparison = compareSoftwareVersions(installedVersion, requiredVersion);
+				if (comparison < 0) {
+					// Need to upgrade - installed version is older
+					toUpgrade.push({ item: packageItem, currentVersion: installedVersion });
+				} else {
+					// Same version or newer - no change needed
+					noChange.push(installed);
+				}
+			} else {
+				// If software_version relation not loaded, assume no change
+				noChange.push(installed);
+			}
 		}
 	}
 
@@ -168,10 +200,22 @@ export function calculateCompatibilityScore(
 			(s) => s.software_id === packageItem.software_id
 		);
 
-		if (installed) {
-			// For now, count as compatible if installed
-			// TODO: Implement proper version comparison using software_version_id
-			compatibleCount++;
+		if (installed && packageItem.software_version) {
+			// Check if installed version matches or is newer than required
+			const installedVersion = {
+				version: installed.current_version,
+				ptfLevel: installed.current_ptf_level || undefined
+			};
+			const requiredVersion = {
+				version: packageItem.software_version.version,
+				ptfLevel: packageItem.software_version.ptf_level || undefined
+			};
+
+			const comparison = compareSoftwareVersions(installedVersion, requiredVersion);
+			if (comparison >= 0) {
+				// Installed version meets or exceeds requirement
+				compatibleCount++;
+			}
 		}
 	}
 

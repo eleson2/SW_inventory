@@ -165,10 +165,7 @@
 				{@const isEditing = editingIndex === index}
 
 				<div
-					class="border rounded-lg p-4 bg-card hover:bg-accent/5 transition-colors"
-					class:border-blue-500={status === 'new'}
-					class:border-amber-500={status === 'modified'}
-					class:bg-destructive/5={error}
+					class="border rounded-lg p-4 hover:bg-accent/5 transition-colors {error ? 'bg-destructive/5' : 'bg-card'} {status === 'new' ? 'border-blue-500' : ''} {status === 'modified' ? 'border-amber-500' : ''}"
 					draggable="true"
 					ondragstart={() => handleDragStart(index)}
 					ondragover={(e) => handleDragOver(e, index)}

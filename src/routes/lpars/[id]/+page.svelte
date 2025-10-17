@@ -148,7 +148,7 @@
 								{software.software?.name || `Software ${software.software_id}`}
 							</div>
 							<div class="flex items-center gap-3 mt-1">
-								<VersionDisplay version={{ version: software.current_version, ptfLevel: software.current_ptf_level }} showBadge={true} />
+								<VersionDisplay version={{ version: software.current_version, ptfLevel: software.current_ptf_level || undefined }} showBadge={true} />
 								{#if software.rolled_back}
 									<Badge variant="destructive">Rolled Back</Badge>
 								{/if}
@@ -159,16 +159,18 @@
 								Installed: {formatDateTime(new Date(software.installed_date))}
 							</span>
 							{#if software.previous_version}
-								<Button
-									size="sm"
-									variant="outline"
-									onclick={() => {
-										// TODO: Implement rollback
-										console.log('Rollback', software.software_id);
-									}}
-								>
-									Rollback
-								</Button>
+								<form method="POST" action="?/rollback" class="inline">
+									<input type="hidden" name="software_id" value={software.software_id} />
+									<input type="hidden" name="reason" value="User-initiated rollback from UI" />
+									<Button
+										size="sm"
+										variant="outline"
+										type="submit"
+										disabled={software.rolled_back}
+									>
+										{software.rolled_back ? 'Already Rolled Back' : 'Rollback'}
+									</Button>
+								</form>
 							{/if}
 						</div>
 					</div>
@@ -188,7 +190,7 @@
 		{ name: 'code', label: 'New LPAR Code', required: true, placeholder: 'e.g., PROD-LPAR-2' }
 	]}
 	preview={{
-		customer: lpar.customer?.name || 'N/A',
+		customer: lpar.customers?.name || 'N/A',
 		package: lpar.packages?.name || 'N/A',
 		'software count': lpar.lpar_software.length
 	}}

@@ -30,7 +30,12 @@
       "Bash(done)",
       "Bash(netstat:*)",
       "Bash(findstr:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(mkdir:*)",
+      "Bash(npx svelte-check:*)",
+      "Bash(for route in \"\" \"software\" \"vendors\" \"lpars\" \"customers\" \"packages\")",
+      "Bash(do echo \"Testing /$route:\")",
+      "Bash(for route in \"software/new\" \"vendors/new\" \"customers/new\" \"lpars/new\" \"packages/new\")"
     ],
     "deny": [],
     "ask": []

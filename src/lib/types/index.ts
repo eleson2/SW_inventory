@@ -6,6 +6,7 @@ import type {
 	customers,
 	vendors,
 	software,
+	software_versions,
 	packages,
 	package_items,
 	lpars,
@@ -17,14 +18,23 @@ import type {
 export type Customer = customers;
 export type Vendor = vendors;
 export type Software = software & { vendors?: Vendor };
-export type Package = packages & { items?: PackageItem[] };
-export type PackageItem = package_items;
+export type SoftwareVersionRecord = software_versions;
+export type PackageItem = package_items & {
+	software?: Software;
+	software_version?: SoftwareVersionRecord;
+};
+export type Package = packages & {
+	package_items?: PackageItem[];
+	items?: PackageItem[] // Alias for consistency
+};
 export type Lpar = lpars & {
 	customers?: Customer;
 	packages?: Package;
 	lpar_software?: LparSoftware[];
 };
-export type LparSoftware = lpar_software;
+export type LparSoftware = lpar_software & {
+	software?: Software;
+};
 export type AuditLog = audit_log;
 
 // Helper type for version information

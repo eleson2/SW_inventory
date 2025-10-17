@@ -1,7 +1,39 @@
-import type { Actions } from './$types';
+import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/server/db';
 import { createCreateAction } from '$lib/server/route-factory';
 import { z } from 'zod';
+
+// Load all packages for clone dropdown
+export const load: PageServerLoad = async () => {
+	const allPackages = await db.packages.findMany({
+		where: { active: true },
+		include: {
+			package_items: {
+				include: {
+					software: {
+						select: {
+							name: true
+						}
+					},
+					software_version: {
+						select: {
+							version: true,
+							ptf_level: true
+						}
+					}
+				},
+				orderBy: {
+					order_index: 'asc'
+				}
+			}
+		},
+		orderBy: [{ release_date: 'desc' }, { name: 'asc' }]
+	});
+
+	return {
+		allPackages
+	};
+};
 
 // Schema for package creation (without items initially)
 const packageCreateSchema = z.object({

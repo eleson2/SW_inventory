@@ -45,13 +45,19 @@
 	}
 
 	function handleSort(field: string) {
-		// TODO: Implement sorting
-		console.log('Sort by:', field);
+		const url = new URL(window.location.href);
+		const currentDirection = data.sort?.direction || 'asc';
+		const newDirection = data.sort?.field === field && currentDirection === 'asc' ? 'desc' : 'asc';
+
+		url.searchParams.set('sort', field);
+		url.searchParams.set('direction', newDirection);
+		window.location.href = url.toString();
 	}
 
 	function handlePageChange(page: number) {
-		// TODO: Implement pagination
-		console.log('Go to page:', page);
+		const url = new URL(window.location.href);
+		url.searchParams.set('page', page.toString());
+		window.location.href = url.toString();
 	}
 </script>
 

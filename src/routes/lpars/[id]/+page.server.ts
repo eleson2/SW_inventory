@@ -1,7 +1,7 @@
-import type { PageServerLoad } from './$types';
+import type { PageServerLoad, Actions } from './$types';
 import { calculateCompatibilityScore } from '$lib/services/package-service';
 import { db } from '$lib/server/db';
-import { error } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ params }) => {
 	// Fetch LPAR from database with all relations
@@ -81,4 +81,98 @@ export const load: PageServerLoad = async ({ params }) => {
 		lpar: transformedLpar,
 		compatibility
 	};
+};
+
+export const actions: Actions = {
+	rollback: async ({ params, request }) => {
+		const lparId = params.id;
+		const formData = await request.formData();
+		const softwareId = formData.get('software_id')?.toString();
+		const reason = formData.get('reason')?.toString() || 'User-initiated rollback';
+
+		if (!softwareId) {
+			return fail(400, {
+				message: 'Software ID is required'
+			});
+		}
+
+		try {
+			// Get the current software installation
+			const installation = await db.lpar_software.findUnique({
+				where: {
+					lpar_id_software_id: {
+						lpar_id: lparId,
+						software_id: softwareId
+					}
+				}
+			});
+
+			if (!installation) {
+				return fail(404, {
+					message: 'Software installation not found'
+				});
+			}
+
+			if (!installation.previous_version) {
+				return fail(400, {
+					message: 'No previous version available to rollback to'
+				});
+			}
+
+			if (installation.rolled_back) {
+				return fail(400, {
+					message: 'This software has already been rolled back'
+				});
+			}
+
+			// Perform the rollback by swapping current and previous versions
+			const currentVersion = installation.current_version;
+			const currentPtfLevel = installation.current_ptf_level;
+
+			await db.lpar_software.update({
+				where: {
+					lpar_id_software_id: {
+						lpar_id: lparId,
+						software_id: softwareId
+					}
+				},
+				data: {
+					current_version: installation.previous_version,
+					current_ptf_level: installation.previous_ptf_level,
+					previous_version: currentVersion,
+					previous_ptf_level: currentPtfLevel,
+					rolled_back: true,
+					rolled_back_at: new Date(),
+					rollback_reason: reason
+				}
+			});
+
+			// Create audit log
+			await db.audit_log.create({
+				data: {
+					entity_type: 'lpar_software',
+					entity_id: lparId,
+					action: 'rollback',
+					changes: {
+						software_id: softwareId,
+						from_version: currentVersion,
+						from_ptf: currentPtfLevel,
+						to_version: installation.previous_version,
+						to_ptf: installation.previous_ptf_level,
+						reason
+					}
+				}
+			});
+
+			return {
+				success: true,
+				message: 'Software rolled back successfully'
+			};
+		} catch (err) {
+			console.error('Error rolling back software:', err);
+			return fail(500, {
+				message: 'Failed to rollback software'
+			});
+		}
+	}
 };

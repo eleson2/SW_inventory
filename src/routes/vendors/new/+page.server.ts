@@ -1,7 +1,27 @@
-import type { Actions } from './$types';
+import type { PageServerLoad, Actions } from './$types';
 import { vendorSchema } from '$schemas';
 import { db } from '$lib/server/db';
 import { createCreateAction } from '$lib/server/route-factory';
+
+// Load all vendors for clone dropdown
+export const load: PageServerLoad = async () => {
+	const allVendors = await db.vendors.findMany({
+		where: { active: true },
+		orderBy: { name: 'asc' },
+		select: {
+			id: true,
+			name: true,
+			code: true,
+			website: true,
+			contact_email: true,
+			active: true
+		}
+	});
+
+	return {
+		allVendors
+	};
+};
 
 export const actions: Actions = {
 	default: createCreateAction({

@@ -3,9 +3,9 @@ import { db } from '$lib/server/db';
 import { createCreateAction } from '$lib/server/route-factory';
 import { z } from 'zod';
 
-// Load customers and packages for dropdowns
+// Load customers, packages, and all LPARs for dropdowns
 export const load: PageServerLoad = async () => {
-	const [customers, packages] = await Promise.all([
+	const [customers, packages, allLpars] = await Promise.all([
 		db.customers.findMany({
 			where: { active: true },
 			orderBy: { name: 'asc' },
@@ -24,12 +24,32 @@ export const load: PageServerLoad = async () => {
 				code: true,
 				version: true
 			}
+		}),
+		db.lpars.findMany({
+			where: { active: true },
+			include: {
+				customers: {
+					select: {
+						name: true,
+						code: true
+					}
+				},
+				packages: {
+					select: {
+						name: true,
+						code: true,
+						version: true
+					}
+				}
+			},
+			orderBy: { name: 'asc' }
 		})
 	]);
 
 	return {
 		customers,
-		packages
+		packages,
+		allLpars
 	};
 };
 

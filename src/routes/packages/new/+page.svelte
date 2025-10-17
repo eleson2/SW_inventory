@@ -1,11 +1,15 @@
 <script lang="ts">
-	import type { ActionData } from './$types';
+	import type { PageData, ActionData } from './$types';
 	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import Label from '$components/ui/Label.svelte';
+	import SearchableSelect from '$components/common/SearchableSelect.svelte';
 
-	let { form }: { form: ActionData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
+
+	let creationMode = $state<'blank' | 'clone'>('blank');
+	let cloneSourceId = $state('');
 
 	let formData = $state({
 		name: '',
@@ -15,6 +19,20 @@
 		release_date: '',
 		active: true
 	});
+
+	// When clone source is selected, pre-fill form
+	function handleCloneSourceSelect(sourceId: string) {
+		cloneSourceId = sourceId;
+		const source = data.allPackages.find((p) => p.id === sourceId);
+		if (source) {
+			formData.name = `${source.name} (Copy)`;
+			formData.code = `${source.code}-COPY`;
+			formData.version = `${source.version}.1`; // Increment version
+			formData.description = source.description || '';
+			formData.release_date = new Date().toISOString().split('T')[0];
+			formData.active = source.active;
+		}
+	}
 </script>
 
 <div class="space-y-6 max-w-2xl">
@@ -27,6 +45,74 @@
 
 	<Card class="p-6">
 		<form method="POST" class="space-y-6">
+			<!-- Creation Mode Toggle -->
+			<div class="space-y-3 pb-4 border-b">
+				<Label>How would you like to create this package?</Label>
+				<div class="flex gap-4">
+					<label class="flex items-center gap-2 cursor-pointer">
+						<input
+							type="radio"
+							name="creationMode"
+							value="blank"
+							bind:group={creationMode}
+							onchange={() => {
+								cloneSourceId = '';
+								formData = {
+									name: '',
+									code: '',
+									version: '',
+									description: '',
+									release_date: '',
+									active: true
+								};
+							}}
+							class="h-4 w-4"
+						/>
+						<span>Create blank package</span>
+					</label>
+					<label class="flex items-center gap-2 cursor-pointer">
+						<input
+							type="radio"
+							name="creationMode"
+							value="clone"
+							bind:group={creationMode}
+							class="h-4 w-4"
+						/>
+						<span>Create from existing package</span>
+					</label>
+				</div>
+
+				{#if creationMode === 'clone'}
+					<div class="space-y-2 pt-2">
+						<Label for="cloneSource">Select source package</Label>
+						<SearchableSelect
+							items={data.allPackages}
+							displayField="name"
+							valueField="id"
+							secondaryField="code"
+							placeholder="Search for package to clone..."
+							bind:value={cloneSourceId}
+							onSelect={handleCloneSourceSelect}
+						/>
+						{#if cloneSourceId}
+							{@const source = data.allPackages.find((p) => p.id === cloneSourceId)}
+							<div class="text-sm space-y-1">
+								<p class="text-muted-foreground">
+									Form has been pre-filled with data from selected package. You can edit any field
+									before creating.
+								</p>
+								{#if source && source.package_items.length > 0}
+									<p class="text-primary font-medium">
+										Note: Package items ({source.package_items.length} items) are NOT cloned. You'll need to add items
+										after creation or use the Clone button on the detail page to clone with items.
+									</p>
+								{/if}
+							</div>
+						{/if}
+					</div>
+				{/if}
+			</div>
+
 			<FormField
 				label="Package Name"
 				id="name"
@@ -98,7 +184,7 @@
 			{/if}
 
 			<div class="flex gap-4">
-				<Button type="submit">Create Package</Button>
+				<Button type="submit">Save & Close</Button>
 				<Button type="button" variant="outline" onclick={() => window.history.back()}>
 					Cancel
 				</Button>

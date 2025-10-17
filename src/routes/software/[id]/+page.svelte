@@ -42,7 +42,7 @@
 			<Button onclick={() => window.location.href = `/software/${software.id}/version`}>
 				New Version
 			</Button>
-			<Button variant="outline" onclick={() => showCloneDialog = true}>
+			<Button variant="outline" onclick={() => (showCloneDialog = true)}>
 				Clone Software
 			</Button>
 			<Button variant="outline" onclick={() => window.location.href = `/software/${software.id}/edit`}>
@@ -162,13 +162,18 @@
 	entityType="Software"
 	sourceName={software.name}
 	fields={[
-		{ name: 'name', label: 'New Software Name', required: true, placeholder: 'Enter new software name' }
+		{ name: 'name', label: 'Software Name', required: true, placeholder: 'Enter software name' },
+		{ name: 'description', label: 'Description', placeholder: 'Enter description (optional)' }
 	]}
+	initialValues={{
+		name: `${software.name} - copy`,
+		description: software.description || ''
+	}}
 	preview={{
-		vendor: software.vendors?.name || 'Unknown',
-		version: software.current_version?.version || 'N/A',
-		ptfLevel: software.current_version?.ptf_level || 'N/A',
-		'version history': software.versions.length
+		'Current Vendor': software.vendors?.name || 'Unknown',
+		'Current Version': software.current_version?.version || 'N/A',
+		'Current PTF Level': software.current_version?.ptf_level || 'N/A',
+		'Version History Count': software.versions.length
 	}}
 	onClone={handleClone}
 	loading={cloning}

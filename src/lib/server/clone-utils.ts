@@ -11,6 +11,7 @@ import { db, createAuditLog } from './db';
 export async function cloneSoftware(
 	sourceId: string,
 	newName: string,
+	newDescription?: string,
 	userId?: string
 ) {
 	const source = await db.software.findUnique({
@@ -26,9 +27,7 @@ export async function cloneSoftware(
 		data: {
 			name: newName,
 			vendor_id: source.vendor_id,
-			description: `Cloned from: ${source.name}
-
-${source.description || ''}`.trim(),
+			description: newDescription || source.description,
 			current_version_id: source.current_version_id,
 			active: source.active
 		}

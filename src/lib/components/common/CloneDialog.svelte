@@ -10,6 +10,7 @@
 		entityType,
 		sourceName,
 		fields = [],
+		initialValues = {},
 		preview = {},
 		onClone,
 		loading = false
@@ -26,16 +27,26 @@
 			placeholder?: string;
 			helperText?: string;
 		}>;
+		initialValues?: Record<string, string>;
 		preview?: Record<string, any>;
 		onClone: (data: Record<string, string>) => Promise<void>;
 		loading?: boolean;
 	} = $props();
 
-	let formData = $state<Record<string, string>>({});
+	// Initialize formData immediately with initial values or empty strings
+	let formData = $state<Record<string, string>>(
+		fields.reduce((acc, field) => ({
+			...acc,
+			[field.name]: initialValues[field.name] || ''
+		}), {} as Record<string, string>)
+	);
 	let errors = $state<Record<string, string>>({});
 
 	function resetForm() {
-		formData = {};
+		formData = fields.reduce((acc, field) => ({
+			...acc,
+			[field.name]: initialValues[field.name] || ''
+		}), {});
 		errors = {};
 	}
 
@@ -89,17 +100,40 @@
 
 				<form onsubmit={handleSubmit} class="space-y-4">
 					{#each fields as field}
-						<FormField
-							label={field.label}
-							id={field.name}
-							name={field.name}
-							type={field.type || 'text'}
-							bind:value={formData[field.name]}
-							placeholder={field.placeholder}
-							required={field.required}
-							error={errors[field.name]}
-							helperText={field.helperText}
-						/>
+						{#if field.name === 'description'}
+							<div class="space-y-2">
+								<Label for={field.name}>
+									{field.label}
+									{#if field.required}<span class="text-destructive">*</span>{/if}
+								</Label>
+								<textarea
+									id={field.name}
+									name={field.name}
+									bind:value={formData[field.name]}
+									placeholder={field.placeholder}
+									required={field.required}
+									class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+								></textarea>
+								{#if errors[field.name]}
+									<p class="text-sm text-destructive">{errors[field.name]}</p>
+								{/if}
+								{#if field.helperText}
+									<p class="text-sm text-muted-foreground">{field.helperText}</p>
+								{/if}
+							</div>
+						{:else}
+							<FormField
+								label={field.label}
+								id={field.name}
+								name={field.name}
+								type={field.type || 'text'}
+								bind:value={formData[field.name]}
+								placeholder={field.placeholder}
+								required={field.required}
+								error={errors[field.name]}
+								helperText={field.helperText}
+							/>
+						{/if}
 					{/each}
 
 					<div class="flex gap-4 pt-4">

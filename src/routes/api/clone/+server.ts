@@ -22,7 +22,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				if (!data.name) {
 					return json({ error: 'Name is required' }, { status: 400 });
 				}
-				result = await cloneSoftware(sourceId, data.name);
+				result = await cloneSoftware(sourceId, data.name, data.description);
 				break;
 
 			case 'package':
