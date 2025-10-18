@@ -94,13 +94,13 @@
 				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Required Items</dt>
 					<dd class="text-2xl font-bold mt-1">
-						{pkg.package_items.filter(item => item.required).length}
+						{pkg.package_items.filter((item: { required: boolean }) => item.required).length}
 					</dd>
 				</div>
 				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Optional Items</dt>
 					<dd class="text-2xl font-bold mt-1">
-						{pkg.package_items.filter(item => !item.required).length}
+						{pkg.package_items.filter((item: { required: boolean }) => !item.required).length}
 					</dd>
 				</div>
 			</dl>
@@ -177,7 +177,7 @@
 		code: pkg.code,
 		version: pkg.version,
 		'item count': pkg.package_items.length,
-		'required items': pkg.package_items.filter(i => i.required).length
+		'required items': pkg.package_items.filter((i: { required: boolean }) => i.required).length
 	}}
 	onClone={handleClone}
 	loading={cloning}

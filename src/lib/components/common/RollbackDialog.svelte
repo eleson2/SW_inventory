@@ -176,7 +176,6 @@
 					</Button>
 				</div>
 			</div>
-		</div>
 	</Card>
 </div>
 {/if}

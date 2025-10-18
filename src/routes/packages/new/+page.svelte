@@ -1,12 +1,19 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
+	import type { PackageItem } from '$lib/schemas/package';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import Label from '$components/ui/Label.svelte';
 	import SearchableSelect from '$components/common/SearchableSelect.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
+	import PackageItemsManager from '$components/domain/PackageItemsManager.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
+
+	// Helper to safely access errors
+	const errors = $derived(
+		form && 'errors' in form ? form.errors as Record<string, string[]> : undefined
+	);
 
 	let creationMode = $state<'blank' | 'clone'>('blank');
 	let cloneSourceId = $state('');
@@ -20,6 +27,9 @@
 		active: true
 	});
 
+	// Package items state for master-detail pattern
+	let packageItems = $state<PackageItem[]>([]);
+
 	// When clone source is selected, pre-fill form
 	function handleCloneSourceSelect(sourceId: string) {
 		cloneSourceId = sourceId;
@@ -31,20 +41,60 @@
 			formData.description = source.description || '';
 			formData.release_date = new Date().toISOString().split('T')[0];
 			formData.active = source.active;
+
+			// Clone package items if they exist
+			if (source.package_items && source.package_items.length > 0) {
+				packageItems = source.package_items.map((item, index) => ({
+					software_id: item.software_id,
+					software_version_id: item.software_version_id,
+					required: item.required,
+					order_index: index
+				}));
+			}
+		}
+	}
+
+	// Handle form submission with items
+	async function handleSubmit(event: Event) {
+		event.preventDefault();
+		const formElement = event.target as HTMLFormElement;
+		const formDataToSend = new FormData(formElement);
+
+		// Add items as JSON
+		formDataToSend.set('items', JSON.stringify(packageItems));
+
+		// Submit the form
+		try {
+			const response = await fetch(formElement.action, {
+				method: 'POST',
+				body: formDataToSend
+			});
+
+			if (response.redirected) {
+				window.location.href = response.url;
+			} else {
+				// Handle error - the form will show errors from the action
+				window.location.reload();
+			}
+		} catch (error) {
+			console.error('Error submitting form:', error);
 		}
 	}
 </script>
 
-<div class="space-y-6 max-w-2xl">
+<div class="space-y-6">
 	<div>
 		<h1 class="text-3xl font-bold tracking-tight">New Software Package</h1>
 		<p class="text-muted-foreground mt-2">
-			Create a new software package. Software items can be added after creation.
+			Create a new software package with items in one step.
 		</p>
 	</div>
 
-	<Card class="p-6">
-		<form method="POST" class="space-y-6">
+	<form method="POST" class="space-y-6" onsubmit={handleSubmit}>
+		<!-- Package Information Card -->
+		<Card class="p-6">
+			<h2 class="text-xl font-semibold mb-4">Package Information</h2>
+			<div class="space-y-6">
 			<!-- Creation Mode Toggle -->
 			<div class="space-y-3 pb-4 border-b">
 				<Label>How would you like to create this package?</Label>
@@ -103,8 +153,7 @@
 								</p>
 								{#if source && source.package_items.length > 0}
 									<p class="text-primary font-medium">
-										Note: Package items ({source.package_items.length} items) are NOT cloned. You'll need to add items
-										after creation or use the Clone button on the detail page to clone with items.
+										✓ Package items ({source.package_items.length} items) have been cloned! You can modify them below before creating.
 									</p>
 								{/if}
 							</div>
@@ -120,7 +169,7 @@
 				bind:value={formData.name}
 				required
 				placeholder="Enter package name"
-				error={form?.errors?.name?.[0]}
+				error={errors?.name?.[0]}
 			/>
 
 			<FormField
@@ -131,7 +180,7 @@
 				required
 				placeholder="PKG-CODE"
 				helperText="Uppercase alphanumeric with dashes/underscores"
-				error={form?.errors?.code?.[0]}
+				error={errors?.code?.[0]}
 			/>
 
 			<FormField
@@ -142,7 +191,7 @@
 				required
 				placeholder="e.g., 2025.1.0"
 				helperText="Package version number"
-				error={form?.errors?.version?.[0]}
+				error={errors?.version?.[0]}
 			/>
 
 			<FormField
@@ -152,7 +201,7 @@
 				type="date"
 				bind:value={formData.release_date}
 				required
-				error={form?.errors?.release_date?.[0]}
+				error={errors?.release_date?.[0]}
 			/>
 
 			<div class="space-y-2">
@@ -166,24 +215,37 @@
 				></textarea>
 			</div>
 
-			<div class="flex items-center space-x-2">
-				<input
-					type="checkbox"
-					id="active"
-					name="active"
-					bind:checked={formData.active}
-					class="h-4 w-4 rounded border-gray-300"
-				/>
-				<Label for="active">Active</Label>
-			</div>
-
-			{#if form?.message}
-				<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-					{form.message}
+				<div class="flex items-center space-x-2">
+					<input
+						type="checkbox"
+						id="active"
+						name="active"
+						bind:checked={formData.active}
+						class="h-4 w-4 rounded border-gray-300"
+					/>
+					<Label for="active">Active</Label>
 				</div>
-			{/if}
 
+				{#if form?.message}
+					<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+						{form.message}
+					</div>
+				{/if}
+			</div>
+		</Card>
+
+		<!-- Package Items Card -->
+		<Card class="p-6">
+			<PackageItemsManager
+				bind:items={packageItems}
+				allSoftware={data.allSoftware}
+				errors={errors}
+			/>
+		</Card>
+
+		<!-- Submit Buttons -->
+		<Card class="p-6">
 			<FormButtons />
-		</form>
-	</Card>
+		</Card>
+	</form>
 </div>

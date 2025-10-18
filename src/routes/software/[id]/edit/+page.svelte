@@ -8,6 +8,11 @@
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
+	// Helper to safely access errors
+	const errors = $derived(
+		form && 'errors' in form ? form.errors as Record<string, string[]> : undefined
+	);
+
 	// Master form data (software)
 	let formData = $state({
 		name: data.software.name,
@@ -71,7 +76,7 @@
 					bind:value={formData.name}
 					required
 					placeholder="Enter software name"
-					error={form?.errors?.name?.[0]}
+					error={errors?.name?.[0]}
 				/>
 
 				<div class="space-y-2">
@@ -87,8 +92,8 @@
 							<option value={vendor.id}>{vendor.name} ({vendor.code})</option>
 						{/each}
 					</select>
-					{#if form?.errors?.vendor_id?.[0]}
-						<p class="text-sm text-destructive">{form.errors.vendor_id[0]}</p>
+					{#if errors?.vendor_id?.[0]}
+						<p class="text-sm text-destructive">{errors.vendor_id[0]}</p>
 					{/if}
 				</div>
 
@@ -117,7 +122,7 @@
 		</Card>
 
 		<!-- Detail Entity: Version Management -->
-		<VersionManager bind:versions onVersionsChange={handleVersionsChange} errors={form?.errors} />
+		<VersionManager bind:versions onVersionsChange={handleVersionsChange} errors={errors} />
 
 		<!-- Form Actions -->
 		{#if form?.message}

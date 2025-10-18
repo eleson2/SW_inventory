@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
-import { db } from '$lib/server/db';
+import { db, createAuditLog } from '$lib/server/db';
 import { fail, redirect } from '@sveltejs/kit';
-import { z } from 'zod';
+import { softwareWithVersionsSchema } from '$lib/schemas/software';
 
 // Load vendors and all software for dropdown
 export const load: PageServerLoad = async () => {
@@ -42,17 +42,6 @@ export const load: PageServerLoad = async () => {
 	};
 };
 
-// Schema for software creation with initial version
-const softwareCreateSchema = z.object({
-	name: z.string().min(2, 'Name must be at least 2 characters').max(100),
-	vendor_id: z.string().uuid('Please select a vendor'),
-	description: z.string().max(500).optional(),
-	version: z.string().min(1, 'Version is required').max(50),
-	ptf_level: z.string().max(50).optional().or(z.literal('')),
-	release_date: z.coerce.date(),
-	active: z.boolean().default(true)
-});
-
 export const actions: Actions = {
 	default: async ({ request }) => {
 		const formData = await request.formData();
@@ -61,14 +50,13 @@ export const actions: Actions = {
 			name: formData.get('name'),
 			vendor_id: formData.get('vendor_id'),
 			description: formData.get('description') || '',
-			version: formData.get('version'),
-			ptf_level: formData.get('ptf_level') || '',
-			release_date: formData.get('release_date'),
-			active: formData.get('active') === 'on'
+			active: formData.get('active') === 'on',
+			versions: JSON.parse(formData.get('versions')?.toString() || '[]'),
+			current_version_id: formData.get('current_version_id')?.toString() || null
 		};
 
-		// Validate
-		const validation = softwareCreateSchema.safeParse(data);
+		// Validate with master-detail schema
+		const validation = softwareWithVersionsSchema.safeParse(data);
 		if (!validation.success) {
 			return fail(400, {
 				errors: validation.error.flatten().fieldErrors,
@@ -94,7 +82,7 @@ export const actions: Actions = {
 				});
 			}
 
-			// Create software and initial version in a transaction
+			// Create software and versions in a transaction
 			const result = await db.$transaction(async (tx) => {
 				// Create the software first
 				const software = await tx.software.create({
@@ -106,35 +94,48 @@ export const actions: Actions = {
 					}
 				});
 
-				// Create the initial version
-				const version = await tx.software_versions.create({
-					data: {
-						software_id: software.id,
-						version: validated.version,
-						ptf_level: validated.ptf_level || null,
-						release_date: validated.release_date,
-						is_current: true
-					}
-				});
+				let currentVersionId: string | null = null;
 
-				// Update software to set current_version_id
-				await tx.software.update({
-					where: { id: software.id },
-					data: { current_version_id: version.id }
-				});
+				// Create versions if provided
+				if (validated.versions && validated.versions.length > 0) {
+					for (const versionData of validated.versions) {
+						const version = await tx.software_versions.create({
+							data: {
+								software_id: software.id,
+								version: versionData.version,
+								ptf_level: versionData.ptf_level || null,
+								release_date: versionData.release_date,
+								end_of_support: versionData.end_of_support || null,
+								release_notes: versionData.release_notes || null,
+								is_current: versionData.is_current
+							}
+						});
 
-				// Create audit log
-				await tx.audit_log.create({
-					data: {
-						entity_type: 'software',
-						entity_id: software.id,
-						action: 'create',
-						changes: {
-							...software,
-							initial_version: version
+						// Track the current version ID
+						if (versionData.is_current) {
+							currentVersionId = version.id;
 						}
 					}
-				});
+				}
+
+				// Update software with current_version_id if set
+				if (currentVersionId) {
+					await tx.software.update({
+						where: { id: software.id },
+						data: { current_version_id: currentVersionId }
+					});
+				}
+
+				// Create audit log
+				await createAuditLog(
+					'software',
+					software.id,
+					'create',
+					{
+						...software,
+						versions_count: validated.versions?.length || 0
+					}
+				);
 
 				return software;
 			});

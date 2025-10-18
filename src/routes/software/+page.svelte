@@ -24,7 +24,7 @@
 		{
 			key: 'currentVersion',
 			label: 'Current Version',
-			render: (item: Software) => {
+			render: (item: Software & { current_version?: { version: string; ptf_level: string | null } }) => {
 				if (item.current_version) {
 					const version = item.current_version.version;
 					const ptf = item.current_version.ptf_level;
@@ -69,15 +69,15 @@
 
 	<Card class="p-6">
 		<DataTable
-			data={data.software.items}
+			data={'items' in data.software ? data.software.items : []}
 			{columns}
 			onRowClick={handleRowClick}
 			onSort={handleSort}
 			currentSort={data.sort}
 		/>
 		<Pagination
-			currentPage={data.software.page}
-			totalPages={data.software.totalPages}
+			currentPage={'page' in data.software ? data.software.page : 1}
+			totalPages={'totalPages' in data.software ? data.software.totalPages : 1}
 			onPageChange={handlePageChange}
 		/>
 	</Card>

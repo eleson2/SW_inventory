@@ -102,7 +102,7 @@
 				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Active Products</dt>
 					<dd class="text-2xl font-bold mt-1">
-						{vendor.software.filter(sw => sw.active).length}
+						{vendor.software.filter((sw: { active: boolean }) => sw.active).length}
 					</dd>
 				</div>
 				<div>

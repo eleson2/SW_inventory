@@ -166,6 +166,7 @@
 
 				<div
 					class="border rounded-lg p-4 hover:bg-accent/5 transition-colors {error ? 'bg-destructive/5' : 'bg-card'} {status === 'new' ? 'border-blue-500' : ''} {status === 'modified' ? 'border-amber-500' : ''}"
+					role="listitem"
 					draggable="true"
 					ondragstart={() => handleDragStart(index)}
 					ondragover={(e) => {
@@ -297,9 +298,9 @@
 										</div>
 										<div class="flex items-center gap-2 text-sm">
 											{#if item.required}
-												<Badge variant="default" size="sm">Required</Badge>
+												<Badge variant="default">Required</Badge>
 											{:else}
-												<Badge variant="outline" size="sm">Optional</Badge>
+												<Badge variant="outline">Optional</Badge>
 											{/if}
 											<span class="text-muted-foreground">Order: #{item.order_index}</span>
 										</div>

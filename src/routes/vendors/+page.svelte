@@ -61,15 +61,15 @@
 
 	<Card class="p-6">
 		<DataTable
-			data={data.vendors.items}
+			data={'items' in data.vendors ? data.vendors.items : []}
 			{columns}
 			onRowClick={handleRowClick}
 			onSort={handleSort}
 			currentSort={data.sort}
 		/>
 		<Pagination
-			currentPage={data.vendors.page}
-			totalPages={data.vendors.totalPages}
+			currentPage={'page' in data.vendors ? data.vendors.page : 1}
+			totalPages={'totalPages' in data.vendors ? data.vendors.totalPages : 1}
 			onPageChange={handlePageChange}
 		/>
 	</Card>

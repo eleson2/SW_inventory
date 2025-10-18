@@ -43,7 +43,9 @@
       "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT id FROM software LIMIT 1\" -t)",
       "Bash(xargs -I {} curl -s -o /dev/null -w \"software edit: %{http_code}\\n\" \"http://localhost:5175{}\")",
       "Bash(bash:*)",
-      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT COUNT(*) as lpar_count FROM lpars;\" -t)"
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT COUNT(*) as lpar_count FROM lpars;\" -t)",
+      "Bash(del check-divs.js)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []

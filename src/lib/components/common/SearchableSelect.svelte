@@ -39,8 +39,8 @@
 	let searchTerm = $state('');
 	let isOpen = $state(false);
 	let highlightedIndex = $state(0);
-	let inputElement: HTMLInputElement;
-	let dropdownElement: HTMLDivElement;
+	let inputElement = $state<HTMLInputElement>();
+	let dropdownElement = $state<HTMLDivElement>();
 
 	// Filter items based on search term
 	const filteredItems = $derived(

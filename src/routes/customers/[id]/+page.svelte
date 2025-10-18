@@ -89,7 +89,7 @@
 				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Active LPARs</dt>
 					<dd class="text-2xl font-bold mt-1">
-						{customer.lpars.filter(lpar => lpar.active).length}
+						{customer.lpars.filter((lpar: { active: boolean }) => lpar.active).length}
 					</dd>
 				</div>
 			</dl>

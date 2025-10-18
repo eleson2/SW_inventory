@@ -11,6 +11,7 @@
 		type = 'button',
 		disabled = false,
 		onclick,
+		formaction,
 		children
 	}: {
 		variant?: Variant;
@@ -19,6 +20,7 @@
 		type?: 'button' | 'submit' | 'reset';
 		disabled?: boolean;
 		onclick?: (e: MouseEvent) => void;
+		formaction?: string;
 		children: any;
 	} = $props();
 
@@ -42,6 +44,7 @@
 <button
 	{type}
 	{disabled}
+	{formaction}
 	class={cn(
 		'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors',
 		'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',

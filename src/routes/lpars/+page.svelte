@@ -77,15 +77,15 @@
 
 	<Card class="p-6">
 		<DataTable
-			data={data.lpars.items}
+			data={'items' in data.lpars ? data.lpars.items : []}
 			{columns}
 			onRowClick={handleRowClick}
 			onSort={handleSort}
 			currentSort={data.sort}
 		/>
 		<Pagination
-			currentPage={data.lpars.page}
-			totalPages={data.lpars.totalPages}
+			currentPage={'page' in data.lpars ? data.lpars.page : 1}
+			totalPages={'totalPages' in data.lpars ? data.lpars.totalPages : 1}
 			onPageChange={handlePageChange}
 		/>
 	</Card>

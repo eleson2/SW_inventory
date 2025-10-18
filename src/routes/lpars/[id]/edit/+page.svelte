@@ -1,119 +1,192 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
+	import type { LparSoftwareInstallation } from '$lib/schemas/lpar';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import Label from '$components/ui/Label.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
+	import LparSoftwareManager from '$components/domain/LparSoftwareManager.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
+	// Helper to safely access errors
+	const errors = $derived(
+		form && 'errors' in form ? form.errors as Record<string, string[]> : undefined
+	);
+
+	// Master form data (LPAR)
 	let formData = $state({
 		name: data.lpar.name,
 		code: data.lpar.code,
-		customer_id: data.lpar.customerId,
+		customer_id: data.lpar.customer_id,
 		description: data.lpar.description || '',
-		current_package_id: data.lpar.currentPackageId || '',
+		current_package_id: data.lpar.current_package_id || '',
 		active: data.lpar.active
 	});
+
+	// Detail form data (software installations)
+	// Need to derive software_version_id from the denormalized version data
+	let softwareInstallations = $state<LparSoftwareInstallation[]>(
+		data.lpar.lpar_software.map((ls) => {
+			// Find the matching version ID by looking up version and PTF level
+			const software = data.allSoftware.find(s => s.id === ls.software_id);
+			const matchingVersion = software?.versions.find(v =>
+				v.version === ls.current_version &&
+				(v.ptf_level || null) === (ls.current_ptf_level || null)
+			);
+
+			return {
+				id: ls.id,
+				software_id: ls.software_id,
+				software_version_id: matchingVersion?.id || '',
+				installed_date: ls.installed_date,
+				_action: undefined
+			};
+		})
+	);
+
+	// Handle form submission
+	async function handleSubmit(event: Event) {
+		event.preventDefault();
+		const formElement = event.target as HTMLFormElement;
+		const formDataToSend = new FormData(formElement);
+
+		// Add installations as JSON
+		formDataToSend.set('software_installations', JSON.stringify(softwareInstallations));
+
+		// Submit the form
+		try {
+			const response = await fetch(formElement.action, {
+				method: 'POST',
+				body: formDataToSend
+			});
+
+			if (response.redirected) {
+				window.location.href = response.url;
+			} else {
+				// Handle error
+				window.location.reload();
+			}
+		} catch (error) {
+			console.error('Error submitting form:', error);
+		}
+	}
 </script>
 
-<div class="space-y-6 max-w-2xl">
+<div class="space-y-6">
 	<div>
 		<h1 class="text-3xl font-bold tracking-tight">Edit LPAR</h1>
 		<p class="text-muted-foreground mt-2">
-			Update LPAR information
+			Update LPAR information and manage software installations
 		</p>
 	</div>
 
-	<Card class="p-6">
-		<form method="POST" class="space-y-6">
-			<FormField
-				label="LPAR Name"
-				id="name"
-				name="name"
-				bind:value={formData.name}
-				required
-				placeholder="Enter LPAR name"
-				error={form?.errors?.name?.[0]}
-			/>
-
-			<FormField
-				label="LPAR Code"
-				id="code"
-				name="code"
-				bind:value={formData.code}
-				required
-				placeholder="LPAR-CODE"
-				helperText="Uppercase alphanumeric with dashes/underscores"
-				error={form?.errors?.code?.[0]}
-			/>
-
-			<div class="space-y-2">
-				<Label for="customerId">Customer <span class="text-destructive">*</span></Label>
-				<select
-					id="customer_id"
-					name="customer_id"
-					bind:value={formData.customer_id}
+	<form method="POST" class="space-y-6" onsubmit={handleSubmit}>
+		<!-- LPAR Information Card -->
+		<Card class="p-6">
+			<h2 class="text-xl font-semibold mb-4">LPAR Details</h2>
+			<div class="space-y-6">
+				<FormField
+					label="LPAR Name"
+					id="name"
+					name="name"
+					bind:value={formData.name}
 					required
-					class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-				>
-					{#each data.customers as customer}
-						<option value={customer.id}>{customer.name} ({customer.code})</option>
-					{/each}
-				</select>
-				{#if form?.errors?.customer_id?.[0]}
-					<p class="text-sm text-destructive">{form.errors.customerId[0]}</p>
-				{/if}
-			</div>
-
-			<div class="space-y-2">
-				<Label for="currentPackageId">Current Package</Label>
-				<select
-					id="current_package_id"
-					name="current_package_id"
-					bind:value={formData.current_package_id}
-					class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-				>
-					<option value="">None</option>
-					{#each data.packages as pkg}
-						<option value={pkg.id}>{pkg.name} ({pkg.code} {pkg.version})</option>
-					{/each}
-				</select>
-				<p class="text-sm text-muted-foreground">Optional - can be changed later</p>
-				{#if form?.errors?.current_package_id?.[0]}
-					<p class="text-sm text-destructive">{form.errors.currentPackageId[0]}</p>
-				{/if}
-			</div>
-
-			<div class="space-y-2">
-				<Label for="description">Description</Label>
-				<textarea
-					id="description"
-					name="description"
-					bind:value={formData.description}
-					placeholder="Enter LPAR description (optional)"
-					class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-				></textarea>
-			</div>
-
-			<div class="flex items-center space-x-2">
-				<input
-					type="checkbox"
-					id="active"
-					name="active"
-					bind:checked={formData.active}
-					class="h-4 w-4 rounded border-gray-300"
+					placeholder="Enter LPAR name"
+					error={errors?.name?.[0]}
 				/>
-				<Label for="active">Active</Label>
-			</div>
 
-			{#if form?.message}
-				<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-					{form.message}
+				<FormField
+					label="LPAR Code"
+					id="code"
+					name="code"
+					bind:value={formData.code}
+					required
+					placeholder="LPAR-CODE"
+					helperText="Uppercase alphanumeric with dashes/underscores"
+					error={errors?.code?.[0]}
+				/>
+
+				<div class="space-y-2">
+					<Label for="customerId">Customer <span class="text-destructive">*</span></Label>
+					<select
+						id="customer_id"
+						name="customer_id"
+						bind:value={formData.customer_id}
+						required
+						class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+					>
+						{#each data.customers as customer}
+							<option value={customer.id}>{customer.name} ({customer.code})</option>
+						{/each}
+					</select>
+					{#if errors?.customer_id?.[0]}
+						<p class="text-sm text-destructive">{errors.customer_id[0]}</p>
+					{/if}
 				</div>
-			{/if}
 
+				<div class="space-y-2">
+					<Label for="currentPackageId">Current Package</Label>
+					<select
+						id="current_package_id"
+						name="current_package_id"
+						bind:value={formData.current_package_id}
+						class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+					>
+						<option value="">None</option>
+						{#each data.packages as pkg}
+							<option value={pkg.id}>{pkg.name} ({pkg.code} {pkg.version})</option>
+						{/each}
+					</select>
+					<p class="text-sm text-muted-foreground">Optional - can be changed later</p>
+					{#if errors?.current_package_id?.[0]}
+						<p class="text-sm text-destructive">{errors.current_package_id[0]}</p>
+					{/if}
+				</div>
+
+				<div class="space-y-2">
+					<Label for="description">Description</Label>
+					<textarea
+						id="description"
+						name="description"
+						bind:value={formData.description}
+						placeholder="Enter LPAR description (optional)"
+						class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+					></textarea>
+				</div>
+
+				<div class="flex items-center space-x-2">
+					<input
+						type="checkbox"
+						id="active"
+						name="active"
+						bind:checked={formData.active}
+						class="h-4 w-4 rounded border-gray-300"
+					/>
+					<Label for="active">Active</Label>
+				</div>
+
+				{#if form?.message}
+					<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+						{form.message}
+					</div>
+				{/if}
+			</div>
+		</Card>
+
+		<!-- Software Installations Card -->
+		<Card class="p-6">
+			<LparSoftwareManager
+				bind:installations={softwareInstallations}
+				allSoftware={data.allSoftware}
+				assignedPackage={data.lpar.packages}
+				errors={errors}
+			/>
+		</Card>
+
+		<!-- Submit Buttons -->
+		<Card class="p-6">
 			<FormButtons />
-		</form>
-	</Card>
+		</Card>
+	</form>
 </div>

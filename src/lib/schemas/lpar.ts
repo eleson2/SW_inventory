@@ -4,6 +4,15 @@
 import { z } from 'zod';
 import { CODE_PATTERN, CODE_ERROR_MESSAGE, FIELD_LENGTHS } from '$lib/constants/validation';
 
+// Schema for individual LPAR software installation (detail entity)
+export const lparSoftwareInstallationSchema = z.object({
+	id: z.string().uuid().optional(), // Optional for new installations
+	software_id: z.string().uuid('Invalid software ID'),
+	software_version_id: z.string().uuid('Invalid version ID'),
+	installed_date: z.coerce.date().default(() => new Date()),
+	_action: z.enum(['keep', 'delete']).optional() // Track item state for deletion
+});
+
 export const lparSoftwareSchema = z.object({
 	software_id: z.string().uuid('Invalid software ID'),
 	software_version_id: z.string().uuid('Invalid version ID'),
@@ -31,6 +40,14 @@ export const lparSchema = z.object({
 export const lparUpdateSchema = lparSchema
 	.partial()
 	.required({ name: true, code: true, customer_id: true });
+
+// Master-detail schema for LPAR with software installations
+export const lparWithSoftwareSchema = lparSchema.extend({
+	software_installations: z.array(lparSoftwareInstallationSchema).default([])
+});
+
+// Type exports
+export type LparSoftwareInstallation = z.infer<typeof lparSoftwareInstallationSchema>;
 
 export const rollbackSchema = z.object({
 	lpar_id: z.string().uuid('Invalid LPAR ID'),

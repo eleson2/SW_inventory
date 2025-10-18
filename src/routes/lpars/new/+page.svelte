@@ -140,7 +140,7 @@
 					{/each}
 				</select>
 				{#if form?.errors?.customer_id?.[0]}
-					<p class="text-sm text-destructive">{form.errors.customerId[0]}</p>
+					<p class="text-sm text-destructive">{form.errors.customer_id[0]}</p>
 				{/if}
 			</div>
 
@@ -159,7 +159,7 @@
 				</select>
 				<p class="text-sm text-muted-foreground">Optional - can be assigned later</p>
 				{#if form?.errors?.current_package_id?.[0]}
-					<p class="text-sm text-destructive">{form.errors.currentPackageId[0]}</p>
+					<p class="text-sm text-destructive">{form.errors.current_package_id[0]}</p>
 				{/if}
 			</div>
 

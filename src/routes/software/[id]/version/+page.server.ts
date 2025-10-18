@@ -16,6 +16,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		where: { id: params.id },
 		include: {
 			vendors: true,
+			current_version: true,
 			versions: {
 				orderBy: [
 					{ is_current: 'desc' },
