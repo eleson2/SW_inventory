@@ -110,8 +110,8 @@
 	<Card class="p-6">
 		<div class="flex items-center justify-between mb-4">
 			<h2 class="text-xl font-semibold">Package Items</h2>
-			<Button size="sm" onclick={() => window.location.href = `/packages/${pkg.id}/items/add`}>
-				Add Item
+			<Button size="sm" onclick={() => window.location.href = `/packages/${pkg.id}/edit`}>
+				Manage Items
 			</Button>
 		</div>
 
