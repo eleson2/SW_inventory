@@ -13,11 +13,21 @@ export const softwareVersionSchema = z.object({
 export const softwareVersionDetailSchema = z.object({
 	id: z.string().uuid().optional(), // Optional for new versions
 	version: z.string().min(1, 'Version is required').max(50),
-	ptf_level: z.string().max(50),
-	release_date: z.string().min(1, 'Release date is required'), // String for HTML input compatibility
-	end_of_support: z.string(), // String for HTML input compatibility
-	release_notes: z.string().max(1000),
-	is_current: z.boolean(),
+	ptf_level: z.string().max(50).optional().or(z.literal('')),
+	release_date: z.string().or(z.date()).transform((val) => {
+		if (typeof val === 'string') {
+			return new Date(val);
+		}
+		return val;
+	}),
+	end_of_support: z.string().or(z.date()).transform((val) => {
+		if (typeof val === 'string') {
+			return val ? new Date(val) : null;
+		}
+		return val;
+	}).optional().nullable(),
+	release_notes: z.string().max(1000).optional().or(z.literal('')),
+	is_current: z.boolean().default(false),
 	_action: z.enum(['create', 'update', 'delete']).optional() // Track intended action
 });
 
@@ -43,15 +53,16 @@ export const softwareWithVersionsSchema = z.object({
 		.min(FIELD_LENGTHS.name.min, `Name must be at least ${FIELD_LENGTHS.name.min} characters`)
 		.max(FIELD_LENGTHS.name.max),
 	vendor_id: z.string().uuid('Invalid vendor'),
-	description: z.string().max(FIELD_LENGTHS.description.max),
-	active: z.boolean(),
-	versions: z.array(softwareVersionDetailSchema)
+	description: z.string().max(FIELD_LENGTHS.description.max).optional().or(z.literal('')),
+	active: z.boolean().default(true),
+	versions: z.array(softwareVersionDetailSchema).optional().default([]),
+	current_version_id: z.string().uuid().optional().nullable()
 }).refine(
 	(data) => {
-		// If there are versions, at least one must be marked as current
+		// If there are versions, at least one must be marked as current or current_version_id must be set
 		if (data.versions && data.versions.length > 0) {
-			const hasCurrentFlag = data.versions.some(v => v.is_current && v._action !== 'delete');
-			return hasCurrentFlag;
+			const hasCurrentFlag = data.versions.some(v => v.is_current);
+			return hasCurrentFlag || !!data.current_version_id;
 		}
 		return true;
 	},

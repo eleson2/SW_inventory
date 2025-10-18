@@ -32,9 +32,9 @@ export const lparSchema = z.object({
 		.max(FIELD_LENGTHS.code.max)
 		.regex(CODE_PATTERN, CODE_ERROR_MESSAGE),
 	customer_id: z.string().uuid('Invalid customer'),
-	description: z.string().max(FIELD_LENGTHS.description.max),
-	current_package_id: z.string().uuid('Invalid package').or(z.literal('')),
-	active: z.boolean()
+	description: z.string().max(FIELD_LENGTHS.description.max).optional(),
+	current_package_id: z.string().uuid('Invalid package').optional(),
+	active: z.boolean().default(true)
 });
 
 export const lparUpdateSchema = lparSchema
@@ -43,7 +43,7 @@ export const lparUpdateSchema = lparSchema
 
 // Master-detail schema for LPAR with software installations
 export const lparWithSoftwareSchema = lparSchema.extend({
-	software_installations: z.array(lparSoftwareInstallationSchema)
+	software_installations: z.array(lparSoftwareInstallationSchema).default([])
 });
 
 // Type exports

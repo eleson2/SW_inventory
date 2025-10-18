@@ -25,15 +25,15 @@ export const packageSchema = z.object({
 		.min(FIELD_LENGTHS.code.min, `Code must be at least ${FIELD_LENGTHS.code.min} characters`)
 		.max(FIELD_LENGTHS.code.max)
 		.regex(CODE_PATTERN, CODE_ERROR_MESSAGE),
-	description: z.string().max(FIELD_LENGTHS.description.max),
+	description: z.string().max(FIELD_LENGTHS.description.max).optional(),
 	version: z.string().min(1, 'Version is required'),
-	release_date: z.string().min(1, 'Release date is required'), // String for HTML input compatibility
-	active: z.boolean()
+	release_date: z.coerce.date(),
+	active: z.boolean().default(true)
 });
 
 // Master-detail schema for package with items
 export const packageWithItemsSchema = packageSchema.extend({
-	items: z.array(packageItemSchema)
+	items: z.array(packageItemSchema).default([])
 });
 
 // Update schema with optional items array

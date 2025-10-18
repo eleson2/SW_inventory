@@ -2,6 +2,7 @@
  * Reusable clone handler utility for entity detail pages
  * Consolidates duplicate clone logic across all detail pages
  */
+import { toast } from '$stores/toast';
 
 export type EntityType = 'software' | 'package' | 'lpar' | 'customer' | 'vendor';
 
@@ -43,15 +44,16 @@ export function createCloneHandler(options: CloneHandlerOptions) {
 			const result = await response.json();
 
 			if (result.success) {
+				toast.success(`${entityType.charAt(0).toUpperCase() + entityType.slice(1)} cloned successfully!`);
 				window.location.href = redirectPath(result.data.id);
 			} else {
-				alert(`Error: ${result.error}`);
+				toast.error(`Error: ${result.error}`);
 				throw new Error(result.error);
 			}
 		} catch (error) {
 			console.error('Clone error:', error);
 			const message = errorMessage || `Failed to clone ${entityType}`;
-			alert(message);
+			toast.error(message);
 			throw error;
 		}
 	};

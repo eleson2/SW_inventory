@@ -50,7 +50,8 @@
       "Bash(npm run check 2)",
       "Bash(1)",
       "Bash(for route in \"\" \"vendors\" \"vendors/new\" \"customers\" \"customers/new\" \"software\" \"software/new\" \"packages\" \"packages/new\" \"lpars\" \"lpars/new\")",
-      "Bash(do echo -n \"Testing /$route: \")"
+      "Bash(do echo -n \"Testing /$route: \")",
+      "Bash(git stash drop)"
     ],
     "deny": [],
     "ask": []

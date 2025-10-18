@@ -6,38 +6,17 @@
 	import Badge from '$components/ui/Badge.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
-	import CloneDialog from '$components/common/CloneDialog.svelte';
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
 	import { formatDateTime } from '$utils/date-format';
-	import { createCloneHandler } from '$utils/clone-handler';
 
 	let { data }: { data: PageData } = $props();
 	const { vendor } = data;
-
-	let showCloneDialog = $state(false);
-	let cloning = $state(false);
 
 	const breadcrumbItems = [
 		{ label: 'Home', href: '/' },
 		{ label: 'Vendors', href: '/vendors' },
 		{ label: vendor.name }
 	];
-
-	const handleClone = async (formData: Record<string, string>) => {
-		cloning = true;
-		try {
-			const cloneHandler = createCloneHandler({
-				entityType: 'vendor',
-				sourceId: vendor.id,
-				redirectPath: (id) => `/vendors/${id}`,
-				errorMessage: 'Failed to clone vendor'
-			});
-			await cloneHandler(formData);
-		} finally {
-			cloning = false;
-			showCloneDialog = false;
-		}
-	};
 </script>
 
 <div class="space-y-6">
@@ -50,9 +29,6 @@
 			<p class="text-muted-foreground mt-2">Vendor Details and Software Products</p>
 		</div>
 		<div class="flex gap-2">
-			<Button onclick={() => showCloneDialog = true}>
-				Clone Vendor
-			</Button>
 			<Button variant="outline" onclick={() => goto(`/vendors/${vendor.id}/edit`)}>
 				Edit
 			</Button>
@@ -176,22 +152,3 @@
 		{/if}
 	</Card>
 </div>
-
-<CloneDialog
-	bind:open={showCloneDialog}
-	title="Clone Vendor"
-	entityType="Vendor"
-	sourceName={vendor.name}
-	fields={[
-		{ name: 'name', label: 'New Vendor Name', required: true, placeholder: 'Enter new vendor name' },
-		{ name: 'code', label: 'New Vendor Code', required: true, placeholder: 'e.g., VENDOR-02' }
-	]}
-	preview={{
-		code: vendor.code,
-		website: vendor.website || 'N/A',
-		'software count': vendor.software.length,
-		active: vendor.active ? 'Yes' : 'No'
-	}}
-	onClone={handleClone}
-	loading={cloning}
-/>
