@@ -45,7 +45,12 @@
       "Bash(bash:*)",
       "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT COUNT(*) as lpar_count FROM lpars;\" -t)",
       "Bash(del check-divs.js)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(for file in src/routes/vendors/new/+page.svelte src/routes/software/new/+page.svelte src/routes/packages/new/+page.svelte src/routes/lpars/new/+page.svelte)",
+      "Bash(npm run check 2)",
+      "Bash(1)",
+      "Bash(for route in \"\" \"vendors\" \"vendors/new\" \"customers\" \"customers/new\" \"software\" \"software/new\" \"packages\" \"packages/new\" \"lpars\" \"lpars/new\")",
+      "Bash(do echo -n \"Testing /$route: \")"
     ],
     "deny": [],
     "ask": []

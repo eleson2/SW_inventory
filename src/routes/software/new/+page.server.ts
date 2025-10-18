@@ -1,10 +1,18 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '$lib/server/db';
 import { fail, redirect } from '@sveltejs/kit';
+import { superValidate } from 'sveltekit-superforms';
+import { zod } from 'sveltekit-superforms/adapters';
 import { softwareWithVersionsSchema } from '$lib/schemas/software';
 
 // Load vendors and all software for dropdown
 export const load: PageServerLoad = async () => {
+	// Initialize Superforms with default values
+	const form = await superValidate(
+		{ description: '', active: true, versions: [] },
+		zod(softwareWithVersionsSchema)
+	);
+
 	const [vendors, allSoftware] = await Promise.all([
 		db.vendors.findMany({
 			where: { active: true },
@@ -37,48 +45,36 @@ export const load: PageServerLoad = async () => {
 	]);
 
 	return {
+		form,
 		vendors,
 		allSoftware
 	};
 };
 
 export const actions: Actions = {
-	default: async ({ request }) => {
-		const formData = await request.formData();
+	default: async (event) => {
+		// Use Superforms to validate form data
+		const form = await superValidate(event, zod(softwareWithVersionsSchema));
 
-		const data = {
-			name: formData.get('name'),
-			vendor_id: formData.get('vendor_id'),
-			description: formData.get('description') || '',
-			active: formData.get('active') === 'on',
-			versions: JSON.parse(formData.get('versions')?.toString() || '[]'),
-			current_version_id: formData.get('current_version_id')?.toString() || null
-		};
-
-		// Validate with master-detail schema
-		const validation = softwareWithVersionsSchema.safeParse(data);
-		if (!validation.success) {
-			return fail(400, {
-				errors: validation.error.flatten().fieldErrors,
-				message: 'Validation failed'
-			});
+		if (!form.valid) {
+			return fail(400, { form });
 		}
-
-		const validated = validation.data;
 
 		try {
 			// Check if software already exists for this vendor
 			const existing = await db.software.findFirst({
 				where: {
-					vendor_id: validated.vendor_id,
-					name: validated.name
+					vendor_id: form.data.vendor_id,
+					name: form.data.name
 				}
 			});
 
 			if (existing) {
 				return fail(400, {
-					errors: { name: ['Software with this name already exists for this vendor'] },
-					message: 'Software with this name already exists for this vendor'
+					form: {
+						...form,
+						errors: { ...form.errors, name: { _errors: ['Software with this name already exists for this vendor'] } }
+					}
 				});
 			}
 
@@ -87,25 +83,25 @@ export const actions: Actions = {
 				// Create the software first
 				const software = await tx.software.create({
 					data: {
-						name: validated.name,
-						vendor_id: validated.vendor_id,
-						description: validated.description || null,
-						active: validated.active
+						name: form.data.name,
+						vendor_id: form.data.vendor_id,
+						description: form.data.description || null,
+						active: form.data.active
 					}
 				});
 
 				let currentVersionId: string | null = null;
 
 				// Create versions if provided
-				if (validated.versions && validated.versions.length > 0) {
-					for (const versionData of validated.versions) {
+				if (form.data.versions && form.data.versions.length > 0) {
+					for (const versionData of form.data.versions) {
 						const version = await tx.software_versions.create({
 							data: {
 								software_id: software.id,
 								version: versionData.version,
 								ptf_level: versionData.ptf_level || null,
-								release_date: versionData.release_date,
-								end_of_support: versionData.end_of_support || null,
+								release_date: new Date(versionData.release_date),
+								end_of_support: versionData.end_of_support ? new Date(versionData.end_of_support) : null,
 								release_notes: versionData.release_notes || null,
 								is_current: versionData.is_current
 							}
@@ -133,7 +129,7 @@ export const actions: Actions = {
 					'create',
 					{
 						...software,
-						versions_count: validated.versions?.length || 0
+						versions_count: form.data.versions?.length || 0
 					}
 				);
 
@@ -145,9 +141,7 @@ export const actions: Actions = {
 			if (error instanceof Response) throw error;
 
 			console.error('Error creating software:', error);
-			return fail(500, {
-				message: 'Failed to create software'
-			});
+			return fail(500, { form });
 		}
 	}
 };

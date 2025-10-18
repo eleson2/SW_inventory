@@ -5,10 +5,10 @@ import { z } from 'zod';
 
 const versionSchema = z.object({
 	version: z.string().min(1, 'Version is required').max(50),
-	ptf_level: z.string().max(50).optional().or(z.literal('')),
+	ptf_level: z.string().max(50),
 	release_date: z.coerce.date(),
 	end_of_support: z.coerce.date().optional().nullable(),
-	release_notes: z.string().max(1000).optional().or(z.literal(''))
+	release_notes: z.string().max(1000)
 });
 
 export const load: PageServerLoad = async ({ params }) => {

@@ -1,5 +1,6 @@
 <script lang="ts">
-	import type { PageData, ActionData } from './$types';
+	import type { PageData } from './$types';
+	import { superForm } from 'sveltekit-superforms';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import Label from '$components/ui/Label.svelte';
@@ -7,30 +8,24 @@
 	import FormButtons from '$components/common/FormButtons.svelte';
 	import VersionManager from '$components/domain/VersionManager.svelte';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { data }: { data: PageData } = $props();
 
-	// Helper to safely access errors
-	const errors = $derived(
-		form && 'errors' in form ? form.errors as Record<string, string[]> : undefined
-	);
+	// Initialize Superforms (server-side validation only)
+	const { form, errors, enhance, submitting, delayed } = superForm(data.form, {
+		dataType: 'json',
+		resetForm: false
+	});
 
 	let creationMode = $state<'blank' | 'clone'>('blank');
 	let cloneSourceId = $state('');
-
-	let formData = $state({
-		name: '',
-		vendor_id: '',
-		description: '',
-		active: true
-	});
 
 	// Versions state for master-detail pattern
 	let versions = $state<any[]>([
 		{
 			version: '',
 			ptf_level: '',
-			release_date: new Date(),
-			end_of_support: null,
+			release_date: new Date().toISOString().split('T')[0],
+			end_of_support: '',
 			release_notes: '',
 			is_current: true,
 			_isNew: true,
@@ -38,15 +33,20 @@
 		}
 	]);
 
+	// Sync versions with form.versions
+	$effect(() => {
+		$form.versions = versions;
+	});
+
 	// When clone source is selected, pre-fill form
 	function handleCloneSourceSelect(sourceId: string) {
 		cloneSourceId = sourceId;
 		const source = data.allSoftware.find((s) => s.id === sourceId);
 		if (source) {
-			formData.name = `${source.name} (Copy)`;
-			formData.vendor_id = source.vendor_id;
-			formData.description = source.description || '';
-			formData.active = source.active;
+			$form.name = `${source.name} (Copy)`;
+			$form.vendor_id = source.vendor_id;
+			$form.description = source.description || '';
+			$form.active = source.active;
 
 			// Clone versions if they exist
 			if (source.current_version) {
@@ -54,9 +54,9 @@
 					version: source.current_version.version,
 					ptf_level: source.current_version.ptf_level || '',
 					release_date: source.current_version.release_date
-						? new Date(source.current_version.release_date)
-						: new Date(),
-					end_of_support: null,
+						? new Date(source.current_version.release_date).toISOString().split('T')[0]
+						: new Date().toISOString().split('T')[0],
+					end_of_support: '',
 					release_notes: '',
 					is_current: true,
 					_isNew: true
@@ -69,39 +69,6 @@
 	function handleVersionsChange(updatedVersions: any[]) {
 		versions = updatedVersions;
 	}
-
-	// Handle form submission
-	async function handleSubmit(event: Event) {
-		event.preventDefault();
-		const formElement = event.target as HTMLFormElement;
-		const formDataToSend = new FormData(formElement);
-
-		// Add versions as JSON
-		formDataToSend.set('versions', JSON.stringify(versions));
-
-		// Find current version ID
-		const currentVersion = versions.find((v) => v.is_current && v._action !== 'delete');
-		if (currentVersion?.id) {
-			formDataToSend.set('current_version_id', currentVersion.id);
-		}
-
-		// Submit the form
-		try {
-			const response = await fetch(formElement.action, {
-				method: 'POST',
-				body: formDataToSend
-			});
-
-			if (response.redirected) {
-				window.location.href = response.url;
-			} else {
-				// Handle error
-				window.location.reload();
-			}
-		} catch (error) {
-			console.error('Error submitting form:', error);
-		}
-	}
 </script>
 
 <div class="space-y-6">
@@ -112,7 +79,7 @@
 		</p>
 	</div>
 
-	<form method="POST" class="space-y-6" onsubmit={handleSubmit}>
+	<form method="POST" class="space-y-6" use:enhance>
 		<!-- Software Information Card -->
 		<Card class="p-6">
 			<h2 class="text-xl font-semibold mb-4">Software Details</h2>
@@ -129,12 +96,20 @@
 								bind:group={creationMode}
 								onchange={() => {
 									cloneSourceId = '';
-									formData = {
-										name: '',
-										vendor_id: '',
-										description: '',
-										active: true
-									};
+									$form.name = '';
+									$form.vendor_id = '';
+									$form.description = '';
+									$form.active = true;
+									versions = [{
+										version: '',
+										ptf_level: '',
+										release_date: new Date().toISOString().split('T')[0],
+										end_of_support: '',
+										release_notes: '',
+										is_current: true,
+										_isNew: true,
+										_isEditing: true
+									}];
 								}}
 								class="h-4 w-4"
 							/>
@@ -178,10 +153,10 @@
 					label="Software Name"
 					id="name"
 					name="name"
-					bind:value={formData.name}
+					bind:value={$form.name}
 					required
 					placeholder="Enter software name"
-					error={errors?.name?.[0]}
+					error={$errors.name?._errors?.[0]}
 				/>
 
 				<div class="space-y-2">
@@ -189,7 +164,7 @@
 					<select
 						id="vendor_id"
 						name="vendor_id"
-						bind:value={formData.vendor_id}
+						bind:value={$form.vendor_id}
 						required
 						class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 					>
@@ -198,8 +173,8 @@
 							<option value={vendor.id}>{vendor.name} ({vendor.code})</option>
 						{/each}
 					</select>
-					{#if errors?.vendor_id?.[0]}
-						<p class="text-sm text-destructive">{errors.vendor_id[0]}</p>
+					{#if $errors.vendor_id?._errors?.[0]}
+						<p class="text-sm text-destructive">{$errors.vendor_id._errors[0]}</p>
 					{/if}
 				</div>
 
@@ -208,7 +183,7 @@
 					<textarea
 						id="description"
 						name="description"
-						bind:value={formData.description}
+						bind:value={$form.description}
 						placeholder="Enter software description (optional)"
 						class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 					></textarea>
@@ -219,7 +194,7 @@
 						type="checkbox"
 						id="active"
 						name="active"
-						bind:checked={formData.active}
+						bind:checked={$form.active}
 						class="h-4 w-4 rounded border-gray-300"
 					/>
 					<Label for="active">Active</Label>

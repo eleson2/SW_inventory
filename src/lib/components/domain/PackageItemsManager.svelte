@@ -139,13 +139,32 @@
 		<div>
 			<h3 class="text-lg font-semibold">Package Items</h3>
 			<p class="text-sm text-muted-foreground">
-				Manage software items included in this package. Drag to reorder.
+				Add and configure software items for this package. Drag items to reorder installation sequence.
+			</p>
+			<p class="text-xs text-muted-foreground mt-1">
+				💡 Changes are saved when you submit the entire form below.
 			</p>
 		</div>
 		<Button type="button" size="sm" onclick={addItem}>
 			Add Item
 		</Button>
 	</div>
+
+	<!-- Validation Summary -->
+	{#if visibleItems.some(i => validateItem(i))}
+		<div class="rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+			<div class="flex items-start gap-2">
+				<svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+					<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+				</svg>
+				<div>
+					<strong>{visibleItems.filter(i => validateItem(i)).length} item(s) have validation errors.</strong>
+					<br/>
+					Please complete all required fields before submitting the form.
+				</div>
+			</div>
+		</div>
+	{/if}
 
 	{#if errors?.items}
 		<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
@@ -165,7 +184,11 @@
 				{@const isEditing = editingIndex === index}
 
 				<div
-					class="border rounded-lg p-4 hover:bg-accent/5 transition-colors {error ? 'bg-destructive/5' : 'bg-card'} {status === 'new' ? 'border-blue-500' : ''} {status === 'modified' ? 'border-amber-500' : ''}"
+					class="border rounded-lg p-4 transition-all
+						{draggedIndex === index ? 'opacity-50 scale-95' : 'hover:bg-accent/5'}
+						{error ? 'bg-destructive/5 border-destructive' : 'bg-card'}
+						{status === 'new' ? 'border-blue-500' : ''}
+						{isEditing ? 'ring-2 ring-primary bg-primary/5' : ''}"
 					role="listitem"
 					draggable="true"
 					ondragstart={() => handleDragStart(index)}
@@ -245,7 +268,7 @@
 									</Label>
 
 									<div class="text-sm text-muted-foreground">
-										Order: #{item.order_index}
+										Installation order: {item.order_index + 1}
 									</div>
 								</div>
 
@@ -265,7 +288,7 @@
 											}
 										}}
 									>
-										Done
+										Apply Changes
 									</Button>
 									<Button
 										type="button"
@@ -281,6 +304,9 @@
 										Cancel
 									</Button>
 								</div>
+								<p class="text-xs text-muted-foreground mt-2">
+									Click "Apply Changes" to finish editing this item. Remember to submit the form to save all changes.
+								</p>
 							{:else}
 								<!-- Display Mode -->
 								<div class="flex items-start justify-between">
@@ -302,7 +328,7 @@
 											{:else}
 												<Badge variant="outline">Optional</Badge>
 											{/if}
-											<span class="text-muted-foreground">Order: #{item.order_index}</span>
+											<span class="text-muted-foreground">Install order: {item.order_index + 1}</span>
 										</div>
 									</div>
 

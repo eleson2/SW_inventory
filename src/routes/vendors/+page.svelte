@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import type { Vendor } from '$types';
+	import { goto } from '$app/navigation';
 	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
 	import DataTable from '$components/common/DataTable.svelte';
@@ -34,15 +35,28 @@
 	];
 
 	function handleRowClick(vendor: Vendor) {
-		window.location.href = `/vendors/${vendor.id}`;
+		goto(`/vendors/${vendor.id}`);
 	}
 
 	function handleSort(field: string) {
-		console.log('Sort by:', field);
+		const currentSort = data.sort;
+		// Toggle direction if clicking same field, otherwise default to asc
+		const direction = currentSort?.field === field && currentSort?.direction === 'asc' ? 'desc' : 'asc';
+
+		// Build new URL with sort parameters
+		const url = new URL(window.location.href);
+		url.searchParams.set('sort', field);
+		url.searchParams.set('direction', direction);
+		url.searchParams.set('page', '1'); // Reset to first page when sorting
+
+		goto(url.toString());
 	}
 
 	function handlePageChange(page: number) {
-		console.log('Go to page:', page);
+		const url = new URL(window.location.href);
+		url.searchParams.set('page', page.toString());
+
+		goto(url.toString());
 	}
 </script>
 
@@ -54,7 +68,7 @@
 				Track software vendors and their contact information
 			</p>
 		</div>
-		<Button onclick={() => window.location.href = '/vendors/new'}>
+		<Button onclick={() => goto('/vendors/new')}>
 			Add Vendor
 		</Button>
 	</div>

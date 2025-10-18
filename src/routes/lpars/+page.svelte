@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import type { Lpar } from '$types';
+	import { goto } from '$app/navigation';
 	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
 	import DataTable from '$components/common/DataTable.svelte';
@@ -50,15 +51,26 @@
 	];
 
 	function handleRowClick(lpar: Lpar) {
-		window.location.href = `/lpars/${lpar.id}`;
+		goto(`/lpars/${lpar.id}`);
 	}
 
 	function handleSort(field: string) {
-		console.log('Sort by:', field);
+		const currentSort = data.sort;
+		const direction = currentSort?.field === field && currentSort?.direction === 'asc' ? 'desc' : 'asc';
+
+		const url = new URL(window.location.href);
+		url.searchParams.set('sort', field);
+		url.searchParams.set('direction', direction);
+		url.searchParams.set('page', '1');
+
+		goto(url.toString());
 	}
 
 	function handlePageChange(page: number) {
-		console.log('Go to page:', page);
+		const url = new URL(window.location.href);
+		url.searchParams.set('page', page.toString());
+
+		goto(url.toString());
 	}
 </script>
 
@@ -70,7 +82,7 @@
 				Monitor LPAR configurations and installed software
 			</p>
 		</div>
-		<Button onclick={() => window.location.href = '/lpars/new'}>
+		<Button onclick={() => goto('/lpars/new')}>
 			Add LPAR
 		</Button>
 	</div>

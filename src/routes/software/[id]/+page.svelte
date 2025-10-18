@@ -1,9 +1,11 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import { goto } from '$app/navigation';
 	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
+	import Breadcrumb from '$components/common/Breadcrumb.svelte';
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
 	import CloneDialog from '$components/common/CloneDialog.svelte';
 	import { formatDateTime } from '$utils/date-format';
@@ -14,6 +16,13 @@
 
 	let showCloneDialog = $state(false);
 	let cloning = $state(false);
+
+	const breadcrumbItems = [
+		{ label: 'Home', href: '/' },
+		{ label: 'Software', href: '/software' },
+		{ label: software.vendors?.name || 'Vendor', href: `/vendors/${software.vendor_id}` },
+		{ label: software.name }
+	];
 
 	const handleClone = async (formData: Record<string, string>) => {
 		cloning = true;
@@ -33,23 +42,26 @@
 </script>
 
 <div class="space-y-6">
+	<!-- Breadcrumb Navigation -->
+	<Breadcrumb items={breadcrumbItems} />
+
 	<div class="flex items-center justify-between">
 		<div>
 			<h1 class="text-3xl font-bold tracking-tight">{software.name}</h1>
 			<p class="text-muted-foreground mt-2">Software Product Details</p>
 		</div>
 		<div class="flex gap-2">
-			<Button onclick={() => window.location.href = `/software/${software.id}/version`}>
+			<Button onclick={() => goto(`/software/${software.id}/version`)}>
 				New Version
 			</Button>
 			<Button variant="outline" onclick={() => (showCloneDialog = true)}>
 				Clone Software
 			</Button>
-			<Button variant="outline" onclick={() => window.location.href = `/software/${software.id}/edit`}>
+			<Button variant="outline" onclick={() => goto(`/software/${software.id}/edit`)}>
 				Edit
 			</Button>
-			<Button variant="outline" onclick={() => window.history.back()}>
-				Back
+			<Button variant="outline" onclick={() => goto('/software')}>
+				Back to List
 			</Button>
 		</div>
 	</div>

@@ -177,6 +177,10 @@
 			oninput={(e) => {
 				searchTerm = e.currentTarget.value;
 				highlightedIndex = 0;
+				// Auto-open dropdown when user starts typing
+				if (!isOpen && searchTerm.length > 0) {
+					isOpen = true;
+				}
 			}}
 			onclick={handleInputClick}
 			onfocus={handleInputFocus}

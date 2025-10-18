@@ -1,10 +1,18 @@
 import type { PageServerLoad, Actions } from './$types';
-import { db } from '$lib/server/db';
-import { createCreateAction } from '$lib/server/route-factory';
-import { z } from 'zod';
+import { lparSchema } from '$schemas';
+import { db, createAuditLog } from '$lib/server/db';
+import { fail, redirect } from '@sveltejs/kit';
+import { superValidate } from 'sveltekit-superforms';
+import { zod } from 'sveltekit-superforms/adapters';
 
 // Load customers, packages, and all LPARs for dropdowns
 export const load: PageServerLoad = async () => {
+	// Initialize Superforms with default values
+	const form = await superValidate(
+		{ description: '', current_package_id: '', active: true },
+		zod(lparSchema)
+	);
+
 	const [customers, packages, allLpars] = await Promise.all([
 		db.customers.findMany({
 			where: { active: true },
@@ -47,59 +55,58 @@ export const load: PageServerLoad = async () => {
 	]);
 
 	return {
+		form,
 		customers,
 		packages,
 		allLpars
 	};
 };
 
-// Schema for LPAR creation
-const lparCreateSchema = z.object({
-	name: z.string().min(2, 'Name must be at least 2 characters').max(100),
-	code: z
-		.string()
-		.min(2, 'Code must be at least 2 characters')
-		.max(20)
-		.regex(/^[A-Z0-9_-]+$/, 'Code must be uppercase alphanumeric with dashes/underscores'),
-	customer_id: z.string().uuid('Please select a customer'),
-	description: z.string().max(500).optional(),
-	current_package_id: z.string().uuid().optional().or(z.literal('')),
-	active: z.boolean().default(true)
-});
-
 export const actions: Actions = {
-	default: createCreateAction({
-		schema: lparCreateSchema,
-		model: db.lpars,
-		entityType: 'lpar',
-		redirectPath: '/lpars/{id}',
-		extractFormData: (formData) => ({
-			name: formData.get('name'),
-			code: formData.get('code')?.toString().toUpperCase(),
-			customer_id: formData.get('customer_id'),
-			description: formData.get('description') || '',
-			current_package_id: formData.get('current_package_id') || '',
-			active: formData.get('active') === 'on'
-		}),
-		checkUnique: async (validated) => {
-			const existing = await db.lpars.findUnique({
-				where: { code: validated.code }
+	default: async (event) => {
+		// Use Superforms to validate form data
+		const form = await superValidate(event, zod(lparSchema));
+
+		if (!form.valid) {
+			return fail(400, { form });
+		}
+
+		// Check for unique code
+		const existing = await db.lpars.findUnique({
+			where: { code: form.data.code }
+		});
+
+		if (existing) {
+			return fail(400, {
+				form: {
+					...form,
+					errors: { ...form.errors, code: { _errors: ['An LPAR with this code already exists.'] } }
+				}
 			});
-			return existing
-				? {
-						exists: true,
-						field: 'code',
-						message: 'An LPAR with this code already exists.'
-				  }
-				: null;
-		},
-		transformData: (validated) => ({
-			name: validated.name,
-			code: validated.code,
-			customer_id: validated.customer_id,
-			description: validated.description || null,
-			current_package_id: validated.current_package_id || null,
-			active: validated.active
-		})
-	})
+		}
+
+		try {
+			// Create LPAR
+			const lpar = await db.lpars.create({
+				data: {
+					name: form.data.name,
+					code: form.data.code,
+					customer_id: form.data.customer_id,
+					description: form.data.description || null,
+					current_package_id: form.data.current_package_id || null,
+					active: form.data.active
+				}
+			});
+
+			// Create audit log
+			await createAuditLog('lpar', lpar.id, 'create', lpar);
+
+			throw redirect(303, `/lpars/${lpar.id}`);
+		} catch (error) {
+			if (error instanceof Response) throw error;
+
+			console.error('Error creating LPAR:', error);
+			return fail(500, { form });
+		}
+	}
 };

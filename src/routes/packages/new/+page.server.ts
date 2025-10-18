@@ -1,10 +1,18 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '$lib/server/db';
 import { fail, redirect } from '@sveltejs/kit';
+import { superValidate } from 'sveltekit-superforms';
+import { zod } from 'sveltekit-superforms/adapters';
 import { packageWithItemsSchema } from '$lib/schemas/package';
 
 // Load all packages for clone dropdown and all software for PackageItemsManager
 export const load: PageServerLoad = async () => {
+	// Initialize Superforms with default values
+	const form = await superValidate(
+		{ description: '', active: true, items: [] },
+		zod(packageWithItemsSchema)
+	);
+
 	const [allPackages, allSoftware] = await Promise.all([
 		db.packages.findMany({
 			where: { active: true },
@@ -46,67 +54,48 @@ export const load: PageServerLoad = async () => {
 	]);
 
 	return {
+		form,
 		allPackages,
 		allSoftware
 	};
 };
 
 export const actions: Actions = {
-	default: async ({ request }) => {
-		const formData = await request.formData();
+	default: async (event) => {
+		// Use Superforms to validate form data
+		const form = await superValidate(event, zod(packageWithItemsSchema));
 
-		// Parse the form data
-		const rawData = {
-			name: formData.get('name')?.toString(),
-			code: formData.get('code')?.toString().toUpperCase(),
-			version: formData.get('version')?.toString(),
-			description: formData.get('description')?.toString() || '',
-			release_date: formData.get('release_date')?.toString(),
-			active: formData.get('active') === 'on',
-			items: JSON.parse(formData.get('items')?.toString() || '[]')
-		};
-
-		// Validate with Zod schema
-		const validated = packageWithItemsSchema.safeParse({
-			name: rawData.name,
-			code: rawData.code,
-			version: rawData.version,
-			description: rawData.description,
-			release_date: new Date(rawData.release_date || ''),
-			active: rawData.active,
-			items: rawData.items
-		});
-
-		if (!validated.success) {
-			return fail(400, {
-				errors: validated.error.flatten().fieldErrors,
-				message: 'Validation failed'
-			});
+		if (!form.valid) {
+			return fail(400, { form });
 		}
 
 		// Check for unique code+version combination
 		const existing = await db.packages.findFirst({
 			where: {
-				code: validated.data.code,
-				version: validated.data.version
+				code: form.data.code,
+				version: form.data.version
 			}
 		});
 
 		if (existing) {
 			return fail(400, {
-				errors: { code: ['A package with this code and version already exists.'] },
-				message: 'Validation failed'
+				form: {
+					...form,
+					errors: { ...form.errors, code: ['A package with this code and version already exists.'] }
+				}
 			});
 		}
 
 		// Validate unique order_index values if items provided
-		if (validated.data.items && validated.data.items.length > 0) {
-			const orderIndices = validated.data.items.map(item => item.order_index);
+		if (form.data.items && form.data.items.length > 0) {
+			const orderIndices = form.data.items.map((item: any) => item.order_index);
 			const uniqueOrderIndices = new Set(orderIndices);
 			if (orderIndices.length !== uniqueOrderIndices.size) {
 				return fail(400, {
-					errors: { items: ['Order indices must be unique'] },
-					message: 'Validation failed'
+					form: {
+						...form,
+						errors: { ...form.errors, items: ['Order indices must be unique'] }
+					}
 				});
 			}
 		}
@@ -117,18 +106,18 @@ export const actions: Actions = {
 				// Create package master data
 				const pkg = await tx.packages.create({
 					data: {
-						name: validated.data.name,
-						code: validated.data.code,
-						version: validated.data.version,
-						description: validated.data.description || null,
-						release_date: validated.data.release_date,
-						active: validated.data.active
+						name: form.data.name,
+						code: form.data.code,
+						version: form.data.version,
+						description: form.data.description || null,
+						release_date: new Date(form.data.release_date),
+						active: form.data.active
 					}
 				});
 
 				// Create package items if provided
-				if (validated.data.items && validated.data.items.length > 0) {
-					for (const item of validated.data.items) {
+				if (form.data.items && form.data.items.length > 0) {
+					for (const item of form.data.items) {
 						await tx.package_items.create({
 							data: {
 								package_id: pkg.id,
@@ -148,7 +137,7 @@ export const actions: Actions = {
 					'create',
 					{
 						...pkg,
-						items_count: validated.data.items?.length || 0
+						items_count: form.data.items?.length || 0
 					}
 				);
 
@@ -162,9 +151,7 @@ export const actions: Actions = {
 			}
 
 			console.error('Error creating package:', err);
-			return fail(500, {
-				message: 'Failed to create package. Please try again.'
-			});
+			return fail(500, { form });
 		}
 	}
 };

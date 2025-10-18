@@ -14,9 +14,9 @@ export const vendorSchema = z.object({
 		.min(FIELD_LENGTHS.code.min, `Code must be at least ${FIELD_LENGTHS.code.min} characters`)
 		.max(FIELD_LENGTHS.code.max)
 		.regex(CODE_PATTERN, CODE_ERROR_MESSAGE),
-	website: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-	contact_email: z.string().email('Must be a valid email').optional().or(z.literal('')),
-	active: z.boolean().default(true)
+	website: z.string().url('Must be a valid URL').or(z.literal('')),
+	contact_email: z.string().email('Must be a valid email').or(z.literal('')),
+	active: z.boolean()
 });
 
 export const vendorUpdateSchema = vendorSchema.partial().required({ name: true, code: true });

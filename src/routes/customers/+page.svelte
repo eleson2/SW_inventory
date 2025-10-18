@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import type { Customer } from '$types';
+	import { goto } from '$app/navigation';
 	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
 	import DataTable from '$components/common/DataTable.svelte';
@@ -41,7 +42,7 @@
 	];
 
 	function handleRowClick(customer: Customer) {
-		window.location.href = `/customers/${customer.id}`;
+		goto(`/customers/${customer.id}`);
 	}
 
 	function handleSort(field: string) {
@@ -51,13 +52,16 @@
 
 		url.searchParams.set('sort', field);
 		url.searchParams.set('direction', newDirection);
-		window.location.href = url.toString();
+		url.searchParams.set('page', '1'); // Reset to first page when sorting
+
+		goto(url.toString());
 	}
 
 	function handlePageChange(page: number) {
 		const url = new URL(window.location.href);
 		url.searchParams.set('page', page.toString());
-		window.location.href = url.toString();
+
+		goto(url.toString());
 	}
 </script>
 
@@ -69,7 +73,7 @@
 				Manage customer information in multi-tenant environment
 			</p>
 		</div>
-		<Button onclick={() => window.location.href = '/customers/new'}>
+		<Button onclick={() => goto('/customers/new')}>
 			Add Customer
 		</Button>
 	</div>

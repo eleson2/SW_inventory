@@ -1,9 +1,11 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import { goto } from '$app/navigation';
 	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
+	import Breadcrumb from '$components/common/Breadcrumb.svelte';
 	import CloneDialog from '$components/common/CloneDialog.svelte';
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
 	import { formatDateTime } from '$utils/date-format';
@@ -14,6 +16,12 @@
 
 	let showCloneDialog = $state(false);
 	let cloning = $state(false);
+
+	const breadcrumbItems = [
+		{ label: 'Home', href: '/' },
+		{ label: 'Vendors', href: '/vendors' },
+		{ label: vendor.name }
+	];
 
 	const handleClone = async (formData: Record<string, string>) => {
 		cloning = true;
@@ -33,6 +41,9 @@
 </script>
 
 <div class="space-y-6">
+	<!-- Breadcrumb Navigation -->
+	<Breadcrumb items={breadcrumbItems} />
+
 	<div class="flex items-center justify-between">
 		<div>
 			<h1 class="text-3xl font-bold tracking-tight">{vendor.name}</h1>
@@ -42,11 +53,11 @@
 			<Button onclick={() => showCloneDialog = true}>
 				Clone Vendor
 			</Button>
-			<Button variant="outline" onclick={() => window.location.href = `/vendors/${vendor.id}/edit`}>
+			<Button variant="outline" onclick={() => goto(`/vendors/${vendor.id}/edit`)}>
 				Edit
 			</Button>
-			<Button variant="outline" onclick={() => window.history.back()}>
-				Back
+			<Button variant="outline" onclick={() => goto('/vendors')}>
+				Back to List
 			</Button>
 		</div>
 	</div>
