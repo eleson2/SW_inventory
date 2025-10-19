@@ -3,6 +3,7 @@
 	import type { LparSoftwareInstallation } from '$lib/schemas/lpar';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
+	import FormCheckbox from '$components/common/FormCheckbox.svelte';
 	import Label from '$components/ui/Label.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
 	import LparSoftwareManager from '$components/domain/LparSoftwareManager.svelte';
@@ -155,16 +156,12 @@
 					></textarea>
 				</div>
 
-				<div class="flex items-center space-x-2">
-					<input
-						type="checkbox"
-						id="active"
-						name="active"
-						bind:checked={formData.active}
-						class="h-4 w-4 rounded border-gray-300"
-					/>
-					<Label for="active">Active</Label>
-				</div>
+				<FormCheckbox
+					label="Active"
+					id="active"
+					name="active"
+					bind:checked={formData.active}
+				/>
 
 				{#if form?.message}
 					<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">

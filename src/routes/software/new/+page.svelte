@@ -3,8 +3,9 @@
 	import { superForm } from 'sveltekit-superforms';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
+	import FormCheckbox from '$components/common/FormCheckbox.svelte';
 	import Label from '$components/ui/Label.svelte';
-	import SearchableSelect from '$components/common/SearchableSelect.svelte';
+	import CloneModeToggle from '$components/common/CloneModeToggle.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
 	import VersionManager from '$components/domain/VersionManager.svelte';
 
@@ -40,7 +41,6 @@
 
 	// When clone source is selected, pre-fill form
 	function handleCloneSourceSelect(sourceId: string) {
-		cloneSourceId = sourceId;
 		const source = data.allSoftware.find((s) => s.id === sourceId);
 		if (source) {
 			$form.name = `${source.name} (Copy)`;
@@ -65,6 +65,24 @@
 		}
 	}
 
+	// Reset form to blank state
+	function handleBlankSelect() {
+		$form.name = '';
+		$form.vendor_id = '';
+		$form.description = '';
+		$form.active = true;
+		versions = [{
+			version: '',
+			ptf_level: '',
+			release_date: new Date().toISOString().split('T')[0],
+			end_of_support: '',
+			release_notes: '',
+			is_current: true,
+			_isNew: true,
+			_isEditing: true
+		}];
+	}
+
 	// Handle version changes
 	function handleVersionsChange(updatedVersions: any[]) {
 		versions = updatedVersions;
@@ -85,69 +103,19 @@
 			<h2 class="text-xl font-semibold mb-4">Software Details</h2>
 			<div class="space-y-6">
 				<!-- Creation Mode Toggle -->
-				<div class="space-y-3 pb-4 border-b">
-					<Label>How would you like to create this software?</Label>
-					<div class="flex gap-4">
-						<label class="flex items-center gap-2 cursor-pointer">
-							<input
-								type="radio"
-								name="creationMode"
-								value="blank"
-								bind:group={creationMode}
-								onchange={() => {
-									cloneSourceId = '';
-									$form.name = '';
-									$form.vendor_id = '';
-									$form.description = '';
-									$form.active = true;
-									versions = [{
-										version: '',
-										ptf_level: '',
-										release_date: new Date().toISOString().split('T')[0],
-										end_of_support: '',
-										release_notes: '',
-										is_current: true,
-										_isNew: true,
-										_isEditing: true
-									}];
-								}}
-								class="h-4 w-4"
-							/>
-							<span>Create blank software</span>
-						</label>
-						<label class="flex items-center gap-2 cursor-pointer">
-							<input
-								type="radio"
-								name="creationMode"
-								value="clone"
-								bind:group={creationMode}
-								class="h-4 w-4"
-							/>
-							<span>Create from existing software</span>
-						</label>
-					</div>
-
-					{#if creationMode === 'clone'}
-						<div class="space-y-2 pt-2">
-							<Label for="cloneSource">Select source software</Label>
-							<SearchableSelect
-								items={data.allSoftware}
-								displayField="name"
-								valueField="id"
-								secondaryField="vendors.name"
-								placeholder="Search for software to clone..."
-								bind:value={cloneSourceId}
-								onSelect={handleCloneSourceSelect}
-							/>
-							{#if cloneSourceId}
-								<p class="text-sm text-muted-foreground">
-									Form has been pre-filled with data from selected software. You can edit any field
-									before creating.
-								</p>
-							{/if}
-						</div>
-					{/if}
-				</div>
+				<CloneModeToggle
+					entityName="Software"
+					items={data.allSoftware}
+					displayField="name"
+					secondaryField="vendors.name"
+					bind:mode={creationMode}
+					bind:selectedId={cloneSourceId}
+					onModeChange={(mode) => {
+						creationMode = mode;
+					}}
+					onSourceSelect={handleCloneSourceSelect}
+					onBlankSelect={handleBlankSelect}
+				/>
 
 				<FormField
 					label="Software Name"
@@ -189,16 +157,12 @@
 					></textarea>
 				</div>
 
-				<div class="flex items-center space-x-2">
-					<input
-						type="checkbox"
-						id="active"
-						name="active"
-						bind:checked={$form.active}
-						class="h-4 w-4 rounded border-gray-300"
-					/>
-					<Label for="active">Active</Label>
-				</div>
+				<FormCheckbox
+					label="Active"
+					id="active"
+					name="active"
+					bind:checked={$form.active}
+				/>
 
 				{#if form?.message}
 					<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">

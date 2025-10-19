@@ -3,9 +3,9 @@
 	import { superForm } from 'sveltekit-superforms';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
-	import Label from '$components/ui/Label.svelte';
-	import SearchableSelect from '$components/common/SearchableSelect.svelte';
+	import FormCheckbox from '$components/common/FormCheckbox.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
+	import CloneModeToggle from '$components/common/CloneModeToggle.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -20,7 +20,6 @@
 
 	// When clone source is selected, pre-fill form
 	function handleCloneSourceSelect(sourceId: string) {
-		cloneSourceId = sourceId;
 		const source = data.allVendors.find((v) => v.id === sourceId);
 		if (source) {
 			$form.name = `${source.name} (Copy)`;
@@ -29,6 +28,15 @@
 			$form.contact_email = source.contact_email || '';
 			$form.active = source.active;
 		}
+	}
+
+	// Reset form to blank state
+	function handleBlankSelect() {
+		$form.name = '';
+		$form.code = '';
+		$form.website = '';
+		$form.contact_email = '';
+		$form.active = true;
 	}
 </script>
 
@@ -42,61 +50,25 @@
 
 	<Card class="p-6">
 		<form method="POST" class="space-y-6" use:enhance>
-			<!-- Creation Mode Toggle -->
-			<div class="space-y-3 pb-4 border-b">
-				<Label>How would you like to create this vendor?</Label>
-				<div class="flex gap-4">
-					<label class="flex items-center gap-2 cursor-pointer">
-						<input
-							type="radio"
-							name="creationMode"
-							value="blank"
-							bind:group={creationMode}
-							onchange={() => {
-								cloneSourceId = '';
-								$form.name = '';
-								$form.code = '';
-								$form.website = '';
-								$form.contact_email = '';
-								$form.active = true;
-							}}
-							class="h-4 w-4"
-						/>
-						<span>Create blank vendor</span>
-					</label>
-					<label class="flex items-center gap-2 cursor-pointer">
-						<input
-							type="radio"
-							name="creationMode"
-							value="clone"
-							bind:group={creationMode}
-							class="h-4 w-4"
-						/>
-						<span>Create from existing vendor</span>
-					</label>
-				</div>
+			<!-- Required fields legend -->
+			<p class="text-sm text-muted-foreground pb-2 border-b">
+				<span class="text-destructive">*</span> Required fields
+			</p>
 
-				{#if creationMode === 'clone'}
-					<div class="space-y-2 pt-2">
-						<Label for="cloneSource">Select source vendor</Label>
-						<SearchableSelect
-							items={data.allVendors}
-							displayField="name"
-							valueField="id"
-							secondaryField="code"
-							placeholder="Search for vendor to clone..."
-							bind:value={cloneSourceId}
-							onSelect={handleCloneSourceSelect}
-						/>
-						{#if cloneSourceId}
-							<p class="text-sm text-muted-foreground">
-								Form has been pre-filled with data from selected vendor. You can edit any field
-								before creating.
-							</p>
-						{/if}
-					</div>
-				{/if}
-			</div>
+			<!-- Creation Mode Toggle -->
+			<CloneModeToggle
+				entityName="Vendor"
+				items={data.allVendors}
+				displayField="name"
+				secondaryField="code"
+				bind:mode={creationMode}
+				bind:selectedId={cloneSourceId}
+				onModeChange={(mode) => {
+					creationMode = mode;
+				}}
+				onSourceSelect={handleCloneSourceSelect}
+				onBlankSelect={handleBlankSelect}
+			/>
 
 			<FormField
 				label="Vendor Name"
@@ -141,16 +113,12 @@
 				error={$errors.contact_email?._errors?.[0]}
 			/>
 
-			<div class="flex items-center space-x-2">
-				<input
-					type="checkbox"
-					id="active"
-					name="active"
-					bind:checked={$form.active}
-					class="h-4 w-4 rounded border-gray-300"
-				/>
-				<Label for="active">Active</Label>
-			</div>
+			<FormCheckbox
+				label="Active"
+				id="active"
+				name="active"
+				bind:checked={$form.active}
+			/>
 
 			<FormButtons />
 		</form>

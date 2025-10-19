@@ -14,8 +14,17 @@ async function runSqlFile(filename: string) {
 	try {
 		const sql = readFileSync(join(__dirname, filename), 'utf-8');
 
-		// Execute as a single transaction
-		await prisma.$executeRawUnsafe(sql);
+		// Split SQL into individual statements and execute them separately
+		const statements = sql
+			.split(';')
+			.map(s => s.trim())
+			.filter(s => s.length > 0 && !s.startsWith('--'));
+
+		for (const statement of statements) {
+			if (statement) {
+				await prisma.$executeRawUnsafe(statement);
+			}
+		}
 
 		console.log(`✅ ${filename} executed successfully!`);
 	} catch (error: any) {

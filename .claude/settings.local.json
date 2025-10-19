@@ -51,7 +51,10 @@
       "Bash(1)",
       "Bash(for route in \"\" \"vendors\" \"vendors/new\" \"customers\" \"customers/new\" \"software\" \"software/new\" \"packages\" \"packages/new\" \"lpars\" \"lpars/new\")",
       "Bash(do echo -n \"Testing /$route: \")",
-      "Bash(git stash drop)"
+      "Bash(git stash drop)",
+      "Bash(npm install xlsx)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT COUNT(*) as vendors FROM vendors; SELECT COUNT(*) as customers FROM customers; SELECT COUNT(*) as software FROM software; SELECT COUNT(*) as lpars FROM lpars; SELECT COUNT(*) as lpar_software FROM lpar_software;\" -t)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT ''Vendors:'' as type, COUNT(*)::text as count FROM vendors UNION ALL SELECT ''Customers:'', COUNT(*)::text FROM customers UNION ALL SELECT ''Software:'', COUNT(*)::text FROM software UNION ALL SELECT ''LPARs:'', COUNT(*)::text FROM lpars UNION ALL SELECT ''LPAR Software:'', COUNT(*)::text FROM lpar_software;\" -t)"
     ],
     "deny": [],
     "ask": []

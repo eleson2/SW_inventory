@@ -2,6 +2,7 @@
 	import { cn } from '$utils/cn';
 	import Button from '$components/ui/Button.svelte';
 	import type { SortOptions } from '$types';
+	import type { Snippet } from 'svelte';
 
 	type Column<T> = {
 		key: keyof T | string;
@@ -17,7 +18,8 @@
 		currentSort,
 		onRowClick,
 		loading = false,
-		emptyMessage = 'No data available'
+		emptyMessage = 'No data available',
+		emptyState
 	}: {
 		data: T[];
 		columns: Column<T>[];
@@ -26,6 +28,7 @@
 		onRowClick?: (item: T) => void;
 		loading?: boolean;
 		emptyMessage?: string;
+		emptyState?: Snippet;
 	} = $props();
 
 	function handleSort(field: string) {
@@ -71,13 +74,22 @@
 			{#if loading}
 				<tr>
 					<td colspan={columns.length} class="h-24 text-center">
-						Loading...
+						<div class="flex items-center justify-center gap-2">
+							<div class="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+							<span class="text-muted-foreground">Loading...</span>
+						</div>
 					</td>
 				</tr>
 			{:else if data.length === 0}
 				<tr>
-					<td colspan={columns.length} class="h-24 text-center text-muted-foreground">
-						{emptyMessage}
+					<td colspan={columns.length} class="h-32 text-center">
+						{#if emptyState}
+							<div class="flex flex-col items-center justify-center gap-2 py-8">
+								{@render emptyState()}
+							</div>
+						{:else}
+							<p class="text-muted-foreground">{emptyMessage}</p>
+						{/if}
 					</td>
 				</tr>
 			{:else}

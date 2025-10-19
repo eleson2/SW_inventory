@@ -4,8 +4,9 @@
 	import { superForm } from 'sveltekit-superforms';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
+	import FormCheckbox from '$components/common/FormCheckbox.svelte';
+	import CloneModeToggle from '$components/common/CloneModeToggle.svelte';
 	import Label from '$components/ui/Label.svelte';
-	import SearchableSelect from '$components/common/SearchableSelect.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
 	import PackageItemsManager from '$components/domain/PackageItemsManager.svelte';
 
@@ -25,7 +26,6 @@
 
 	// When clone source is selected, pre-fill form
 	function handleCloneSourceSelect(sourceId: string) {
-		cloneSourceId = sourceId;
 		const source = data.allPackages.find((p) => p.id === sourceId);
 		if (source) {
 			$form.name = `${source.name} (Copy)`;
@@ -48,6 +48,17 @@
 		}
 	}
 
+	// Reset form to blank state
+	function handleBlankSelect() {
+		$form.name = '';
+		$form.code = '';
+		$form.version = '';
+		$form.description = '';
+		$form.release_date = '';
+		$form.active = true;
+		packageItems = [];
+	}
+
 	// Sync packageItems with form.items when they change
 	$effect(() => {
 		$form.items = packageItems;
@@ -68,70 +79,19 @@
 			<h2 class="text-xl font-semibold mb-4">Package Information</h2>
 			<div class="space-y-6">
 			<!-- Creation Mode Toggle -->
-			<div class="space-y-3 pb-4 border-b">
-				<Label>How would you like to create this package?</Label>
-				<div class="flex gap-4">
-					<label class="flex items-center gap-2 cursor-pointer">
-						<input
-							type="radio"
-							name="creationMode"
-							value="blank"
-							bind:group={creationMode}
-							onchange={() => {
-								cloneSourceId = '';
-								$form.name = '';
-								$form.code = '';
-								$form.version = '';
-								$form.description = '';
-								$form.release_date = '';
-								$form.active = true;
-								packageItems = [];
-							}}
-							class="h-4 w-4"
-						/>
-						<span>Create blank package</span>
-					</label>
-					<label class="flex items-center gap-2 cursor-pointer">
-						<input
-							type="radio"
-							name="creationMode"
-							value="clone"
-							bind:group={creationMode}
-							class="h-4 w-4"
-						/>
-						<span>Create from existing package</span>
-					</label>
-				</div>
-
-				{#if creationMode === 'clone'}
-					<div class="space-y-2 pt-2">
-						<Label for="cloneSource">Select source package</Label>
-						<SearchableSelect
-							items={data.allPackages}
-							displayField="name"
-							valueField="id"
-							secondaryField="code"
-							placeholder="Search for package to clone..."
-							bind:value={cloneSourceId}
-							onSelect={handleCloneSourceSelect}
-						/>
-						{#if cloneSourceId}
-							{@const source = data.allPackages.find((p) => p.id === cloneSourceId)}
-							<div class="text-sm space-y-1">
-								<p class="text-muted-foreground">
-									Form has been pre-filled with data from selected package. You can edit any field
-									before creating.
-								</p>
-								{#if source && source.package_items.length > 0}
-									<p class="text-primary font-medium">
-										✓ Package items ({source.package_items.length} items) have been cloned! You can modify them below before creating.
-									</p>
-								{/if}
-							</div>
-						{/if}
-					</div>
-				{/if}
-			</div>
+			<CloneModeToggle
+				entityName="Package"
+				items={data.allPackages}
+				displayField="name"
+				secondaryField="code"
+				bind:mode={creationMode}
+				bind:selectedId={cloneSourceId}
+				onModeChange={(mode) => {
+					creationMode = mode;
+				}}
+				onSourceSelect={handleCloneSourceSelect}
+				onBlankSelect={handleBlankSelect}
+			/>
 
 			<FormField
 				label="Package Name"
@@ -186,16 +146,12 @@
 				></textarea>
 			</div>
 
-				<div class="flex items-center space-x-2">
-					<input
-						type="checkbox"
-						id="active"
-						name="active"
-						bind:checked={$form.active}
-						class="h-4 w-4 rounded border-gray-300"
-					/>
-					<Label for="active">Active</Label>
-				</div>
+				<FormCheckbox
+					label="Active"
+					id="active"
+					name="active"
+					bind:checked={$form.active}
+				/>
 			</div>
 		</Card>
 

@@ -2,7 +2,7 @@
 	import type { PageData, ActionData } from './$types';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
-	import Label from '$components/ui/Label.svelte';
+	import FormCheckbox from '$components/common/FormCheckbox.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -69,16 +69,12 @@
 				error={form?.errors?.contact_email?.[0]}
 			/>
 
-			<div class="flex items-center space-x-2">
-				<input
-					type="checkbox"
-					id="active"
-					name="active"
-					bind:checked={formData.active}
-					class="h-4 w-4 rounded border-gray-300"
-				/>
-				<Label for="active">Active</Label>
-			</div>
+			<FormCheckbox
+				label="Active"
+				id="active"
+				name="active"
+				bind:checked={formData.active}
+			/>
 
 			{#if form?.message}
 				<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
