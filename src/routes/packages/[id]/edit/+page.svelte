@@ -4,9 +4,11 @@
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import FormCheckbox from '$components/common/FormCheckbox.svelte';
-	import Label from '$components/ui/Label.svelte';
 	import PackageItemsManager from '$components/domain/PackageItemsManager.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
+	import FormErrorMessage from '$components/common/FormErrorMessage.svelte';
+	import FormTextarea from '$components/common/FormTextarea.svelte';
+	import { useMasterDetailForm } from '$lib/utils/useMasterDetailForm';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -37,40 +39,13 @@
 		}))
 	);
 
-	// Handle form submission with master-detail data
-	let submitting = $state(false);
-
-	async function handleSubmit(event: Event) {
-		event.preventDefault();
-		submitting = true;
-
-		const form = event.target as HTMLFormElement;
-		const formDataToSend = new FormData(form);
-
-		// Add items as JSON
-		formDataToSend.set('items', JSON.stringify(packageItems));
-
-		try {
-			const response = await fetch(form.action, {
-				method: 'POST',
-				body: formDataToSend
-			});
-
-			if (response.redirected) {
-				window.location.href = response.url;
-			} else {
-				// Handle validation errors
-				const result = await response.json();
-				if (!result.success) {
-					// Errors will be in form prop on next render
-					submitting = false;
-				}
-			}
-		} catch (error) {
-			console.error('Submission error:', error);
-			submitting = false;
+	// Use master-detail form utility
+	const { handleSubmit, submitting } = useMasterDetailForm({
+		onBuildFormData: (formData) => {
+			// Add items as JSON
+			formData.set('items', JSON.stringify(packageItems));
 		}
-	}
+	});
 </script>
 
 <div class="space-y-6 max-w-4xl">
@@ -129,16 +104,13 @@
 					error={form?.errors?.release_date?.[0]}
 				/>
 
-				<div class="space-y-2">
-					<Label for="description">Description</Label>
-					<textarea
-						id="description"
-						name="description"
-						bind:value={formData.description}
-						placeholder="Enter package description (optional)"
-						class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-					></textarea>
-				</div>
+				<FormTextarea
+					label="Description"
+					id="description"
+					name="description"
+					bind:value={formData.description}
+					placeholder="Enter package description (optional)"
+				/>
 
 				<FormCheckbox
 					label="Active"
@@ -160,13 +132,10 @@
 
 		<!-- Form Actions -->
 		<Card class="p-6">
-			{#if form?.message}
-				<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive mb-4">
-					{form.message}
-				</div>
-			{/if}
-
-			<FormButtons loading={submitting} />
+			<div class="space-y-4">
+				<FormErrorMessage message={form?.message} />
+				<FormButtons loading={submitting} />
+			</div>
 		</Card>
 	</form>
 </div>

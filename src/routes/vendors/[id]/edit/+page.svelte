@@ -1,18 +1,17 @@
 <script lang="ts">
-	import type { PageData, ActionData } from './$types';
+	import type { PageData } from './$types';
+	import { superForm } from 'sveltekit-superforms';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import FormCheckbox from '$components/common/FormCheckbox.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
+	import FormErrorMessage from '$components/common/FormErrorMessage.svelte';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { data }: { data: PageData } = $props();
 
-	let formData = $state({
-		name: data.vendor.name,
-		code: data.vendor.code,
-		website: data.vendor.website || '',
-		contact_email: data.vendor.contact_email || '',
-		active: data.vendor.active
+	const { form, errors, enhance, message } = superForm(data.form, {
+		dataType: 'json',
+		resetForm: false
 	});
 </script>
 
@@ -25,26 +24,26 @@
 	</div>
 
 	<Card class="p-6">
-		<form method="POST" class="space-y-6">
+		<form method="POST" class="space-y-6" use:enhance>
 			<FormField
 				label="Vendor Name"
 				id="name"
 				name="name"
-				bind:value={formData.name}
+				bind:value={$form.name}
 				required
 				placeholder="Enter vendor name"
-				error={form?.errors?.name?.[0]}
+				error={$errors.name?._errors?.[0]}
 			/>
 
 			<FormField
 				label="Vendor Code"
 				id="code"
 				name="code"
-				bind:value={formData.code}
+				bind:value={$form.code}
 				required
 				placeholder="VENDOR-CODE"
 				helperText="Uppercase alphanumeric with dashes/underscores"
-				error={form?.errors?.code?.[0]}
+				error={$errors.code?._errors?.[0]}
 			/>
 
 			<FormField
@@ -52,10 +51,10 @@
 				id="website"
 				name="website"
 				type="url"
-				bind:value={formData.website}
+				bind:value={$form.website}
 				placeholder="https://www.example.com"
 				helperText="Optional - full URL including https://"
-				error={form?.errors?.website?.[0]}
+				error={$errors.website?._errors?.[0]}
 			/>
 
 			<FormField
@@ -63,24 +62,20 @@
 				id="contact_email"
 				name="contact_email"
 				type="email"
-				bind:value={formData.contact_email}
+				bind:value={$form.contact_email}
 				placeholder="contact@example.com"
 				helperText="Optional - main contact email for this vendor"
-				error={form?.errors?.contact_email?.[0]}
+				error={$errors.contact_email?._errors?.[0]}
 			/>
 
 			<FormCheckbox
 				label="Active"
 				id="active"
 				name="active"
-				bind:checked={formData.active}
+				bind:checked={$form.active}
 			/>
 
-			{#if form?.message}
-				<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-					{form.message}
-				</div>
-			{/if}
+			<FormErrorMessage message={$message} />
 
 			<FormButtons />
 		</form>

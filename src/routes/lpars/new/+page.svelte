@@ -5,8 +5,8 @@
 	import FormField from '$components/common/FormField.svelte';
 	import FormCheckbox from '$components/common/FormCheckbox.svelte';
 	import CloneModeToggle from '$components/common/CloneModeToggle.svelte';
-	import Label from '$components/ui/Label.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
+	import FormTextarea from '$components/common/FormTextarea.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -127,16 +127,13 @@
 				{/if}
 			</div>
 
-			<div class="space-y-2">
-				<Label for="description">Description</Label>
-				<textarea
-					id="description"
-					name="description"
-					bind:value={$form.description}
-					placeholder="Enter LPAR description (optional)"
-					class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-				></textarea>
-			</div>
+			<FormTextarea
+				label="Description"
+				id="description"
+				name="description"
+				bind:value={$form.description}
+				placeholder="Enter LPAR description (optional)"
+			/>
 
 			<FormCheckbox
 				label="Active"

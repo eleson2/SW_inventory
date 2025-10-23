@@ -4,9 +4,11 @@
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import FormCheckbox from '$components/common/FormCheckbox.svelte';
-	import Label from '$components/ui/Label.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
 	import LparSoftwareManager from '$components/domain/LparSoftwareManager.svelte';
+	import FormErrorMessage from '$components/common/FormErrorMessage.svelte';
+	import FormTextarea from '$components/common/FormTextarea.svelte';
+	import { useMasterDetailForm } from '$lib/utils/useMasterDetailForm';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -46,32 +48,13 @@
 		})
 	);
 
-	// Handle form submission
-	async function handleSubmit(event: Event) {
-		event.preventDefault();
-		const formElement = event.target as HTMLFormElement;
-		const formDataToSend = new FormData(formElement);
-
-		// Add installations as JSON
-		formDataToSend.set('software_installations', JSON.stringify(softwareInstallations));
-
-		// Submit the form
-		try {
-			const response = await fetch(formElement.action, {
-				method: 'POST',
-				body: formDataToSend
-			});
-
-			if (response.redirected) {
-				window.location.href = response.url;
-			} else {
-				// Handle error
-				window.location.reload();
-			}
-		} catch (error) {
-			console.error('Error submitting form:', error);
+	// Use master-detail form utility
+	const { handleSubmit, submitting } = useMasterDetailForm({
+		onBuildFormData: (formData) => {
+			// Add installations as JSON
+			formData.set('software_installations', JSON.stringify(softwareInstallations));
 		}
-	}
+	});
 </script>
 
 <div class="space-y-6">
@@ -145,16 +128,13 @@
 					{/if}
 				</div>
 
-				<div class="space-y-2">
-					<Label for="description">Description</Label>
-					<textarea
-						id="description"
-						name="description"
-						bind:value={formData.description}
-						placeholder="Enter LPAR description (optional)"
-						class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-					></textarea>
-				</div>
+				<FormTextarea
+					label="Description"
+					id="description"
+					name="description"
+					bind:value={formData.description}
+					placeholder="Enter LPAR description (optional)"
+				/>
 
 				<FormCheckbox
 					label="Active"
@@ -163,11 +143,7 @@
 					bind:checked={formData.active}
 				/>
 
-				{#if form?.message}
-					<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-						{form.message}
-					</div>
-				{/if}
+				<FormErrorMessage message={form?.message} />
 			</div>
 		</Card>
 
@@ -183,7 +159,7 @@
 
 		<!-- Submit Buttons -->
 		<Card class="p-6">
-			<FormButtons />
+			<FormButtons loading={submitting} />
 		</Card>
 	</form>
 </div>

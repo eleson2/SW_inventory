@@ -1,18 +1,18 @@
 <script lang="ts">
-	import type { PageData, ActionData } from './$types';
+	import type { PageData } from './$types';
+	import { superForm } from 'sveltekit-superforms';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import FormCheckbox from '$components/common/FormCheckbox.svelte';
-	import Label from '$components/ui/Label.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
+	import FormErrorMessage from '$components/common/FormErrorMessage.svelte';
+	import FormTextarea from '$components/common/FormTextarea.svelte';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { data }: { data: PageData } = $props();
 
-	let formData = $state({
-		name: data.customer.name,
-		code: data.customer.code,
-		description: data.customer.description || '',
-		active: data.customer.active
+	const { form, errors, enhance, message } = superForm(data.form, {
+		dataType: 'json',
+		resetForm: false
 	});
 </script>
 
@@ -25,51 +25,44 @@
 	</div>
 
 	<Card class="p-6">
-		<form method="POST" class="space-y-6">
+		<form method="POST" class="space-y-6" use:enhance>
 			<FormField
 				label="Customer Name"
 				id="name"
 				name="name"
-				bind:value={formData.name}
+				bind:value={$form.name}
 				required
 				placeholder="Enter customer name"
-				error={form?.errors?.name?.[0]}
+				error={$errors.name?._errors?.[0]}
 			/>
 
 			<FormField
 				label="Customer Code"
 				id="code"
 				name="code"
-				bind:value={formData.code}
+				bind:value={$form.code}
 				required
 				placeholder="CUSTOMER-CODE"
 				helperText="Uppercase alphanumeric with dashes/underscores"
-				error={form?.errors?.code?.[0]}
+				error={$errors.code?._errors?.[0]}
 			/>
 
-			<div class="space-y-2">
-				<Label for="description">Description</Label>
-				<textarea
-					id="description"
-					name="description"
-					bind:value={formData.description}
-					placeholder="Enter customer description (optional)"
-					class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-				></textarea>
-			</div>
+			<FormTextarea
+				label="Description"
+				id="description"
+				name="description"
+				bind:value={$form.description}
+				placeholder="Enter customer description (optional)"
+			/>
 
 			<FormCheckbox
 				label="Active"
 				id="active"
 				name="active"
-				bind:checked={formData.active}
+				bind:checked={$form.active}
 			/>
 
-			{#if form?.message}
-				<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-					{form.message}
-				</div>
-			{/if}
+			<FormErrorMessage message={$message} />
 
 			<FormButtons />
 		</form>

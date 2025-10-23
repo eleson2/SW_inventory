@@ -4,10 +4,11 @@
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import FormCheckbox from '$components/common/FormCheckbox.svelte';
-	import Label from '$components/ui/Label.svelte';
 	import CloneModeToggle from '$components/common/CloneModeToggle.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
 	import VersionManager from '$components/domain/VersionManager.svelte';
+	import FormErrorMessage from '$components/common/FormErrorMessage.svelte';
+	import FormTextarea from '$components/common/FormTextarea.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -146,16 +147,13 @@
 					{/if}
 				</div>
 
-				<div class="space-y-2">
-					<Label for="description">Description</Label>
-					<textarea
-						id="description"
-						name="description"
-						bind:value={$form.description}
-						placeholder="Enter software description (optional)"
-						class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-					></textarea>
-				</div>
+				<FormTextarea
+					label="Description"
+					id="description"
+					name="description"
+					bind:value={$form.description}
+					placeholder="Enter software description (optional)"
+				/>
 
 				<FormCheckbox
 					label="Active"
@@ -164,11 +162,7 @@
 					bind:checked={$form.active}
 				/>
 
-				{#if form?.message}
-					<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-						{form.message}
-					</div>
-				{/if}
+				<FormErrorMessage message={form?.message} />
 			</div>
 		</Card>
 

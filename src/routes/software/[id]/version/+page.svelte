@@ -3,7 +3,8 @@
 	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
-	import Label from '$components/ui/Label.svelte';
+	import FormErrorMessage from '$components/common/FormErrorMessage.svelte';
+	import FormTextarea from '$components/common/FormTextarea.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -75,25 +76,16 @@
 				error={form?.errors?.release_date?.[0]}
 			/>
 
-			<div class="space-y-2">
-				<Label for="release_notes">Release Notes</Label>
-				<textarea
-					id="release_notes"
-					name="release_notes"
-					bind:value={formData.release_notes}
-					placeholder="Enter release notes or change description (optional)"
-					class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-				></textarea>
-				<p class="text-sm text-muted-foreground">
-					Optional - describe changes in this version
-				</p>
-			</div>
+			<FormTextarea
+				label="Release Notes"
+				id="release_notes"
+				name="release_notes"
+				bind:value={formData.release_notes}
+				placeholder="Enter release notes or change description (optional)"
+				helperText="Optional - describe changes in this version"
+			/>
 
-			{#if form?.message}
-				<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-					{form.message}
-				</div>
-			{/if}
+			<FormErrorMessage message={form?.message} />
 
 			<div class="flex gap-4">
 				<Button type="submit">Add New Version</Button>

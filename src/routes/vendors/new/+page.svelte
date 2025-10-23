@@ -6,6 +6,7 @@
 	import FormCheckbox from '$components/common/FormCheckbox.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
 	import CloneModeToggle from '$components/common/CloneModeToggle.svelte';
+	import PageHeader from '$components/common/PageHeader.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -41,12 +42,7 @@
 </script>
 
 <div class="space-y-6 max-w-2xl">
-	<div>
-		<h1 class="text-3xl font-bold tracking-tight">New Vendor</h1>
-		<p class="text-muted-foreground mt-2">
-			Add a new software vendor to the system
-		</p>
-	</div>
+	<PageHeader title="New Vendor" description="Add a new software vendor to the system" />
 
 	<Card class="p-6">
 		<form method="POST" class="space-y-6" use:enhance>

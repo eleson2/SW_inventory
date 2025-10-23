@@ -3,9 +3,12 @@
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import FormCheckbox from '$components/common/FormCheckbox.svelte';
-	import Label from '$components/ui/Label.svelte';
+	import FormSelect from '$components/common/FormSelect.svelte';
 	import VersionManager from '$components/domain/VersionManager.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
+	import FormErrorMessage from '$components/common/FormErrorMessage.svelte';
+	import FormTextarea from '$components/common/FormTextarea.svelte';
+	import { useMasterDetailForm } from '$lib/utils/useMasterDetailForm';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -41,20 +44,19 @@
 		versions = updatedVersions;
 	}
 
-	// Handle form submission
-	function handleSubmit(event: SubmitEvent) {
-		const formElement = event.target as HTMLFormElement;
-		const formDataObj = new FormData(formElement);
+	// Use master-detail form utility
+	const { handleSubmit, submitting } = useMasterDetailForm({
+		onBuildFormData: (formData) => {
+			// Add versions as JSON
+			formData.set('versions', JSON.stringify(versions));
 
-		// Add versions as JSON
-		formDataObj.set('versions', JSON.stringify(versions));
-
-		// Find current version ID
-		const currentVersion = versions.find((v) => v.is_current && v._action !== 'delete');
-		if (currentVersion?.id) {
-			formDataObj.set('current_version_id', currentVersion.id);
+			// Find current version ID
+			const currentVersion = versions.find((v) => v.is_current && v._action !== 'delete');
+			if (currentVersion?.id) {
+				formData.set('current_version_id', currentVersion.id);
+			}
 		}
-	}
+	});
 </script>
 
 <div class="space-y-6 max-w-4xl">
@@ -80,34 +82,26 @@
 					error={errors?.name?.[0]}
 				/>
 
-				<div class="space-y-2">
-					<Label for="vendor_id">Vendor <span class="text-destructive">*</span></Label>
-					<select
-						id="vendor_id"
-						name="vendor_id"
-						bind:value={formData.vendor_id}
-						required
-						class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-					>
-						{#each data.vendors as vendor}
-							<option value={vendor.id}>{vendor.name} ({vendor.code})</option>
-						{/each}
-					</select>
-					{#if errors?.vendor_id?.[0]}
-						<p class="text-sm text-destructive">{errors.vendor_id[0]}</p>
-					{/if}
-				</div>
+				<FormSelect
+					label="Vendor"
+					id="vendor_id"
+					name="vendor_id"
+					bind:value={formData.vendor_id}
+					options={data.vendors}
+					valueField="id"
+					displayField="name"
+					secondaryField="code"
+					required
+					error={errors?.vendor_id?.[0]}
+				/>
 
-				<div class="space-y-2">
-					<Label for="description">Description</Label>
-					<textarea
-						id="description"
-						name="description"
-						bind:value={formData.description}
-						placeholder="Enter software description (optional)"
-						class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-					></textarea>
-				</div>
+				<FormTextarea
+					label="Description"
+					id="description"
+					name="description"
+					bind:value={formData.description}
+					placeholder="Enter software description (optional)"
+				/>
 
 				<FormCheckbox
 					label="Active"
@@ -122,12 +116,8 @@
 		<VersionManager bind:versions onVersionsChange={handleVersionsChange} errors={errors} />
 
 		<!-- Form Actions -->
-		{#if form?.message}
-			<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-				{form.message}
-			</div>
-		{/if}
+		<FormErrorMessage message={form?.message} />
 
-		<FormButtons />
+		<FormButtons loading={submitting} />
 	</form>
 </div>
