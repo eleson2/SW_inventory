@@ -101,7 +101,7 @@ export const actions: Actions = {
 			// Create audit log
 			await createAuditLog('lpar', lpar.id, 'create', lpar);
 
-			throw redirect(303, `/lpars/${lpar.id}`);
+			throw redirect(303, '/lpars');
 		} catch (error) {
 			if (error instanceof Response) throw error;
 

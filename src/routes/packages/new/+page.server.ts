@@ -144,7 +144,7 @@ export const actions: Actions = {
 				return pkg;
 			});
 
-			throw redirect(303, `/packages/${newPackage.id}`);
+			throw redirect(303, '/packages');
 		} catch (err) {
 			if (err instanceof Error && err.message.includes('redirect')) {
 				throw err;

@@ -192,7 +192,7 @@ export const actions: Actions = {
 				);
 			});
 
-			throw redirect(303, `/lpars/${params.id}`);
+			throw redirect(303, '/lpars');
 		} catch (err) {
 			if (err instanceof Error && err.message.includes('redirect')) {
 				throw err;

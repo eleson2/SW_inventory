@@ -136,7 +136,7 @@ export const actions: Actions = {
 				return software;
 			});
 
-			throw redirect(303, `/software/${result.id}`);
+			throw redirect(303, '/software');
 		} catch (error) {
 			if (error instanceof Response) throw error;
 

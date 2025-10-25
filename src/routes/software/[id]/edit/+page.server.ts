@@ -179,7 +179,7 @@ export const actions: Actions = {
 				version_changes: updated.versionChanges
 			});
 
-			throw redirect(303, `/software/${params.id}`);
+			throw redirect(303, '/software');
 		} catch (err) {
 			console.error('Software update error:', err);
 

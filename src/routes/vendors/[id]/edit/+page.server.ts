@@ -59,7 +59,7 @@ export const actions: Actions = {
 
 			await createAuditLog('vendor', vendor.id, 'update', vendor);
 
-			throw redirect(303, `/vendors/${vendor.id}`);
+			throw redirect(303, '/vendors');
 		} catch (err) {
 			if (err instanceof Response) throw err;
 
