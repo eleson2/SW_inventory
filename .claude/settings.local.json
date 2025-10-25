@@ -54,7 +54,20 @@
       "Bash(git stash drop)",
       "Bash(npm install xlsx)",
       "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT COUNT(*) as vendors FROM vendors; SELECT COUNT(*) as customers FROM customers; SELECT COUNT(*) as software FROM software; SELECT COUNT(*) as lpars FROM lpars; SELECT COUNT(*) as lpar_software FROM lpar_software;\" -t)",
-      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT ''Vendors:'' as type, COUNT(*)::text as count FROM vendors UNION ALL SELECT ''Customers:'', COUNT(*)::text FROM customers UNION ALL SELECT ''Software:'', COUNT(*)::text FROM software UNION ALL SELECT ''LPARs:'', COUNT(*)::text FROM lpars UNION ALL SELECT ''LPAR Software:'', COUNT(*)::text FROM lpar_software;\" -t)"
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT ''Vendors:'' as type, COUNT(*)::text as count FROM vendors UNION ALL SELECT ''Customers:'', COUNT(*)::text FROM customers UNION ALL SELECT ''Software:'', COUNT(*)::text FROM software UNION ALL SELECT ''LPARs:'', COUNT(*)::text FROM lpars UNION ALL SELECT ''LPAR Software:'', COUNT(*)::text FROM lpar_software;\" -t)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT ''vendor'' as type, id FROM vendors LIMIT 1 UNION ALL SELECT ''customer'', id FROM customers LIMIT 1 UNION ALL SELECT ''software'', id FROM software LIMIT 1 UNION ALL SELECT ''lpar'', id FROM lpars LIMIT 1 UNION ALL SELECT ''package'', id FROM packages LIMIT 1;\" -t)",
+      "Bash(for route in \"\" \"vendors\" \"customers\" \"software\" \"lpars\" \"packages\")",
+      "Bash(for route in \"vendors\" \"customers\" \"software\" \"lpars\" \"packages\")",
+      "Bash(do echo -n \"$route list: \")",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT id FROM vendors LIMIT 1\" -t)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT id FROM packages LIMIT 1\" -t -A)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT COUNT(*) as count FROM packages;\" -t)",
+      "Bash(for file in src/routes/software/new/+page.svelte src/routes/lpars/new/+page.svelte src/routes/vendors/new/+page.svelte src/routes/customers/new/+page.svelte)",
+      "Bash(do)",
+      "Bash(echo \"Fixed: $file\")",
+      "Bash(for route in \"packages/new\" \"software/new\" \"vendors/new\" \"customers/new\")",
+      "Bash(do echo -n \"$route: \")",
+      "Bash(for route in \"packages/new\" \"software/new\" \"vendors/new\" \"customers/new\" \"lpars/new\")"
     ],
     "deny": [],
     "ask": []

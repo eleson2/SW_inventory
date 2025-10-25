@@ -116,7 +116,7 @@
 				bind:checked={$form.active}
 			/>
 
-			<FormButtons />
+			<FormButtons loading={$submitting || $delayed} />
 		</form>
 	</Card>
 </div>

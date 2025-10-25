@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import { superForm} from 'sveltekit-superforms';
 	import Card from '$components/ui/Card.svelte';
+	import Label from '$components/ui/Label.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import FormCheckbox from '$components/common/FormCheckbox.svelte';
 	import CloneModeToggle from '$components/common/CloneModeToggle.svelte';
@@ -142,7 +143,7 @@
 				bind:checked={$form.active}
 			/>
 
-			<FormButtons />
+			<FormButtons loading={$submitting || $delayed} />
 		</form>
 	</Card>
 </div>

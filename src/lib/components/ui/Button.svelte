@@ -12,6 +12,7 @@
 		disabled = false,
 		onclick,
 		formaction,
+		href,
 		children
 	}: {
 		variant?: Variant;
@@ -21,6 +22,7 @@
 		disabled?: boolean;
 		onclick?: (e: MouseEvent) => void;
 		formaction?: string;
+		href?: string;
 		children: any;
 	} = $props();
 
@@ -41,19 +43,36 @@
 	};
 </script>
 
-<button
-	{type}
-	{disabled}
-	{formaction}
-	class={cn(
-		'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors',
-		'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-		'disabled:pointer-events-none disabled:opacity-50',
-		variants[variant],
-		sizes[size],
-		className
-	)}
-	{onclick}
->
-	{@render children()}
-</button>
+{#if href}
+	<a
+		{href}
+		class={cn(
+			'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors',
+			'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+			disabled ? 'pointer-events-none opacity-50' : '',
+			variants[variant],
+			sizes[size],
+			className
+		)}
+		aria-disabled={disabled}
+	>
+		{@render children()}
+	</a>
+{:else}
+	<button
+		{type}
+		{disabled}
+		{formaction}
+		class={cn(
+			'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors',
+			'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+			'disabled:pointer-events-none disabled:opacity-50',
+			variants[variant],
+			sizes[size],
+			className
+		)}
+		{onclick}
+	>
+		{@render children()}
+	</button>
+{/if}

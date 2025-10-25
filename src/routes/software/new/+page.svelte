@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import { superForm } from 'sveltekit-superforms';
 	import Card from '$components/ui/Card.svelte';
+	import Label from '$components/ui/Label.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import FormCheckbox from '$components/common/FormCheckbox.svelte';
 	import CloneModeToggle from '$components/common/CloneModeToggle.svelte';
@@ -171,7 +172,7 @@
 
 		<!-- Submit Buttons -->
 		<Card class="p-6">
-			<FormButtons />
+			<FormButtons loading={$submitting || $delayed} />
 		</Card>
 	</form>
 </div>

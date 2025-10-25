@@ -163,7 +163,7 @@
 
 		<!-- Submit Buttons -->
 		<Card class="p-6">
-			<FormButtons />
+			<FormButtons loading={$submitting || $delayed} />
 		</Card>
 	</form>
 </div>

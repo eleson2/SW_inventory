@@ -2,6 +2,7 @@
 	import type { PageData, ActionData } from './$types';
 	import type { LparSoftwareInstallation } from '$lib/schemas/lpar';
 	import Card from '$components/ui/Card.svelte';
+	import Label from '$components/ui/Label.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import FormCheckbox from '$components/common/FormCheckbox.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
