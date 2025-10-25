@@ -14,6 +14,7 @@
 	import Button from '$components/ui/Button.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import Label from '$components/ui/Label.svelte';
+	import ConfirmationDialog from '$components/common/ConfirmationDialog.svelte';
 
 	interface SoftwareWithVersions {
 		id: string;
@@ -39,6 +40,10 @@
 	let editingIndex = $state<number | null>(null);
 	let draggedIndex = $state<number | null>(null);
 
+	// Confirmation dialog state
+	let showDeleteConfirmation = $state(false);
+	let itemToDelete = $state<number | null>(null);
+
 	// Add a new item
 	function addItem() {
 		const maxOrder = items.reduce((max, item) => Math.max(max, item.order_index), -1);
@@ -51,17 +56,31 @@
 		editingIndex = items.length - 1;
 	}
 
-	// Remove an item
-	function removeItem(index: number) {
-		const item = items[index];
-		if (item.id) {
-			// Mark existing item for deletion
-			item._action = 'delete';
-		} else {
-			// Remove new item completely
-			items.splice(index, 1);
+	// Initiate item removal
+	function initiateRemoveItem(index: number) {
+		itemToDelete = index;
+		showDeleteConfirmation = true;
+	}
+
+	// Confirm item removal
+	function confirmRemoveItem() {
+		if (itemToDelete !== null) {
+			const item = items[itemToDelete];
+			if (item.id) {
+				// Mark existing item for deletion
+				item._action = 'delete';
+			} else {
+				// Remove new item completely
+				items.splice(itemToDelete, 1);
+			}
+			editingIndex = null;
+			itemToDelete = null;
 		}
-		editingIndex = null;
+	}
+
+	// Cancel item removal
+	function cancelRemoveItem() {
+		itemToDelete = null;
 	}
 
 	// Get versions for selected software
@@ -139,9 +158,17 @@
 		<div>
 			<h3 class="text-lg font-semibold">Package Items</h3>
 			<p class="text-sm text-muted-foreground">
-				Add and configure software items for this package. Drag items to reorder installation sequence.
+				Add and configure software items for this package. <strong>Drag items to reorder installation sequence.</strong>
 			</p>
-			<p class="text-xs text-muted-foreground mt-1">
+			<div class="flex items-start gap-2 mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
+				<svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+					<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+				</svg>
+				<div>
+					<strong>Installation Order Matters:</strong> Software dependencies must be installed before the products that need them. Number 1 installs first, then 2, and so on.
+				</div>
+			</div>
+			<p class="text-xs text-muted-foreground mt-2">
 				💡 Changes are saved when you submit the entire form below.
 			</p>
 		</div>
@@ -199,9 +226,15 @@
 					ondragend={handleDragEnd}
 				>
 					<div class="flex items-start gap-4">
-						<!-- Drag Handle -->
-						<div class="flex items-center justify-center w-8 pt-2 cursor-move text-muted-foreground">
-							<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<!-- Installation Order Badge -->
+						<div class="flex flex-col items-center gap-1 pt-1">
+							<div
+								class="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm"
+								title="Installation order - items are installed in this sequence during deployment"
+							>
+								{item.order_index + 1}
+							</div>
+							<svg class="w-5 h-5 cursor-move text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Drag to reorder">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
 							</svg>
 						</div>
@@ -267,8 +300,16 @@
 										<span>Required</span>
 									</Label>
 
-									<div class="text-sm text-muted-foreground">
-										Installation order: {item.order_index + 1}
+									<div class="flex items-center gap-2">
+										<Badge variant="secondary" class="font-semibold">
+											Install Order: {item.order_index + 1}
+										</Badge>
+										<span
+											class="text-xs text-muted-foreground cursor-help"
+											title="Software is installed in numerical order. Dependencies must be installed before the software that needs them."
+										>
+											ⓘ
+										</span>
 									</div>
 								</div>
 
@@ -310,9 +351,9 @@
 							{:else}
 								<!-- Display Mode -->
 								<div class="flex items-start justify-between">
-									<div class="space-y-1">
+									<div class="space-y-2">
 										<div class="flex items-center gap-2">
-											<span class="font-medium">
+											<span class="font-medium text-base">
 												{getSoftwareName(item.software_id)}
 											</span>
 											{#if status === 'new'}
@@ -320,7 +361,7 @@
 											{/if}
 										</div>
 										<div class="text-sm text-muted-foreground">
-											Version: {getVersionDisplay(item.software_version_id, item.software_id)}
+											Version: <span class="font-medium">{getVersionDisplay(item.software_version_id, item.software_id)}</span>
 										</div>
 										<div class="flex items-center gap-2 text-sm">
 											{#if item.required}
@@ -328,7 +369,15 @@
 											{:else}
 												<Badge variant="outline">Optional</Badge>
 											{/if}
-											<span class="text-muted-foreground">Install order: {item.order_index + 1}</span>
+											<Badge variant="secondary" class="font-semibold">
+												Install Order: {item.order_index + 1}
+											</Badge>
+											<span
+												class="text-xs text-muted-foreground cursor-help"
+												title="Software is installed in numerical order during deployment. Drag items to reorder them."
+											>
+												ⓘ
+											</span>
 										</div>
 									</div>
 
@@ -345,11 +394,7 @@
 											type="button"
 											size="sm"
 											variant="ghost"
-											onclick={() => {
-												if (confirm('Remove this item?')) {
-													removeItem(index);
-												}
-											}}
+											onclick={() => initiateRemoveItem(index)}
 										>
 											Remove
 										</Button>
@@ -382,3 +427,15 @@
 		</div>
 	{/if}
 </div>
+
+<!-- Confirmation Dialog -->
+<ConfirmationDialog
+	bind:open={showDeleteConfirmation}
+	title="Remove Package Item"
+	message="Are you sure you want to remove this item from the package? This action cannot be undone."
+	confirmLabel="Remove"
+	cancelLabel="Cancel"
+	variant="destructive"
+	onConfirm={confirmRemoveItem}
+	onCancel={cancelRemoveItem}
+/>

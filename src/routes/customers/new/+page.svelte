@@ -7,11 +7,19 @@
 	import CloneModeToggle from '$components/common/CloneModeToggle.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
 	import FormTextarea from '$components/common/FormTextarea.svelte';
+	import FormValidationSummary from '$components/common/FormValidationSummary.svelte';
+	import Breadcrumb from '$components/common/Breadcrumb.svelte';
 
 	let { data }: { data: PageData } = $props();
 
+	const breadcrumbItems = [
+		{ label: 'Home', href: '/' },
+		{ label: 'Customers', href: '/customers' },
+		{ label: 'New Customer' }
+	];
+
 	// Initialize Superforms (server-side validation only)
-	const { form, errors, enhance, submitting, delayed } = superForm(data.form, {
+	const { form, errors, enhance, submitting, delayed, submitted } = superForm(data.form, {
 		dataType: 'json',
 		resetForm: false
 	});
@@ -40,6 +48,8 @@
 </script>
 
 <div class="space-y-6 max-w-2xl">
+	<Breadcrumb items={breadcrumbItems} />
+
 	<div>
 		<h1 class="text-3xl font-bold tracking-tight">New Customer</h1>
 		<p class="text-muted-foreground mt-2">
@@ -49,6 +59,8 @@
 
 	<Card class="p-6">
 		<form method="POST" class="space-y-6" use:enhance>
+			<FormValidationSummary errors={$errors} submitted={$submitted} />
+
 			<!-- Creation Mode Toggle -->
 			<CloneModeToggle
 				entityName="Customer"

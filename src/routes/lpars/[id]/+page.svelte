@@ -18,6 +18,47 @@
 	let showRollbackDialog = $state(false);
 	let selectedSoftware = $state<any>(null);
 
+	// Compatibility score color coding and context
+	const compatibilityInfo = $derived(() => {
+		if (compatibility >= 90) {
+			return {
+				color: 'bg-green-500',
+				textColor: 'text-green-700',
+				bgColor: 'bg-green-50',
+				borderColor: 'border-green-200',
+				label: 'Excellent',
+				message: 'LPAR is fully compliant with assigned package'
+			};
+		} else if (compatibility >= 75) {
+			return {
+				color: 'bg-blue-500',
+				textColor: 'text-blue-700',
+				bgColor: 'bg-blue-50',
+				borderColor: 'border-blue-200',
+				label: 'Good',
+				message: 'Minor version differences detected'
+			};
+		} else if (compatibility >= 50) {
+			return {
+				color: 'bg-amber-500',
+				textColor: 'text-amber-700',
+				bgColor: 'bg-amber-50',
+				borderColor: 'border-amber-200',
+				label: 'Fair',
+				message: 'Several software items do not match package'
+			};
+		} else {
+			return {
+				color: 'bg-red-500',
+				textColor: 'text-red-700',
+				bgColor: 'bg-red-50',
+				borderColor: 'border-red-200',
+				label: 'Poor',
+				message: 'Significant drift from assigned package detected'
+			};
+		}
+	});
+
 	const handleClone = async (formData: Record<string, string>) => {
 		cloning = true;
 		try {
@@ -117,16 +158,36 @@
 						</dd>
 					</div>
 					<div>
-						<dt class="text-sm font-medium text-muted-foreground">Compatibility Score</dt>
-						<dd class="text-sm mt-1">
-							<div class="flex items-center gap-2">
-								<div class="flex-1 bg-muted rounded-full h-2">
+						<dt class="text-sm font-medium text-muted-foreground mb-2">
+							Package Compatibility
+							<span
+								class="ml-1 text-xs cursor-help"
+								title="Measures how closely installed software matches the assigned package. 100% = perfect match."
+							>
+								ⓘ
+							</span>
+						</dt>
+						<dd class="mt-2">
+							<div class="p-3 rounded-lg border {compatibilityInfo().borderColor} {compatibilityInfo().bgColor}">
+								<div class="flex items-center justify-between mb-2">
+									<span class="text-sm font-semibold {compatibilityInfo().textColor}">
+										{compatibilityInfo().label} ({compatibility}%)
+									</span>
+									<Badge
+										variant={compatibility >= 90 ? 'default' : compatibility >= 75 ? 'secondary' : 'destructive'}
+									>
+										{compatibility}%
+									</Badge>
+								</div>
+								<div class="bg-gray-200 rounded-full h-3 mb-2">
 									<div
-										class="bg-primary h-2 rounded-full transition-all"
+										class="{compatibilityInfo().color} h-3 rounded-full transition-all duration-500"
 										style="width: {compatibility}%"
 									></div>
 								</div>
-								<span class="text-sm font-medium">{compatibility}%</span>
+								<p class="text-xs {compatibilityInfo().textColor}">
+									{compatibilityInfo().message}
+								</p>
 							</div>
 						</dd>
 					</div>

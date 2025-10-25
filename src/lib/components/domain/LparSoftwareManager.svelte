@@ -15,6 +15,7 @@
 	import Button from '$components/ui/Button.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import Label from '$components/ui/Label.svelte';
+	import ConfirmationDialog from '$components/common/ConfirmationDialog.svelte';
 
 	interface SoftwareWithVersions {
 		id: string;
@@ -48,6 +49,10 @@
 	// Track which installation is being edited (inline editing)
 	let editingIndex = $state<number | null>(null);
 
+	// Confirmation dialog state
+	let showDeleteConfirmation = $state(false);
+	let installationToDelete = $state<number | null>(null);
+
 	// Add a new installation
 	function addInstallation() {
 		installations.push({
@@ -60,18 +65,33 @@
 	}
 
 	// Remove an installation
-	function removeInstallation(index: number) {
-		const installation = installations[index];
-		if (installation.id) {
-			// Mark existing installation for deletion
-			installation._action = 'delete';
-		} else {
-			// Remove new installation completely
-			installations.splice(index, 1);
-			if (editingIndex === index) {
-				editingIndex = null;
+	// Initiate installation removal
+	function initiateRemoveInstallation(index: number) {
+		installationToDelete = index;
+		showDeleteConfirmation = true;
+	}
+
+	// Confirm installation removal
+	function confirmRemoveInstallation() {
+		if (installationToDelete !== null) {
+			const installation = installations[installationToDelete];
+			if (installation.id) {
+				// Mark existing installation for deletion
+				installation._action = 'delete';
+			} else {
+				// Remove new installation completely
+				installations.splice(installationToDelete, 1);
+				if (editingIndex === installationToDelete) {
+					editingIndex = null;
+				}
 			}
+			installationToDelete = null;
 		}
+	}
+
+	// Cancel installation removal
+	function cancelRemoveInstallation() {
+		installationToDelete = null;
 	}
 
 	// Get versions for selected software
@@ -300,11 +320,7 @@
 									type="button"
 									size="sm"
 									variant="ghost"
-									onclick={() => {
-										if (confirm('Remove this software installation?')) {
-											removeInstallation(index);
-										}
-									}}
+									onclick={() => initiateRemoveInstallation(index)}
 								>
 									Remove
 								</Button>
@@ -337,3 +353,15 @@
 		</div>
 	{/if}
 </div>
+
+<!-- Confirmation Dialog -->
+<ConfirmationDialog
+	bind:open={showDeleteConfirmation}
+	title="Remove Software Installation"
+	message="Are you sure you want to remove this software installation from the LPAR? This action cannot be undone."
+	confirmLabel="Remove"
+	cancelLabel="Cancel"
+	variant="destructive"
+	onConfirm={confirmRemoveInstallation}
+	onCancel={cancelRemoveInstallation}
+/>

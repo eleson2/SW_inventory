@@ -91,6 +91,22 @@
 		selectedFromSelected.clear();
 	}
 
+	function selectAllSelected() {
+		selectedFromSelected = new Set(filteredSelected.map((item) => item.id));
+	}
+
+	function moveAllToSelected() {
+		selected = [...selected, ...filteredAvailable];
+		available = [];
+		selectedAvailable.clear();
+	}
+
+	function removeAllFromSelected() {
+		available = [...available, ...filteredSelected];
+		selected = [];
+		selectedFromSelected.clear();
+	}
+
 	function toggleAvailableItem(id: string) {
 		if (selectedAvailable.has(id)) {
 			selectedAvailable.delete(id);
@@ -114,15 +130,33 @@
 		groupItems.forEach((item) => selectedAvailable.add(item.id));
 		selectedAvailable = selectedAvailable;
 	}
+
+	// Handle double-click to move item
+	function handleAvailableDoubleClick(item: T) {
+		selectedAvailable.clear();
+		selectedAvailable.add(item.id);
+		moveToSelected();
+	}
+
+	function handleSelectedDoubleClick(item: T) {
+		selectedFromSelected.clear();
+		selectedFromSelected.add(item.id);
+		moveToAvailable();
+	}
 </script>
 
 <div class="grid grid-cols-[1fr_auto_1fr] gap-4">
 	<!-- Available Items -->
 	<div class="flex flex-col space-y-2">
 		<div class="flex items-center justify-between">
-			<h3 class="font-semibold text-foreground">
-				{availableTitle} ({filteredAvailable.length})
-			</h3>
+			<div>
+				<h3 class="font-semibold text-foreground">
+					{availableTitle} ({filteredAvailable.length})
+				</h3>
+				<p class="text-xs text-muted-foreground mt-0.5">
+					Double-click or use arrow buttons to move items
+				</p>
+			</div>
 			<div class="flex gap-2">
 				<Button variant="ghost" size="sm" onclick={selectAll}>Select All</Button>
 				<Button variant="ghost" size="sm" onclick={clearAvailable}>Clear</Button>
@@ -156,6 +190,7 @@
 								class="w-full px-4 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2 border-b border-input/50"
 								class:bg-accent={selectedAvailable.has(item.id)}
 								onclick={() => toggleAvailableItem(item.id)}
+								ondblclick={() => handleAvailableDoubleClick(item)}
 							>
 								<input
 									type="checkbox"
@@ -183,6 +218,7 @@
 						class="w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2 border-b border-input/50"
 						class:bg-accent={selectedAvailable.has(item.id)}
 						onclick={() => toggleAvailableItem(item.id)}
+						ondblclick={() => handleAvailableDoubleClick(item)}
 					>
 						<input
 							type="checkbox"
@@ -210,20 +246,40 @@
 		<Button
 			variant="outline"
 			size="sm"
+			onclick={moveAllToSelected}
+			disabled={filteredAvailable.length === 0}
+			title="Move all items to selected"
+			class="text-xs"
+		>
+			Add All →→
+		</Button>
+		<Button
+			variant="outline"
+			size="sm"
 			onclick={moveToSelected}
 			disabled={selectedAvailable.size === 0}
-			title="Move selected to right"
+			title="Move selected items (or use double-click)"
 		>
-			→
+			Add →
 		</Button>
 		<Button
 			variant="outline"
 			size="sm"
 			onclick={moveToAvailable}
 			disabled={selectedFromSelected.size === 0}
-			title="Move selected to left"
+			title="Remove selected items (or use double-click)"
 		>
-			←
+			← Remove
+		</Button>
+		<Button
+			variant="outline"
+			size="sm"
+			onclick={removeAllFromSelected}
+			disabled={filteredSelected.length === 0}
+			title="Remove all items from selected"
+			class="text-xs"
+		>
+			←← Remove All
 		</Button>
 	</div>
 
@@ -233,7 +289,10 @@
 			<h3 class="font-semibold text-foreground">
 				{selectedTitle} ({selected.length})
 			</h3>
-			<Button variant="ghost" size="sm" onclick={clearSelected}>Clear</Button>
+			<div class="flex gap-2">
+				<Button variant="ghost" size="sm" onclick={selectAllSelected}>Select All</Button>
+				<Button variant="ghost" size="sm" onclick={clearSelected}>Clear</Button>
+			</div>
 		</div>
 
 		<input
@@ -257,6 +316,7 @@
 						class="w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2 border-b border-input/50"
 						class:bg-accent={selectedFromSelected.has(item.id)}
 						onclick={() => toggleSelectedItem(item.id)}
+						ondblclick={() => handleSelectedDoubleClick(item)}
 					>
 						<input
 							type="checkbox"

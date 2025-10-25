@@ -6,6 +6,7 @@
 	import Card from '$components/ui/Card.svelte';
 	import DataTable from '$components/common/DataTable.svelte';
 	import Pagination from '$components/common/Pagination.svelte';
+	import SearchFilter from '$components/common/SearchFilter.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
 	import { formatDate } from '$utils/date-format';
 
@@ -79,6 +80,26 @@
 	</div>
 
 	<Card class="p-6">
+		<div class="mb-6">
+			<SearchFilter
+				placeholder="Search customers by name or code..."
+				filters={[
+					{
+						name: 'status',
+						label: 'Status',
+						options: [
+							{ value: 'active', label: 'Active' },
+							{ value: 'inactive', label: 'Inactive' }
+						]
+					}
+				]}
+				resultCount={'items' in data.customers ? {
+					current: data.customers.items.length,
+					total: data.customers.totalCount
+				} : null}
+			/>
+		</div>
+
 		<DataTable
 			data={'items' in data.customers ? data.customers.items : []}
 			{columns}

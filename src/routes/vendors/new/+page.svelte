@@ -7,11 +7,19 @@
 	import FormButtons from '$components/common/FormButtons.svelte';
 	import CloneModeToggle from '$components/common/CloneModeToggle.svelte';
 	import PageHeader from '$components/common/PageHeader.svelte';
+	import FormValidationSummary from '$components/common/FormValidationSummary.svelte';
+	import Breadcrumb from '$components/common/Breadcrumb.svelte';
 
 	let { data }: { data: PageData } = $props();
 
+	const breadcrumbItems = [
+		{ label: 'Home', href: '/' },
+		{ label: 'Vendors', href: '/vendors' },
+		{ label: 'New Vendor' }
+	];
+
 	// Initialize Superforms (server-side validation only)
-	const { form, errors, enhance, submitting, delayed } = superForm(data.form, {
+	const { form, errors, enhance, submitting, delayed, submitted } = superForm(data.form, {
 		dataType: 'json',
 		resetForm: false
 	});
@@ -42,10 +50,13 @@
 </script>
 
 <div class="space-y-6 max-w-2xl">
+	<Breadcrumb items={breadcrumbItems} />
 	<PageHeader title="New Vendor" description="Add a new software vendor to the system" />
 
 	<Card class="p-6">
 		<form method="POST" class="space-y-6" use:enhance>
+			<FormValidationSummary errors={$errors} submitted={$submitted} />
+
 			<!-- Required fields legend -->
 			<p class="text-sm text-muted-foreground pb-2 border-b">
 				<span class="text-destructive">*</span> Required fields

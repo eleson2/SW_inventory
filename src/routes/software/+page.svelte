@@ -6,10 +6,16 @@
 	import Card from '$components/ui/Card.svelte';
 	import DataTable from '$components/common/DataTable.svelte';
 	import Pagination from '$components/common/Pagination.svelte';
+	import SearchFilter from '$components/common/SearchFilter.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	const vendorFilterOptions = data.vendors.map(v => ({
+		value: v.id,
+		label: v.name
+	}));
 
 	const columns = [
 		{
@@ -80,6 +86,31 @@
 	</div>
 
 	<Card class="p-6">
+		<div class="mb-6">
+			<SearchFilter
+				placeholder="Search software by name..."
+				filters={[
+					{
+						name: 'vendor',
+						label: 'Vendor',
+						options: vendorFilterOptions
+					},
+					{
+						name: 'status',
+						label: 'Status',
+						options: [
+							{ value: 'active', label: 'Active' },
+							{ value: 'inactive', label: 'Inactive' }
+						]
+					}
+				]}
+				resultCount={'items' in data.software ? {
+					current: data.software.items.length,
+					total: data.software.totalCount
+				} : null}
+			/>
+		</div>
+
 		<DataTable
 			data={'items' in data.software ? data.software.items : []}
 			{columns}

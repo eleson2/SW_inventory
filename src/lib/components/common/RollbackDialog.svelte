@@ -35,8 +35,37 @@
 	} = $props();
 
 	let selectedVersionId = $state<string>('');
-	let reason = $state('');
+	let reasonTemplate = $state<string>('');
+	let customReason = $state('');
 	let submitting = $state(false);
+
+	// Predefined reason templates
+	const reasonTemplates = [
+		{ value: 'performance', label: 'Performance Degradation', description: 'Significant performance issues detected' },
+		{ value: 'bugs', label: 'Functional Bugs/Errors', description: 'Critical bugs or errors affecting functionality' },
+		{ value: 'incompatibility', label: 'Incompatibility Issues', description: 'Compatibility problems with other software' },
+		{ value: 'security', label: 'Security Vulnerability', description: 'Security issues discovered' },
+		{ value: 'stability', label: 'Stability Issues', description: 'System crashes or instability' },
+		{ value: 'other', label: 'Other', description: 'Specify custom reason' }
+	];
+
+	// Get the final reason text
+	const finalReason = $derived(() => {
+		if (reasonTemplate === 'other') {
+			return customReason;
+		}
+		const template = reasonTemplates.find(t => t.value === reasonTemplate);
+		return template ? `${template.label}: ${customReason || template.description}` : '';
+	});
+
+	// Validation
+	const isReasonValid = $derived(() => {
+		if (!reasonTemplate) return false;
+		if (reasonTemplate === 'other') {
+			return customReason.trim().length >= 20;
+		}
+		return customReason.trim().length >= 10 || finalReason().length >= 10;
+	});
 
 	// Filter out the current version and sort by release date
 	const availableVersions = $derived(
@@ -52,7 +81,7 @@
 	);
 
 	async function handleSubmit() {
-		if (!selectedVersionId || !reason.trim()) {
+		if (!selectedVersionId || !isReasonValid()) {
 			return;
 		}
 
@@ -61,7 +90,7 @@
 			const formData = new FormData();
 			formData.append('software_id', softwareId);
 			formData.append('target_version_id', selectedVersionId);
-			formData.append('reason', reason);
+			formData.append('reason', finalReason());
 
 			const response = await fetch(`/lpars/${lparId}?/rollback`, {
 				method: 'POST',
@@ -71,7 +100,8 @@
 			if (response.ok) {
 				open = false;
 				selectedVersionId = '';
-				reason = '';
+				reasonTemplate = '';
+				customReason = '';
 				if (onRollback) {
 					onRollback();
 				} else {
@@ -132,16 +162,60 @@
 				</div>
 			</div>
 
-			<div class="space-y-2">
-				<label for="reason" class="text-sm font-medium">Reason for rollback *</label>
-				<textarea
-					id="reason"
-					bind:value={reason}
-					placeholder="Explain why this rollback is necessary (e.g., performance issues, bugs, incompatibility)"
-					class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary min-h-[80px]"
-					required
-				></textarea>
-				<p class="text-xs text-muted-foreground">Minimum 10 characters required</p>
+			<div class="space-y-3">
+				<label class="text-sm font-medium">Reason for rollback *</label>
+
+				<div class="space-y-2">
+					{#each reasonTemplates as template}
+						<label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors {reasonTemplate === template.value ? 'border-primary bg-primary/5' : ''}">
+							<input
+								type="radio"
+								bind:group={reasonTemplate}
+								value={template.value}
+								class="mt-0.5 h-4 w-4"
+							/>
+							<div class="flex-1">
+								<div class="font-medium text-sm">{template.label}</div>
+								<div class="text-xs text-muted-foreground">{template.description}</div>
+							</div>
+						</label>
+					{/each}
+				</div>
+
+				{#if reasonTemplate}
+					<div class="space-y-2">
+						<label for="custom-reason" class="text-sm font-medium">
+							{#if reasonTemplate === 'other'}
+								Detailed explanation *
+							{:else}
+								Additional details (optional)
+							{/if}
+						</label>
+						<textarea
+							id="custom-reason"
+							bind:value={customReason}
+							placeholder={reasonTemplate === 'other'
+								? "Provide a detailed explanation of the issue (minimum 20 characters)"
+								: "Add specific details about the issue (e.g., 'CPU usage increased 300% in batch processing')"}
+							class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary min-h-[80px]"
+							required={reasonTemplate === 'other'}
+						></textarea>
+						<p class="text-xs text-muted-foreground">
+							{#if reasonTemplate === 'other'}
+								Minimum 20 characters required for custom reasons
+							{:else}
+								Minimum 10 characters for additional details
+							{/if}
+						</p>
+					</div>
+				{/if}
+
+				{#if reasonTemplate && isReasonValid()}
+					<div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+						<p class="text-xs font-medium text-blue-800">Reason that will be recorded:</p>
+						<p class="text-sm text-blue-900 mt-1 font-mono">{finalReason()}</p>
+					</div>
+				{/if}
 			</div>
 
 			{#if selectedVersion}
@@ -166,7 +240,7 @@
 						<Button
 							variant="destructive"
 							onclick={handleSubmit}
-							disabled={!selectedVersionId || reason.trim().length < 10 || submitting}
+							disabled={!selectedVersionId || !isReasonValid() || submitting}
 						>
 							{submitting ? 'Rolling back...' : 'Confirm Rollback'}
 						</Button>

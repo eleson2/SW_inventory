@@ -9,11 +9,20 @@
 	import FormButtons from '$components/common/FormButtons.svelte';
 	import PackageItemsManager from '$components/domain/PackageItemsManager.svelte';
 	import FormTextarea from '$components/common/FormTextarea.svelte';
+	import { useUnsavedChanges } from '$lib/utils/unsaved-changes.svelte';
+	import FormValidationSummary from '$components/common/FormValidationSummary.svelte';
+	import Breadcrumb from '$components/common/Breadcrumb.svelte';
 
 	let { data }: { data: PageData } = $props();
 
+	const breadcrumbItems = [
+		{ label: 'Home', href: '/' },
+		{ label: 'Packages', href: '/packages' },
+		{ label: 'New Package' }
+	];
+
 	// Initialize Superforms (server-side validation only)
-	const { form, errors, enhance, submitting, delayed } = superForm(data.form, {
+	const { form, errors, enhance, submitting, delayed, submitted } = superForm(data.form, {
 		dataType: 'json',
 		resetForm: false
 	});
@@ -23,6 +32,15 @@
 
 	// Package items state for master-detail pattern (bound to form.items via $form)
 	let packageItems = $state<PackageItem[]>([]);
+
+	// Track unsaved changes
+	const unsavedChanges = useUnsavedChanges();
+	const initialFormState = JSON.stringify({
+		name: $form.name,
+		code: $form.code,
+		version: $form.version,
+		items: packageItems
+	});
 
 	// When clone source is selected, pre-fill form
 	function handleCloneSourceSelect(sourceId: string) {
@@ -63,9 +81,27 @@
 	$effect(() => {
 		$form.items = packageItems;
 	});
+
+	// Track changes for unsaved changes warning
+	$effect(() => {
+		const currentState = JSON.stringify({
+			name: $form.name,
+			code: $form.code,
+			version: $form.version,
+			items: packageItems
+		});
+		unsavedChanges.setHasChanges(currentState !== initialFormState);
+	});
+
+	// Update submitting state
+	$effect(() => {
+		unsavedChanges.setIsSubmitting($submitting || $delayed);
+	});
 </script>
 
 <div class="space-y-6">
+	<Breadcrumb items={breadcrumbItems} />
+
 	<div>
 		<h1 class="text-3xl font-bold tracking-tight">New Software Package</h1>
 		<p class="text-muted-foreground mt-2">
@@ -73,7 +109,30 @@
 		</p>
 	</div>
 
+	<!-- Unsaved Changes Banner -->
+	{#if unsavedChanges.hasChanges}
+		<div class="sticky top-0 z-10 rounded-md bg-amber-50 border border-amber-200 p-4 shadow-md">
+			<div class="flex items-center gap-3">
+				<svg class="w-5 h-5 text-amber-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+					<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+				</svg>
+				<div class="flex-1">
+					<p class="font-semibold text-amber-800">You have unsaved changes</p>
+					<p class="text-sm text-amber-700 mt-1">
+						{#if packageItems.length > 0}
+							You have {packageItems.length} package item{packageItems.length !== 1 ? 's' : ''} that will be saved when you submit the form.
+						{:else}
+							Your changes will be saved when you submit the form below.
+						{/if}
+					</p>
+				</div>
+			</div>
+		</div>
+	{/if}
+
 	<form method="POST" class="space-y-6" use:enhance>
+		<FormValidationSummary errors={$errors} submitted={$submitted} />
+
 		<!-- Package Information Card -->
 		<Card class="p-6">
 			<h2 class="text-xl font-semibold mb-4">Package Information</h2>

@@ -45,21 +45,32 @@
 	}
 </script>
 
-<div class="rounded-md border">
-	<table class="w-full">
+{#if loading}
+	<TableSkeleton rows={5} columns={columns.length} />
+{:else}
+<!-- Mobile-responsive wrapper with horizontal scroll -->
+<div class="rounded-md border overflow-x-auto">
+	<table class="w-full min-w-[640px]">
 		<thead>
 			<tr class="border-b bg-muted/50">
 				{#each columns as column}
-					<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+					<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap {currentSort?.field === column.key ? 'bg-accent/50' : ''}">
 						{#if column.sortable && onSort}
 							<button
-								class="flex items-center gap-2 hover:text-foreground"
+								class="flex items-center gap-2 hover:text-foreground transition-colors min-h-[44px] {currentSort?.field === column.key ? 'text-foreground font-bold' : ''}"
 								onclick={() => handleSort(column.key as string)}
+								title={currentSort?.field === column.key
+									? `Sorted ${currentSort.direction === 'asc' ? 'ascending' : 'descending'}. Click to ${currentSort.direction === 'asc' ? 'sort descending' : 'sort ascending'}`
+									: 'Click to sort'}
 							>
 								{column.label}
 								{#if currentSort?.field === column.key}
-									<span class="text-xs">
-										{currentSort.direction === 'asc' ? '↑' : '↓'}
+									<span class="text-base font-bold" aria-label={`Sorted ${currentSort.direction === 'asc' ? 'ascending' : 'descending'}`}>
+										{currentSort.direction === 'asc' ? '▲' : '▼'}
+									</span>
+								{:else}
+									<span class="text-xs text-muted-foreground/50 opacity-0 group-hover:opacity-100">
+										⇅
 									</span>
 								{/if}
 							</button>
@@ -82,13 +93,17 @@
 				</tr>
 			{:else if data.length === 0}
 				<tr>
-					<td colspan={columns.length} class="h-32 text-center">
+					<td colspan={columns.length} class="p-0">
 						{#if emptyState}
-							<div class="flex flex-col items-center justify-center gap-2 py-8">
+							<div class="py-8">
 								{@render emptyState()}
 							</div>
 						{:else}
-							<p class="text-muted-foreground">{emptyMessage}</p>
+							<EmptyState
+								title={emptyMessage}
+								description="Try adjusting your filters or search terms"
+								showBackground={false}
+							/>
 						{/if}
 					</td>
 				</tr>
@@ -113,3 +128,4 @@
 		</tbody>
 	</table>
 </div>
+{/if}

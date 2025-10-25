@@ -6,6 +6,7 @@
 	import Card from '$components/ui/Card.svelte';
 	import DataTable from '$components/common/DataTable.svelte';
 	import Pagination from '$components/common/Pagination.svelte';
+	import SearchFilter from '$components/common/SearchFilter.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
 
 	let { data }: { data: PageData } = $props();
@@ -74,6 +75,26 @@
 	</div>
 
 	<Card class="p-6">
+		<div class="mb-6">
+			<SearchFilter
+				placeholder="Search vendors by name or code..."
+				filters={[
+					{
+						name: 'status',
+						label: 'Status',
+						options: [
+							{ value: 'active', label: 'Active' },
+							{ value: 'inactive', label: 'Inactive' }
+						]
+					}
+				]}
+				resultCount={'items' in data.vendors ? {
+					current: data.vendors.items.length,
+					total: data.vendors.totalCount
+				} : null}
+			/>
+		</div>
+
 		<DataTable
 			data={'items' in data.vendors ? data.vendors.items : []}
 			{columns}

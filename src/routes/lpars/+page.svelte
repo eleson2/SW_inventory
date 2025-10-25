@@ -6,10 +6,16 @@
 	import Card from '$components/ui/Card.svelte';
 	import DataTable from '$components/common/DataTable.svelte';
 	import Pagination from '$components/common/Pagination.svelte';
+	import SearchFilter from '$components/common/SearchFilter.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	const customerFilterOptions = data.customers.map(c => ({
+		value: c.id,
+		label: c.name
+	}));
 
 	const columns = [
 		{
@@ -88,6 +94,31 @@
 	</div>
 
 	<Card class="p-6">
+		<div class="mb-6">
+			<SearchFilter
+				placeholder="Search LPARs by name or code..."
+				filters={[
+					{
+						name: 'customer',
+						label: 'Customer',
+						options: customerFilterOptions
+					},
+					{
+						name: 'status',
+						label: 'Status',
+						options: [
+							{ value: 'active', label: 'Active' },
+							{ value: 'inactive', label: 'Inactive' }
+						]
+					}
+				]}
+				resultCount={'items' in data.lpars ? {
+					current: data.lpars.items.length,
+					total: data.lpars.totalCount
+				} : null}
+			/>
+		</div>
+
 		<DataTable
 			data={'items' in data.lpars ? data.lpars.items : []}
 			{columns}

@@ -12,10 +12,26 @@
 	});
 </script>
 
-<div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-md">
+<div class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-md">
+	<!-- Dismiss All button (shows when multiple toasts) -->
+	{#if toasts.length > 1}
+		<div in:fly={{ y: -20, duration: 200 }} out:fade={{ duration: 150 }}>
+			<button
+				type="button"
+				onclick={() => toast.dismissAll()}
+				class="w-full rounded-lg bg-gray-800 text-white px-3 py-2 text-xs font-medium hover:bg-gray-700 transition-colors flex items-center justify-center gap-2 shadow-lg"
+			>
+				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+				</svg>
+				Dismiss All ({toasts.length})
+			</button>
+		</div>
+	{/if}
+
 	{#each toasts as t (t.id)}
 		<div
-			in:fly={{ y: 50, duration: 300 }}
+			in:fly={{ y: -50, duration: 300 }}
 			out:fade={{ duration: 200 }}
 			class="rounded-lg border shadow-lg p-4 flex items-start gap-3 {t.type === 'success'
 				? 'bg-green-50 border-green-200 text-green-800'

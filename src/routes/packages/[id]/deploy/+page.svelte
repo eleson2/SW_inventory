@@ -17,12 +17,12 @@
 
 	let deploymentMode = $state<'sequential' | 'parallel'>('sequential');
 	let stopOnError = $state(true);
-	let showPreview = $state(false);
 	let showConfirmation = $state(false);
 	let previewData = $state<any>(null);
 	let isDeploying = $state(false);
 	let isLoadingPreview = $state(false);
 	let deployFormRef: HTMLFormElement;
+	let hasViewedPreview = $state(false);
 
 	// Calculate summary stats
 	const summary = $derived(() => {
@@ -59,8 +59,12 @@
 		return lpar.customer.name;
 	}
 
-	async function handlePreview() {
-		if (selectedLpars.length === 0) return;
+	async function loadPreview() {
+		if (selectedLpars.length === 0) {
+			previewData = null;
+			hasViewedPreview = false;
+			return;
+		}
 
 		isLoadingPreview = true;
 		const lparIds = selectedLpars.map((l) => l.id);
@@ -77,7 +81,6 @@
 			const result = await response.json();
 			if (result.type === 'success') {
 				previewData = result.data.previews;
-				showPreview = true;
 			}
 		} catch (error) {
 			console.error('Preview error:', error);
@@ -85,6 +88,16 @@
 			isLoadingPreview = false;
 		}
 	}
+
+	// Auto-load preview when LPARs are selected
+	$effect(() => {
+		if (selectedLpars.length > 0) {
+			loadPreview();
+		} else {
+			previewData = null;
+			hasViewedPreview = false;
+		}
+	});
 
 	function formatDate(date: string | Date): string {
 		return new Date(date).toLocaleDateString('en-US', {
@@ -260,19 +273,99 @@
 			</div>
 		</Card>
 
+		<!-- Deployment Preview (Auto-shown) -->
+		{#if isLoadingPreview}
+			<Card class="p-6">
+				<div class="flex items-center justify-center gap-3 py-8">
+					<div class="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+					<span class="text-muted-foreground">Loading deployment preview...</span>
+				</div>
+			</Card>
+		{:else if previewData && previewData.length > 0}
+			<Card class="p-6 border-primary">
+				<div class="mb-4">
+					<h2 class="text-xl font-semibold">Deployment Impact Preview</h2>
+					<p class="text-sm text-muted-foreground mt-1">
+						Review the changes that will be made to each selected LPAR
+					</p>
+				</div>
+
+				<div class="space-y-4 max-h-[500px] overflow-y-auto">
+					{#each previewData as preview}
+						<div class="border border-border rounded-lg p-4">
+							<h3 class="font-medium mb-2 flex items-center gap-2">
+								{preview.lparName} ({preview.lparCode})
+								<Badge variant="outline" class="text-xs">
+									{preview.changes.length} change{preview.changes.length !== 1 ? 's' : ''}
+								</Badge>
+							</h3>
+							<div class="space-y-1">
+								{#each preview.changes as change}
+									<div class="text-sm flex items-center gap-2">
+										<span class="font-medium">{change.software_name}:</span>
+										{#if change.action === 'upgrade'}
+											<span class="text-muted-foreground">{change.current_version}</span>
+											<span>→</span>
+											<span class="text-green-600 font-medium">{change.target_version}</span>
+											<Badge variant="secondary" class="text-xs bg-green-100 text-green-800">upgrade</Badge>
+										{:else if change.action === 'downgrade'}
+											<span class="text-muted-foreground">{change.current_version}</span>
+											<span>→</span>
+											<span class="text-amber-600 font-medium">{change.target_version}</span>
+											<Badge variant="secondary" class="text-xs bg-amber-100 text-amber-800">downgrade</Badge>
+										{:else if change.action === 'install'}
+											<span class="text-primary font-medium">{change.target_version}</span>
+											<Badge variant="secondary" class="text-xs bg-blue-100 text-blue-800">new install</Badge>
+										{:else}
+											<span class="text-muted-foreground">{change.current_version}</span>
+											<Badge variant="secondary" class="text-xs">no change</Badge>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						</div>
+					{/each}
+				</div>
+
+				<!-- Acknowledgment Checkbox -->
+				<div class="mt-4 pt-4 border-t">
+					<label class="flex items-start gap-3 cursor-pointer">
+						<input
+							type="checkbox"
+							bind:checked={hasViewedPreview}
+							class="h-4 w-4 mt-0.5 rounded border-gray-300"
+						/>
+						<div>
+							<div class="text-sm font-medium">
+								I have reviewed the deployment impact above
+							</div>
+							<div class="text-xs text-muted-foreground">
+								You must review and acknowledge the changes before deploying
+							</div>
+						</div>
+					</label>
+				</div>
+			</Card>
+		{/if}
+
 		<!-- Action Buttons -->
 		<Card class="p-6">
 			<div class="flex gap-3">
-				<Button variant="outline" onclick={handlePreview} disabled={isLoadingPreview}>
-					{isLoadingPreview ? 'Loading...' : 'Preview Detailed Changes'}
-				</Button>
-
-				<Button onclick={handleDeployClick} disabled={isDeploying}>
+				<Button
+					onclick={handleDeployClick}
+					disabled={isDeploying || !hasViewedPreview || selectedLpars.length === 0}
+				>
 					{isDeploying ? 'Deploying...' : 'Deploy Package'}
 				</Button>
 
 				<Button variant="ghost" href="/packages/{data.package.id}">Cancel</Button>
 			</div>
+
+			{#if selectedLpars.length > 0 && !hasViewedPreview && previewData}
+				<p class="text-sm text-amber-600 mt-3">
+					⚠️ Please review and acknowledge the deployment impact above before deploying
+				</p>
+			{/if}
 
 			<!-- Hidden form for submission -->
 			<form
@@ -290,45 +383,6 @@
 				<input type="hidden" name="deployment_mode" value={deploymentMode} />
 				<input type="hidden" name="stop_on_error" value={stopOnError.toString()} />
 			</form>
-		</Card>
-	{/if}
-
-	<!-- Preview Modal/Card -->
-	{#if showPreview && previewData}
-		<Card class="p-6 border-primary">
-			<div class="flex items-center justify-between mb-4">
-				<h2 class="text-xl font-semibold">Deployment Preview</h2>
-				<Button variant="ghost" size="sm" onclick={() => (showPreview = false)}>Close</Button>
-			</div>
-
-			<div class="space-y-4">
-				{#each previewData as preview}
-					<div class="border border-border rounded-lg p-4">
-						<h3 class="font-medium mb-2">
-							{preview.lparName} ({preview.lparCode})
-						</h3>
-						<div class="space-y-1">
-							{#each preview.changes as change}
-								<div class="text-sm flex items-center gap-2">
-									<span class="font-medium">{change.software_name}:</span>
-									{#if change.action === 'upgrade' || change.action === 'downgrade'}
-										<span class="text-muted-foreground">{change.current_version}</span>
-										<span>→</span>
-										<span class="text-primary">{change.target_version}</span>
-										<Badge variant="secondary" class="text-xs">{change.action}</Badge>
-									{:else if change.action === 'install'}
-										<span class="text-primary">{change.target_version}</span>
-										<Badge variant="secondary" class="text-xs">new install</Badge>
-									{:else}
-										<span class="text-muted-foreground">{change.current_version}</span>
-										<Badge variant="secondary" class="text-xs">no change</Badge>
-									{/if}
-								</div>
-							{/each}
-						</div>
-					</div>
-				{/each}
-			</div>
 		</Card>
 	{/if}
 

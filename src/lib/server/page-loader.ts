@@ -20,6 +20,8 @@ export interface PageLoaderOptions<T = any> {
 	include?: Record<string, any>;
 	/** Return key for the data (e.g., 'customers', 'vendors') */
 	dataKey: string;
+	/** Additional filter function to build custom where clauses */
+	filterBuilder?: (url: URL) => Record<string, any>;
 }
 
 /**
@@ -59,7 +61,8 @@ export function createPageLoader<T = any>(options: PageLoaderOptions<T>) {
 		defaultPageSize = 20,
 		searchFields = ['name', 'code'],
 		include,
-		dataKey
+		dataKey,
+		filterBuilder
 	} = options;
 
 	return async (url: URL) => {
@@ -70,14 +73,28 @@ export function createPageLoader<T = any>(options: PageLoaderOptions<T>) {
 		const sortDirection = (url.searchParams.get('direction') || defaultSortDirection) as 'asc' | 'desc';
 		const search = url.searchParams.get('search') || '';
 
-		// Build where clause for search
-		const where = search
-			? {
-					OR: searchFields.map(field => ({
-						[field]: { contains: search, mode: 'insensitive' as const }
-					}))
-			  }
-			: {};
+		// Build where clause
+		const whereConditions: any[] = [];
+
+		// Add search filter
+		if (search) {
+			whereConditions.push({
+				OR: searchFields.map(field => ({
+					[field]: { contains: search, mode: 'insensitive' as const }
+				}))
+			});
+		}
+
+		// Add custom filters
+		if (filterBuilder) {
+			const customFilters = filterBuilder(url);
+			if (Object.keys(customFilters).length > 0) {
+				whereConditions.push(customFilters);
+			}
+		}
+
+		// Combine all conditions with AND
+		const where = whereConditions.length > 0 ? { AND: whereConditions } : {};
 
 		// Get paginated data from database
 		const data = await getPaginated(

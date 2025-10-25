@@ -12,6 +12,8 @@
 		onConfirm: () => void;
 		onCancel: () => void;
 		details?: string[];
+		requireConfirmation?: boolean;
+		confirmationText?: string;
 	}
 
 	let {
@@ -23,17 +25,36 @@
 		variant = 'default',
 		onConfirm,
 		onCancel,
-		details
+		details,
+		requireConfirmation = false,
+		confirmationText
 	}: Props = $props();
 
+	let userConfirmationText = $state('');
+	let confirmationCheckbox = $state(false);
+
+	const canConfirm = $derived(
+		!requireConfirmation ||
+		(confirmationText ? userConfirmationText === confirmationText : confirmationCheckbox)
+	);
+
 	function handleConfirm() {
-		onConfirm();
-		open = false;
+		if (canConfirm) {
+			onConfirm();
+			open = false;
+			resetState();
+		}
 	}
 
 	function handleCancel() {
 		onCancel();
 		open = false;
+		resetState();
+	}
+
+	function resetState() {
+		userConfirmationText = '';
+		confirmationCheckbox = false;
 	}
 
 	function handleBackdropClick(e: MouseEvent) {
@@ -89,12 +110,44 @@
 				</div>
 			{/if}
 
+			<!-- Confirmation Requirement -->
+			{#if requireConfirmation}
+				{#if confirmationText}
+					<!-- Require typing specific text -->
+					<div class="space-y-2">
+						<label for="confirmation-input" class="text-sm font-medium">
+							Type <code class="bg-muted px-1 py-0.5 rounded text-destructive font-mono">{confirmationText}</code> to confirm
+						</label>
+						<input
+							id="confirmation-input"
+							type="text"
+							bind:value={userConfirmationText}
+							placeholder={confirmationText}
+							class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+						/>
+					</div>
+				{:else}
+					<!-- Require checkbox -->
+					<div class="flex items-start gap-2 rounded-md bg-muted/50 p-3 border">
+						<input
+							id="confirmation-checkbox"
+							type="checkbox"
+							bind:checked={confirmationCheckbox}
+							class="h-4 w-4 mt-0.5 rounded border-gray-300"
+						/>
+						<label for="confirmation-checkbox" class="text-sm cursor-pointer">
+							I understand this action cannot be undone
+						</label>
+					</div>
+				{/if}
+			{/if}
+
 			<!-- Actions -->
 			<div class="flex gap-3 justify-end pt-2">
 				<Button variant="outline" onclick={handleCancel}>
 					{cancelLabel}
 				</Button>
-				<Button variant={variant} onclick={handleConfirm}>
+				<Button variant={variant} onclick={handleConfirm} disabled={!canConfirm}>
 					{confirmLabel}
 				</Button>
 			</div>

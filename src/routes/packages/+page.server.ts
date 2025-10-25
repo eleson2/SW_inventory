@@ -10,6 +10,16 @@ export const load: PageServerLoad = async ({ url }) => {
 		defaultSortDirection: 'desc',
 		include: {
 			package_items: true // Relation field name from schema
+		},
+		filterBuilder: (url) => {
+			const filters: Record<string, any> = {};
+			const status = url.searchParams.get('status');
+			if (status === 'active') {
+				filters.active = true;
+			} else if (status === 'inactive') {
+				filters.active = false;
+			}
+			return filters;
 		}
 	})(url);
 };

@@ -8,11 +8,13 @@
 	import Card from '$components/ui/Card.svelte';
 	import Label from '$components/ui/Label.svelte';
 	import Badge from '$components/ui/Badge.svelte';
+	import ConfirmationDialog from '$components/common/ConfirmationDialog.svelte';
 
 	interface VersionRow extends Partial<software_versions> {
 		_action?: 'create' | 'update' | 'delete';
 		_isEditing?: boolean;
 		_isNew?: boolean;
+		_packageCount?: number; // Number of packages using this version
 	}
 
 	interface Props {
@@ -25,6 +27,12 @@
 
 	let editingIndex = $state<number | null>(null);
 	let editForm = $state<Partial<VersionRow>>({});
+
+	// Confirmation dialog states
+	let showDeleteConfirmation = $state(false);
+	let versionToDelete = $state<number | null>(null);
+	let showCurrentChangeConfirmation = $state(false);
+	let versionToSetCurrent = $state<number | null>(null);
 
 	// Format date for input field (YYYY-MM-DD)
 	function formatDateForInput(date: Date | string | null | undefined): string {
@@ -114,24 +122,39 @@
 		onVersionsChange(versions);
 	}
 
-	// Mark version for deletion
-	function deleteVersion(index: number) {
+	// Initiate version deletion
+	function initiateDeleteVersion(index: number) {
 		const version = versions[index];
 
 		if (version._isNew) {
-			// Remove new unsaved version immediately
+			// Remove new unsaved version immediately without confirmation
 			versions = versions.filter((_, i) => i !== index);
+			onVersionsChange(versions);
 		} else {
-			// Mark existing version for deletion
-			const updatedVersions = [...versions];
-			updatedVersions[index] = {
-				...version,
-				_action: 'delete'
-			};
-			versions = updatedVersions;
+			// Show confirmation for existing versions
+			versionToDelete = index;
+			showDeleteConfirmation = true;
 		}
+	}
 
+	// Confirm version deletion
+	function confirmDeleteVersion() {
+		if (versionToDelete === null) return;
+
+		const version = versions[versionToDelete];
+		const updatedVersions = [...versions];
+		updatedVersions[versionToDelete] = {
+			...version,
+			_action: 'delete'
+		};
+		versions = updatedVersions;
+		versionToDelete = null;
 		onVersionsChange(versions);
+	}
+
+	// Cancel version deletion
+	function cancelDeleteVersion() {
+		versionToDelete = null;
 	}
 
 	// Restore deleted version
@@ -146,16 +169,52 @@
 		onVersionsChange(versions);
 	}
 
-	// Set version as current
-	function setAsCurrent(index: number) {
+	// Initiate setting version as current
+	function initiateSetAsCurrent(index: number) {
+		versionToSetCurrent = index;
+		showCurrentChangeConfirmation = true;
+	}
+
+	// Confirm setting version as current
+	function confirmSetAsCurrent() {
+		if (versionToSetCurrent === null) return;
+
 		const updatedVersions = versions.map((v, i) => ({
 			...v,
-			is_current: i === index,
+			is_current: i === versionToSetCurrent,
 			_action: v._action || 'update'
 		}));
 		versions = updatedVersions;
+		versionToSetCurrent = null;
 		onVersionsChange(versions);
 	}
+
+	// Cancel setting version as current
+	function cancelSetAsCurrent() {
+		versionToSetCurrent = null;
+	}
+
+	// Get delete confirmation message
+	const deleteConfirmationMessage = $derived(() => {
+		if (versionToDelete === null) return '';
+		const version = versions[versionToDelete];
+		const packageCount = version._packageCount || 0;
+
+		if (packageCount > 0) {
+			return `This version is currently referenced by ${packageCount} package${packageCount !== 1 ? 's' : ''}. Deleting it may affect those packages.`;
+		}
+		return 'Are you sure you want to delete this version? This action cannot be undone.';
+	});
+
+	// Get current version details for confirmation
+	const currentVersionDetails = $derived(() => {
+		const currentVersion = versions.find(v => v.is_current);
+		if (!currentVersion) return null;
+		return {
+			version: currentVersion.version,
+			ptf: currentVersion.ptf_level
+		};
+	});
 </script>
 
 <Card class="p-6">
@@ -284,7 +343,7 @@
 							<!-- Display Mode -->
 							<div class="flex justify-between items-start">
 								<div class="flex-1">
-									<div class="flex items-center gap-2 mb-2">
+									<div class="flex items-center gap-2 mb-2 flex-wrap">
 										<h4 class="font-semibold text-lg">
 											{version.version}
 											{#if version.ptf_level}
@@ -299,6 +358,16 @@
 										{/if}
 										{#if isDeleted}
 											<Badge variant="destructive">Deleted</Badge>
+										{/if}
+										{#if supportEnded && !isDeleted}
+											<Badge variant="destructive" class="bg-red-100 text-red-800 border-red-300">
+												Support Ended
+											</Badge>
+										{/if}
+										{#if version._packageCount && version._packageCount > 0}
+											<Badge variant="outline" class="text-xs">
+												Referenced in {version._packageCount} package{version._packageCount !== 1 ? 's' : ''}
+											</Badge>
 										{/if}
 									</div>
 
@@ -341,7 +410,7 @@
 												type="button"
 												variant="outline"
 												size="sm"
-												onclick={() => setAsCurrent(index)}
+												onclick={() => initiateSetAsCurrent(index)}
 											>
 												Set Current
 											</Button>
@@ -358,7 +427,7 @@
 											type="button"
 											variant="destructive"
 											size="sm"
-											onclick={() => deleteVersion(index)}
+											onclick={() => initiateDeleteVersion(index)}
 										>
 											Delete
 										</Button>
@@ -372,3 +441,37 @@
 		{/if}
 	</div>
 </Card>
+
+<!-- Delete Version Confirmation -->
+<ConfirmationDialog
+	bind:open={showDeleteConfirmation}
+	title="Delete Software Version"
+	message={deleteConfirmationMessage()}
+	confirmLabel="Delete Version"
+	cancelLabel="Cancel"
+	variant="destructive"
+	requireConfirmation={versionToDelete !== null && (versions[versionToDelete]?._packageCount || 0) > 0}
+	onConfirm={confirmDeleteVersion}
+	onCancel={cancelDeleteVersion}
+	details={versionToDelete !== null && versions[versionToDelete]?._packageCount ? [
+		`Version: ${versions[versionToDelete].version}${versions[versionToDelete].ptf_level ? ` (${versions[versionToDelete].ptf_level})` : ''}`,
+		`Referenced by: ${versions[versionToDelete]._packageCount} package${versions[versionToDelete]._packageCount !== 1 ? 's' : ''}`,
+		'',
+		'Deleting this version may cause issues with packages that reference it.'
+	] : undefined}
+/>
+
+<!-- Set Current Version Confirmation -->
+<ConfirmationDialog
+	bind:open={showCurrentChangeConfirmation}
+	title="Change Current Version"
+	message={currentVersionDetails()
+		? `Changing the current version will affect how this software appears in package creation. The current version will change from ${currentVersionDetails()?.version}${currentVersionDetails()?.ptf ? ` (${currentVersionDetails()?.ptf})` : ''} to ${versionToSetCurrent !== null ? versions[versionToSetCurrent]?.version : ''}${versionToSetCurrent !== null && versions[versionToSetCurrent]?.ptf_level ? ` (${versions[versionToSetCurrent]?.ptf_level})` : ''}.`
+		: 'This will set the selected version as the current version for this software.'}
+	confirmLabel="Change Current Version"
+	cancelLabel="Cancel"
+	variant="default"
+	onConfirm={confirmSetAsCurrent}
+	onCancel={cancelSetAsCurrent}
+	details={['This affects which version is selected by default when creating new packages.']}
+/>

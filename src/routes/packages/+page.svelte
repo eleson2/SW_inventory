@@ -5,6 +5,7 @@
 	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
 	import Pagination from '$components/common/Pagination.svelte';
+	import SearchFilter from '$components/common/SearchFilter.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import { formatDate } from '$utils/date-format';
 	import { cn } from '$utils/cn';
@@ -48,32 +49,58 @@
 	</div>
 
 	<Card class="p-6">
+		<div class="mb-6">
+			<SearchFilter
+				placeholder="Search packages by name or code..."
+				filters={[
+					{
+						name: 'status',
+						label: 'Status',
+						options: [
+							{ value: 'active', label: 'Active' },
+							{ value: 'inactive', label: 'Inactive' }
+						]
+					}
+				]}
+				resultCount={'items' in data.packages ? {
+					current: data.packages.items.length,
+					total: data.packages.totalCount
+				} : null}
+			/>
+		</div>
+
 		<div class="rounded-md border">
 			<table class="w-full">
 				<thead>
 					<tr class="border-b bg-muted/50">
-						<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+						<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground {data.sort?.field === 'code' ? 'bg-accent/50' : ''}">
 							<button
-								class="flex items-center gap-2 hover:text-foreground"
+								class="flex items-center gap-2 hover:text-foreground transition-colors {data.sort?.field === 'code' ? 'text-foreground font-bold' : ''}"
 								onclick={() => handleSort('code')}
+								title={data.sort?.field === 'code'
+									? `Sorted ${data.sort.direction === 'asc' ? 'ascending' : 'descending'}. Click to ${data.sort.direction === 'asc' ? 'sort descending' : 'sort ascending'}`
+									: 'Click to sort'}
 							>
 								Package Code
 								{#if data.sort?.field === 'code'}
-									<span class="text-xs">
-										{data.sort.direction === 'asc' ? '↑' : '↓'}
+									<span class="text-base font-bold">
+										{data.sort.direction === 'asc' ? '▲' : '▼'}
 									</span>
 								{/if}
 							</button>
 						</th>
-						<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+						<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground {data.sort?.field === 'name' ? 'bg-accent/50' : ''}">
 							<button
-								class="flex items-center gap-2 hover:text-foreground"
+								class="flex items-center gap-2 hover:text-foreground transition-colors {data.sort?.field === 'name' ? 'text-foreground font-bold' : ''}"
 								onclick={() => handleSort('name')}
+								title={data.sort?.field === 'name'
+									? `Sorted ${data.sort.direction === 'asc' ? 'ascending' : 'descending'}. Click to ${data.sort.direction === 'asc' ? 'sort descending' : 'sort ascending'}`
+									: 'Click to sort'}
 							>
 								Name
 								{#if data.sort?.field === 'name'}
-									<span class="text-xs">
-										{data.sort.direction === 'asc' ? '↑' : '↓'}
+									<span class="text-base font-bold">
+										{data.sort.direction === 'asc' ? '▲' : '▼'}
 									</span>
 								{/if}
 							</button>
@@ -84,28 +111,34 @@
 						<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
 							Software Count
 						</th>
-						<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+						<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground {data.sort?.field === 'releaseDate' ? 'bg-accent/50' : ''}">
 							<button
-								class="flex items-center gap-2 hover:text-foreground"
+								class="flex items-center gap-2 hover:text-foreground transition-colors {data.sort?.field === 'releaseDate' ? 'text-foreground font-bold' : ''}"
 								onclick={() => handleSort('releaseDate')}
+								title={data.sort?.field === 'releaseDate'
+									? `Sorted ${data.sort.direction === 'asc' ? 'ascending' : 'descending'}. Click to ${data.sort.direction === 'asc' ? 'sort descending' : 'sort ascending'}`
+									: 'Click to sort'}
 							>
 								Release Date
 								{#if data.sort?.field === 'releaseDate'}
-									<span class="text-xs">
-										{data.sort.direction === 'asc' ? '↑' : '↓'}
+									<span class="text-base font-bold">
+										{data.sort.direction === 'asc' ? '▲' : '▼'}
 									</span>
 								{/if}
 							</button>
 						</th>
-						<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+						<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground {data.sort?.field === 'active' ? 'bg-accent/50' : ''}">
 							<button
-								class="flex items-center gap-2 hover:text-foreground"
+								class="flex items-center gap-2 hover:text-foreground transition-colors {data.sort?.field === 'active' ? 'text-foreground font-bold' : ''}"
 								onclick={() => handleSort('active')}
+								title={data.sort?.field === 'active'
+									? `Sorted ${data.sort.direction === 'asc' ? 'ascending' : 'descending'}. Click to ${data.sort.direction === 'asc' ? 'sort descending' : 'sort ascending'}`
+									: 'Click to sort'}
 							>
 								Status
 								{#if data.sort?.field === 'active'}
-									<span class="text-xs">
-										{data.sort.direction === 'asc' ? '↑' : '↓'}
+									<span class="text-base font-bold">
+										{data.sort.direction === 'asc' ? '▲' : '▼'}
 									</span>
 								{/if}
 							</button>
