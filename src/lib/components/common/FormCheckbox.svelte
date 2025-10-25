@@ -8,6 +8,7 @@
 		checked: boolean;
 		helperText?: string;
 		disabled?: boolean;
+		constraints?: Record<string, any>;
 	}
 
 	let {
@@ -16,8 +17,15 @@
 		name,
 		checked = $bindable(),
 		helperText,
-		disabled = false
+		disabled = false,
+		constraints = {}
 	}: Props = $props();
+
+	// Merge constraints with explicit props (explicit props take precedence)
+	const mergedConstraints = $derived({
+		...constraints,
+		...(disabled !== undefined && { disabled })
+	});
 </script>
 
 <div class="space-y-2">
@@ -27,8 +35,8 @@
 			{id}
 			{name}
 			bind:checked
-			{disabled}
 			class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+			{...mergedConstraints}
 		/>
 		<Label for={id}>{label}</Label>
 	</div>

@@ -27,6 +27,20 @@
 		onSourceSelect,
 		onBlankSelect
 	}: Props = $props();
+
+	// Derived: Is clone mode active
+	const isCloneMode = $derived(mode === 'clone');
+
+	// Derived: Is blank mode active
+	const isBlankMode = $derived(mode === 'blank');
+
+	// Derived: Has source selected in clone mode
+	const hasSourceSelected = $derived(isCloneMode && !!selectedId);
+
+	// Derived: Get selected source item
+	const selectedSource = $derived(
+		items.find((item) => item.id === selectedId)
+	);
 </script>
 
 <div class="space-y-3 pb-4 border-b">
@@ -58,7 +72,7 @@
 		</label>
 	</div>
 
-	{#if mode === 'clone'}
+	{#if isCloneMode}
 		<div class="space-y-2 pt-2">
 			<Label for="cloneSource">Select source {entityName.toLowerCase()}</Label>
 			<SearchableSelect
@@ -70,7 +84,7 @@
 				bind:value={selectedId}
 				onSelect={onSourceSelect}
 			/>
-			{#if selectedId}
+			{#if hasSourceSelected}
 				<p class="text-sm text-muted-foreground">
 					Form has been pre-filled with data from selected {entityName.toLowerCase()}. You can edit any
 					field before creating.

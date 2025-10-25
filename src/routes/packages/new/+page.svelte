@@ -2,6 +2,8 @@
 	import type { PageData } from './$types';
 	import type { PackageItem } from '$lib/schemas/package';
 	import { superForm } from 'sveltekit-superforms';
+	import { zod } from 'sveltekit-superforms/adapters';
+	import { packageSchema } from '$schemas';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import FormCheckbox from '$components/common/FormCheckbox.svelte';
@@ -21,10 +23,11 @@
 		{ label: 'New Package' }
 	];
 
-	// Initialize Superforms (server-side validation only)
-	const { form, errors, enhance, submitting, delayed, submitted } = superForm(data.form, {
+	// Initialize Superforms with client-side validation
+	const { form, errors, enhance, submitting, delayed, submitted, constraints } = superForm(data.form, {
 		dataType: 'json',
-		resetForm: false
+		resetForm: false,
+		validators: zod(packageSchema)
 	});
 
 	let creationMode = $state<'blank' | 'clone'>('blank');
@@ -157,9 +160,9 @@
 				id="name"
 				name="name"
 				bind:value={$form.name}
-				required
 				placeholder="Enter package name"
 				error={$errors.name?._errors?.[0]}
+				constraints={$constraints.name}
 			/>
 
 			<FormField
@@ -167,10 +170,10 @@
 				id="code"
 				name="code"
 				bind:value={$form.code}
-				required
 				placeholder="PKG-CODE"
 				helperText="Uppercase alphanumeric with dashes/underscores"
 				error={$errors.code?._errors?.[0]}
+				constraints={$constraints.code}
 			/>
 
 			<FormField
@@ -178,10 +181,10 @@
 				id="version"
 				name="version"
 				bind:value={$form.version}
-				required
 				placeholder="e.g., 2025.1.0"
 				helperText="Package version number"
 				error={$errors.version?._errors?.[0]}
+				constraints={$constraints.version}
 			/>
 
 			<FormField
@@ -190,8 +193,8 @@
 				name="release_date"
 				type="date"
 				bind:value={$form.release_date}
-				required
 				error={$errors.release_date?._errors?.[0]}
+				constraints={$constraints.release_date}
 			/>
 
 			<FormTextarea
@@ -200,6 +203,7 @@
 				name="description"
 				bind:value={$form.description}
 				placeholder="Enter package description (optional)"
+				constraints={$constraints.description}
 			/>
 
 				<FormCheckbox
@@ -207,6 +211,7 @@
 					id="active"
 					name="active"
 					bind:checked={$form.active}
+					constraints={$constraints.active}
 				/>
 			</div>
 		</Card>

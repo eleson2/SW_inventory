@@ -1,6 +1,8 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { superForm} from 'sveltekit-superforms';
+	import { superForm } from 'sveltekit-superforms';
+	import { zod } from 'sveltekit-superforms/adapters';
+	import { lparSchema } from '$schemas';
 	import Card from '$components/ui/Card.svelte';
 	import Label from '$components/ui/Label.svelte';
 	import FormField from '$components/common/FormField.svelte';
@@ -19,10 +21,11 @@
 		{ label: 'New LPAR' }
 	];
 
-	// Initialize Superforms (server-side validation only)
-	const { form, errors, enhance, submitting, delayed, submitted } = superForm(data.form, {
+	// Initialize Superforms with client-side validation
+	const { form, errors, enhance, submitting, delayed, submitted, constraints } = superForm(data.form, {
 		dataType: 'json',
-		resetForm: false
+		resetForm: false,
+		validators: zod(lparSchema)
 	});
 
 	let creationMode = $state<'blank' | 'clone'>('blank');
@@ -86,9 +89,9 @@
 				id="name"
 				name="name"
 				bind:value={$form.name}
-				required
 				placeholder="Enter LPAR name"
 				error={$errors.name?._errors?.[0]}
+				constraints={$constraints.name}
 			/>
 
 			<FormField
@@ -96,10 +99,10 @@
 				id="code"
 				name="code"
 				bind:value={$form.code}
-				required
 				placeholder="LPAR-CODE"
 				helperText="Uppercase alphanumeric with dashes/underscores"
 				error={$errors.code?._errors?.[0]}
+				constraints={$constraints.code}
 			/>
 
 			<div class="space-y-2">
@@ -146,6 +149,7 @@
 				name="description"
 				bind:value={$form.description}
 				placeholder="Enter LPAR description (optional)"
+				constraints={$constraints.description}
 			/>
 
 			<FormCheckbox
@@ -153,6 +157,7 @@
 				id="active"
 				name="active"
 				bind:checked={$form.active}
+				constraints={$constraints.active}
 			/>
 
 			<FormButtons loading={$submitting || $delayed} />

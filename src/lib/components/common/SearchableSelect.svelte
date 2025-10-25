@@ -42,7 +42,7 @@
 	let inputElement = $state<HTMLInputElement>();
 	let dropdownElement = $state<HTMLDivElement>();
 
-	// Filter items based on search term
+	// Derived: Filter items based on search term
 	const filteredItems = $derived(
 		searchTerm.trim() === ''
 			? items
@@ -54,8 +54,10 @@
 			  })
 	);
 
-	// Get display text for selected value
+	// Derived: Get currently selected item
 	const selectedItem = $derived(items.find((item) => item[valueField] === value));
+
+	// Derived: Display text for selected value
 	const displayText = $derived(
 		selectedItem
 			? secondaryField
@@ -64,13 +66,22 @@
 			: ''
 	);
 
+	// Derived: Input value based on open state
+	const inputValue = $derived(isOpen ? searchTerm : displayText);
+
+	// Derived: Has selected value
+	const hasSelection = $derived(!!value);
+
+	// Derived: Constrained highlighted index to prevent out-of-bounds
+	const safeHighlightedIndex = $derived(
+		Math.min(Math.max(0, highlightedIndex), Math.max(0, filteredItems.length - 1))
+	);
+
 	function handleInputClick() {
 		if (disabled) return;
 		isOpen = !isOpen;
-		if (isOpen) {
-			searchTerm = '';
-			highlightedIndex = 0;
-		}
+		searchTerm = '';
+		highlightedIndex = 0;
 	}
 
 	function handleInputFocus() {
@@ -173,7 +184,7 @@
 		<input
 			bind:this={inputElement}
 			type="text"
-			value={isOpen ? searchTerm : displayText}
+			value={inputValue}
 			oninput={(e) => {
 				searchTerm = e.currentTarget.value;
 				highlightedIndex = 0;
@@ -195,7 +206,7 @@
 		/>
 
 		<div class="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
-			{#if value && !disabled}
+			{#if hasSelection && !disabled}
 				<button
 					type="button"
 					onclick={(e) => {
@@ -254,10 +265,7 @@
 						data-index={index}
 						onclick={() => selectItem(item)}
 						onmouseenter={() => (highlightedIndex = index)}
-						class="w-full px-3 py-2 text-left hover:bg-accent cursor-pointer {highlightedIndex ===
-						index
-							? 'bg-accent'
-							: ''}"
+						class="w-full px-3 py-2 text-left hover:bg-accent cursor-pointer {safeHighlightedIndex === index ? 'bg-accent' : ''}"
 						role="option"
 						aria-selected={value === item[valueField]}
 					>

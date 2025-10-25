@@ -1,6 +1,8 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { superForm } from 'sveltekit-superforms';
+	import { zod } from 'sveltekit-superforms/adapters';
+	import { softwareSchema } from '$schemas';
 	import Card from '$components/ui/Card.svelte';
 	import Label from '$components/ui/Label.svelte';
 	import FormField from '$components/common/FormField.svelte';
@@ -21,10 +23,11 @@
 		{ label: 'New Software' }
 	];
 
-	// Initialize Superforms (server-side validation only)
-	const { form, errors, enhance, submitting, delayed, submitted } = superForm(data.form, {
+	// Initialize Superforms with client-side validation
+	const { form, errors, enhance, submitting, delayed, submitted, constraints } = superForm(data.form, {
 		dataType: 'json',
-		resetForm: false
+		resetForm: false,
+		validators: zod(softwareSchema)
 	});
 
 	let creationMode = $state<'blank' | 'clone'>('blank');
@@ -136,9 +139,9 @@
 					id="name"
 					name="name"
 					bind:value={$form.name}
-					required
 					placeholder="Enter software name"
 					error={$errors.name?._errors?.[0]}
+					constraints={$constraints.name}
 				/>
 
 				<div class="space-y-2">
@@ -166,6 +169,7 @@
 					name="description"
 					bind:value={$form.description}
 					placeholder="Enter software description (optional)"
+					constraints={$constraints.description}
 				/>
 
 				<FormCheckbox
@@ -173,6 +177,7 @@
 					id="active"
 					name="active"
 					bind:checked={$form.active}
+					constraints={$constraints.active}
 				/>
 
 				<FormErrorMessage message={form?.message} />

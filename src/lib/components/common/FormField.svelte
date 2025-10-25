@@ -12,7 +12,8 @@
 		required = false,
 		disabled = false,
 		error = '',
-		helperText = ''
+		helperText = '',
+		constraints = {}
 	}: {
 		label: string;
 		id: string;
@@ -24,11 +25,19 @@
 		disabled?: boolean;
 		error?: string;
 		helperText?: string;
+		constraints?: Record<string, any>;
 	} = $props();
+
+	// Merge constraints with explicit props (explicit props take precedence)
+	const mergedConstraints = $derived({
+		...constraints,
+		...(required !== undefined && { required }),
+		...(disabled !== undefined && { disabled })
+	});
 </script>
 
 <div class="space-y-2">
-	<Label for={id} {required}>
+	<Label for={id} required={mergedConstraints.required}>
 		{label}
 	</Label>
 	<Input
@@ -37,9 +46,8 @@
 		{type}
 		bind:value
 		{placeholder}
-		{required}
-		{disabled}
 		{error}
+		{...mergedConstraints}
 	/>
 	{#if helperText && !error}
 		<p class="text-sm text-muted-foreground">{helperText}</p>

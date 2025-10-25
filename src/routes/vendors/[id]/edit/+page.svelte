@@ -1,6 +1,8 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { superForm } from 'sveltekit-superforms';
+	import { zod } from 'sveltekit-superforms/adapters';
+	import { vendorSchema } from '$schemas';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import FormCheckbox from '$components/common/FormCheckbox.svelte';
@@ -9,9 +11,10 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const { form, errors, enhance, message } = superForm(data.form, {
+	const { form, errors, enhance, message, constraints } = superForm(data.form, {
 		dataType: 'json',
-		resetForm: false
+		resetForm: false,
+		validators: zod(vendorSchema)
 	});
 </script>
 
@@ -30,9 +33,9 @@
 				id="name"
 				name="name"
 				bind:value={$form.name}
-				required
 				placeholder="Enter vendor name"
 				error={$errors.name?._errors?.[0]}
+				constraints={$constraints.name}
 			/>
 
 			<FormField
@@ -40,10 +43,10 @@
 				id="code"
 				name="code"
 				bind:value={$form.code}
-				required
 				placeholder="VENDOR-CODE"
 				helperText="Uppercase alphanumeric with dashes/underscores"
 				error={$errors.code?._errors?.[0]}
+				constraints={$constraints.code}
 			/>
 
 			<FormField
@@ -55,6 +58,7 @@
 				placeholder="https://www.example.com"
 				helperText="Optional - full URL including https://"
 				error={$errors.website?._errors?.[0]}
+				constraints={$constraints.website}
 			/>
 
 			<FormField
@@ -66,6 +70,7 @@
 				placeholder="contact@example.com"
 				helperText="Optional - main contact email for this vendor"
 				error={$errors.contact_email?._errors?.[0]}
+				constraints={$constraints.contact_email}
 			/>
 
 			<FormCheckbox
@@ -73,6 +78,7 @@
 				id="active"
 				name="active"
 				bind:checked={$form.active}
+				constraints={$constraints.active}
 			/>
 
 			<FormErrorMessage message={$message} />
