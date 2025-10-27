@@ -6,7 +6,7 @@
 	import Card from '$components/ui/Card.svelte';
 	import DataTable from '$components/common/DataTable.svelte';
 	import Pagination from '$components/common/Pagination.svelte';
-	import SearchFilter from '$components/common/SearchFilter.svelte';
+	import InstantSearch from '$components/common/InstantSearch.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
 
 	let { data }: { data: PageData } = $props();
@@ -76,7 +76,7 @@
 
 	<Card class="p-6">
 		<div class="mb-6">
-			<SearchFilter
+			<InstantSearch
 				placeholder="Search vendors by name or code..."
 				filters={[
 					{

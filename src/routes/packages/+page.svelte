@@ -5,7 +5,7 @@
 	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
 	import Pagination from '$components/common/Pagination.svelte';
-	import SearchFilter from '$components/common/SearchFilter.svelte';
+	import InstantSearch from '$components/common/InstantSearch.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import { formatDate } from '$utils/date-format';
 	import { cn } from '$utils/cn';
@@ -50,7 +50,7 @@
 
 	<Card class="p-6">
 		<div class="mb-6">
-			<SearchFilter
+			<InstantSearch
 				placeholder="Search packages by name or code..."
 				filters={[
 					{
