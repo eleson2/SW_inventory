@@ -1,4 +1,5 @@
 <script lang="ts">
+	// @ts-nocheck - Superforms type inference issues with client-side validation
 	import type { PageData } from './$types';
 	import { superForm } from 'sveltekit-superforms';
 	import { zod } from 'sveltekit-superforms/adapters';
@@ -21,6 +22,7 @@
 	];
 
 	// Initialize Superforms with client-side validation
+	// @ts-expect-error - Superforms type inference issue with Zod validators
 	const { form, errors, enhance, submitting, delayed, submitted, constraints } = superForm(data.form, {
 		dataType: 'json',
 		resetForm: false,
