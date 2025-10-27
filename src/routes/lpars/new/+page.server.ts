@@ -6,15 +6,23 @@ import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 
 // Load customers, packages, and all LPARs for dropdowns
-export const load: PageServerLoad = async () => {
-	// Initialize Superforms with default values
+export const load: PageServerLoad = async ({ url }) => {
+	// Check if customer_id is provided in URL query params
+	const customerIdFromUrl = url.searchParams.get('customer_id');
+
+	// Initialize Superforms with default values (pre-fill customer_id if provided)
 	// @ts-expect-error - Superforms type inference issue with Zod validators
 	const form = await superValidate(
-		{ description: '', current_package_id: '', active: true },
+		{
+			description: '',
+			current_package_id: '',
+			active: true,
+			customer_id: customerIdFromUrl || ''
+		},
 		zod(lparSchema)
 	);
 
-	const [customers, packages, allLpars] = await Promise.all([
+	const [customers, packages, allLpars, preselectedCustomer] = await Promise.all([
 		db.customers.findMany({
 			where: { active: true },
 			orderBy: { name: 'asc' },
@@ -52,14 +60,22 @@ export const load: PageServerLoad = async () => {
 				}
 			},
 			orderBy: { name: 'asc' }
-		})
+		}),
+		// Get customer info if pre-selected
+		customerIdFromUrl
+			? db.customers.findUnique({
+				where: { id: customerIdFromUrl },
+				select: { id: true, name: true, code: true }
+			})
+			: Promise.resolve(null)
 	]);
 
 	return {
 		form,
 		customers,
 		packages,
-		allLpars
+		allLpars,
+		preselectedCustomer
 	};
 };
 
@@ -110,10 +126,9 @@ export const actions: Actions = {
 			// Create audit log
 			await createAuditLog('lpar', lpar.id, 'create', lpar);
 
-			throw redirect(303, '/lpars');
+			// Return success - client will handle redirect via onUpdated
+			return { form };
 		} catch (error) {
-			if (error instanceof Response) throw error;
-
 			console.error('Error creating LPAR:', error);
 			return fail(500, { form });
 		}

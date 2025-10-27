@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { calculateCompatibilityScore } from '$lib/services/package-service';
 import { db } from '$lib/server/db';
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ params }) => {
 	// Fetch LPAR from database with all relations
@@ -63,6 +63,49 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
+	delete: async ({ params }) => {
+		try {
+			// Check if LPAR exists
+			const lpar = await db.lpars.findUnique({
+				where: { id: params.id }
+			});
+
+			if (!lpar) {
+				return fail(404, { error: 'LPAR not found' });
+			}
+
+			// Rule 1: Cannot delete active LPARs
+			if (lpar.active) {
+				return fail(400, {
+					error: 'Cannot delete active LPAR. Please deactivate it first.'
+				});
+			}
+
+			// Safe to hard delete (cascade will delete lpar_software entries)
+			await db.lpars.delete({
+				where: { id: params.id }
+			});
+
+			await db.audit_log.create({
+				data: {
+					entity_type: 'lpar',
+					entity_id: params.id,
+					action: 'delete',
+					changes: {
+						...lpar,
+						permanently_deleted: true
+					}
+				}
+			});
+
+			throw redirect(303, '/lpars');
+		} catch (err) {
+			if (err instanceof Response) throw err;
+
+			console.error('Error deleting LPAR:', err);
+			return fail(500, { error: 'Failed to delete LPAR' });
+		}
+	},
 	rollback: async ({ params, request }) => {
 		const lparId = params.id;
 		const formData = await request.formData();

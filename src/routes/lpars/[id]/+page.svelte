@@ -4,6 +4,7 @@
 	import Card from '$components/ui/Card.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
+	import DeleteButton from '$components/common/DeleteButton.svelte';
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
 	import CloneDialog from '$components/common/CloneDialog.svelte';
 	import RollbackDialog from '$components/common/RollbackDialog.svelte';
@@ -94,6 +95,12 @@
 			<Button variant="outline" onclick={() => window.location.href = `/lpars/${lpar.id}/edit`}>
 				Edit
 			</Button>
+			<DeleteButton
+				entityName="LPAR"
+				entityId={lpar.id}
+				entityLabel={lpar.name}
+				variant="destructive"
+			/>
 			<Button variant="outline" onclick={() => window.history.back()}>
 				Back
 			</Button>

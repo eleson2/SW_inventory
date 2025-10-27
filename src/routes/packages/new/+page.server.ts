@@ -144,12 +144,9 @@ export const actions: Actions = {
 				return pkg;
 			});
 
-			throw redirect(303, '/packages');
+			// Return success - client will handle redirect via onUpdated
+			return { form };
 		} catch (err) {
-			if (err instanceof Error && err.message.includes('redirect')) {
-				throw err;
-			}
-
 			console.error('Error creating package:', err);
 			return fail(500, { form });
 		}

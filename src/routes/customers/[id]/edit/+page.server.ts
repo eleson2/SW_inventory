@@ -47,6 +47,11 @@ export const actions: Actions = {
 		}
 
 		try {
+			// Get current customer state
+			const currentCustomer = await db.customers.findUnique({
+				where: { id: event.params.id }
+			});
+
 			const customer = await db.customers.update({
 				where: { id: event.params.id },
 				data: {
@@ -61,12 +66,19 @@ export const actions: Actions = {
 				}
 			});
 
+			// CASCADE: If customer is being deactivated, deactivate all their LPARs
+			if (currentCustomer?.active && !form.data.active) {
+				await db.lpars.updateMany({
+					where: { customer_id: customer.id },
+					data: { active: false, updated_at: new Date() }
+				});
+			}
+
 			await createAuditLog('customer', customer.id, 'update', customer);
 
-			throw redirect(303, '/customers');
+			// Return success - client will handle redirect via onUpdated
+			return { form };
 		} catch (err) {
-			if (err instanceof Response) throw err;
-
 			console.error('Error updating customer:', err);
 			return fail(500, { form });
 		}

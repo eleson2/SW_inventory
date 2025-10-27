@@ -72,10 +72,9 @@ export const actions: Actions = {
 			// Create audit log
 			await createAuditLog('customer', customer.id, 'create', customer);
 
-			throw redirect(303, '/customers');
+			// Return success - client will handle redirect via onUpdated
+			return { form };
 		} catch (error) {
-			if (error instanceof Response) throw error;
-
 			console.error('Error creating customer:', error);
 			return fail(500, { form });
 		}

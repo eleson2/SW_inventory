@@ -4,6 +4,7 @@
 	import { superForm } from 'sveltekit-superforms';
 	import { zod } from 'sveltekit-superforms/adapters';
 	import { softwareSchema } from '$schemas';
+	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import Label from '$components/ui/Label.svelte';
 	import FormField from '$components/common/FormField.svelte';
@@ -18,18 +19,39 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const breadcrumbItems = [
-		{ label: 'Home', href: '/' },
-		{ label: 'Software', href: '/software' },
-		{ label: 'New Software' }
-	];
+	// Check if we have a pre-selected vendor
+	const hasPreselectedVendor = !!data.preselectedVendor;
+
+	const breadcrumbItems = hasPreselectedVendor
+		? [
+			{ label: 'Home', href: '/' },
+			{ label: 'Vendors', href: '/vendors' },
+			{ label: data.preselectedVendor!.name, href: `/vendors/${data.preselectedVendor!.id}` },
+			{ label: 'New Software' }
+		]
+		: [
+			{ label: 'Home', href: '/' },
+			{ label: 'Software', href: '/software' },
+			{ label: 'New Software' }
+		];
 
 	// Initialize Superforms with client-side validation
 	// @ts-expect-error - Superforms type inference issue with Zod validators
 	const { form, errors, enhance, submitting, delayed, submitted, constraints } = superForm(data.form, {
 		dataType: 'json',
 		resetForm: false,
-		validators: zod(softwareSchema)
+		validators: zod(softwareSchema),
+		// Redirect after successful submission
+		onUpdated: ({ form }) => {
+			if (form.valid) {
+				// Redirect back to vendor page if we came from there
+				if (hasPreselectedVendor) {
+					goto(`/vendors/${data.preselectedVendor!.id}`);
+				} else {
+					goto('/software');
+				}
+			}
+		}
 	});
 
 	let creationMode = $state<'blank' | 'clone'>('blank');
@@ -83,7 +105,10 @@
 	// Reset form to blank state
 	function handleBlankSelect() {
 		$form.name = '';
-		$form.vendor_id = '';
+		// Keep vendor_id if pre-selected
+		if (!hasPreselectedVendor) {
+			$form.vendor_id = '';
+		}
 		$form.description = '';
 		$form.active = true;
 		versions = [{
@@ -110,7 +135,11 @@
 	<div>
 		<h1 class="text-3xl font-bold tracking-tight">New Software Product</h1>
 		<p class="text-muted-foreground mt-2">
-			Create a new software product with version history in one step
+			{#if hasPreselectedVendor}
+				Create a new software product for {data.preselectedVendor!.name}
+			{:else}
+				Create a new software product with version history in one step
+			{/if}
 		</p>
 	</div>
 
@@ -146,24 +175,40 @@
 					constraints={$constraints.name}
 				/>
 
-				<div class="space-y-2">
-					<Label for="vendorId">Vendor <span class="text-destructive">*</span></Label>
-					<select
-						id="vendor_id"
-						name="vendor_id"
-						bind:value={$form.vendor_id}
-						required
-						class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-					>
-						<option value="">Select a vendor...</option>
-						{#each data.vendors as vendor}
-							<option value={vendor.id}>{vendor.name} ({vendor.code})</option>
-						{/each}
-					</select>
-					{#if $errors.vendor_id?._errors?.[0]}
-						<p class="text-sm text-destructive">{$errors.vendor_id._errors[0]}</p>
-					{/if}
-				</div>
+				{#if hasPreselectedVendor}
+					<!-- Show vendor as readonly field when pre-selected -->
+					<div class="space-y-2">
+						<Label for="vendor_id">Vendor</Label>
+						<div class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm">
+							<span class="font-medium">{data.preselectedVendor!.name}</span>
+							<span class="text-muted-foreground ml-2">({data.preselectedVendor!.code})</span>
+						</div>
+						<input type="hidden" name="vendor_id" value={$form.vendor_id} />
+						<p class="text-sm text-muted-foreground">
+							Creating software for this vendor
+						</p>
+					</div>
+				{:else}
+					<!-- Show dropdown when no vendor pre-selected -->
+					<div class="space-y-2">
+						<Label for="vendorId">Vendor <span class="text-destructive">*</span></Label>
+						<select
+							id="vendor_id"
+							name="vendor_id"
+							bind:value={$form.vendor_id}
+							required
+							class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+						>
+							<option value="">Select a vendor...</option>
+							{#each data.vendors as vendor}
+								<option value={vendor.id}>{vendor.name} ({vendor.code})</option>
+							{/each}
+						</select>
+						{#if $errors.vendor_id?._errors?.[0]}
+							<p class="text-sm text-destructive">{$errors.vendor_id._errors[0]}</p>
+						{/if}
+					</div>
+				{/if}
 
 				<FormTextarea
 					label="Description"

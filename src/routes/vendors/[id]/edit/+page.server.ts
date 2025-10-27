@@ -46,6 +46,11 @@ export const actions: Actions = {
 		}
 
 		try {
+			// Get current vendor state
+			const currentVendor = await db.vendors.findUnique({
+				where: { id: event.params.id }
+			});
+
 			const vendor = await db.vendors.update({
 				where: { id: event.params.id },
 				data: {
@@ -57,12 +62,19 @@ export const actions: Actions = {
 				}
 			});
 
+			// CASCADE: If vendor is being deactivated, deactivate all its software
+			if (currentVendor?.active && !form.data.active) {
+				await db.software.updateMany({
+					where: { vendor_id: vendor.id },
+					data: { active: false, updated_at: new Date() }
+				});
+			}
+
 			await createAuditLog('vendor', vendor.id, 'update', vendor);
 
-			throw redirect(303, '/vendors');
+			// Return success - client will handle redirect via onUpdated
+			return { form };
 		} catch (err) {
-			if (err instanceof Response) throw err;
-
 			console.error('Error updating vendor:', err);
 			return fail(500, { form });
 		}

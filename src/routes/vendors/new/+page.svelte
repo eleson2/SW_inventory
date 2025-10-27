@@ -4,6 +4,7 @@
 	import { superForm } from 'sveltekit-superforms';
 	import { zod } from 'sveltekit-superforms/adapters';
 	import { vendorSchema } from '$schemas';
+	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import FormCheckbox from '$components/common/FormCheckbox.svelte';
@@ -26,7 +27,13 @@
 	const { form, errors, enhance, submitting, delayed, submitted, constraints } = superForm(data.form, {
 		dataType: 'json',
 		resetForm: false,
-		validators: zod(vendorSchema)
+		validators: zod(vendorSchema),
+		// Redirect after successful submission
+		onUpdated: ({ form }) => {
+			if (form.valid) {
+				goto('/vendors');
+			}
+		}
 	});
 
 	let creationMode = $state<'blank' | 'clone'>('blank');

@@ -4,6 +4,7 @@
 	import { superForm } from 'sveltekit-superforms';
 	import { zod } from 'sveltekit-superforms/adapters';
 	import { lparSchema } from '$schemas';
+	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import Label from '$components/ui/Label.svelte';
 	import FormField from '$components/common/FormField.svelte';
@@ -16,18 +17,39 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const breadcrumbItems = [
-		{ label: 'Home', href: '/' },
-		{ label: 'LPARs', href: '/lpars' },
-		{ label: 'New LPAR' }
-	];
+	// Check if we have a pre-selected customer
+	const hasPreselectedCustomer = !!data.preselectedCustomer;
+
+	const breadcrumbItems = hasPreselectedCustomer
+		? [
+			{ label: 'Home', href: '/' },
+			{ label: 'Customers', href: '/customers' },
+			{ label: data.preselectedCustomer!.name, href: `/customers/${data.preselectedCustomer!.id}` },
+			{ label: 'New LPAR' }
+		]
+		: [
+			{ label: 'Home', href: '/' },
+			{ label: 'LPARs', href: '/lpars' },
+			{ label: 'New LPAR' }
+		];
 
 	// Initialize Superforms with client-side validation
 	// @ts-expect-error - Superforms type inference issue with Zod validators
 	const { form, errors, enhance, submitting, delayed, submitted, constraints } = superForm(data.form, {
 		dataType: 'json',
 		resetForm: false,
-		validators: zod(lparSchema)
+		validators: zod(lparSchema),
+		// Redirect after successful submission
+		onUpdated: ({ form }) => {
+			if (form.valid) {
+				// Redirect back to customer page if we came from there
+				if (hasPreselectedCustomer) {
+					goto(`/customers/${data.preselectedCustomer!.id}`);
+				} else {
+					goto('/lpars');
+				}
+			}
+		}
 	});
 
 	let creationMode = $state<'blank' | 'clone'>('blank');
@@ -50,7 +72,10 @@
 	function handleBlankSelect() {
 		$form.name = '';
 		$form.code = '';
-		$form.customer_id = '';
+		// Keep customer_id if pre-selected
+		if (!hasPreselectedCustomer) {
+			$form.customer_id = '';
+		}
 		$form.description = '';
 		$form.current_package_id = '';
 		$form.active = true;
@@ -63,7 +88,11 @@
 	<div>
 		<h1 class="text-3xl font-bold tracking-tight">New LPAR</h1>
 		<p class="text-muted-foreground mt-2">
-			Add a new logical partition to track
+			{#if hasPreselectedCustomer}
+				Add a new logical partition for {data.preselectedCustomer!.name}
+			{:else}
+				Add a new logical partition to track
+			{/if}
 		</p>
 	</div>
 
@@ -107,24 +136,40 @@
 				constraints={$constraints.code}
 			/>
 
-			<div class="space-y-2">
-				<Label for="customerId">Customer <span class="text-destructive">*</span></Label>
-				<select
-					id="customer_id"
-					name="customer_id"
-					bind:value={$form.customer_id}
-					required
-					class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-				>
-					<option value="">Select a customer...</option>
-					{#each data.customers as customer}
-						<option value={customer.id}>{customer.name} ({customer.code})</option>
-					{/each}
-				</select>
-				{#if $errors.customer_id?._errors?.[0]}
-					<p class="text-sm text-destructive">{$errors.customer_id._errors[0]}</p>
-				{/if}
-			</div>
+			{#if hasPreselectedCustomer}
+				<!-- Show customer as readonly field when pre-selected -->
+				<div class="space-y-2">
+					<Label for="customer_id">Customer</Label>
+					<div class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm">
+						<span class="font-medium">{data.preselectedCustomer!.name}</span>
+						<span class="text-muted-foreground ml-2">({data.preselectedCustomer!.code})</span>
+					</div>
+					<input type="hidden" name="customer_id" value={$form.customer_id} />
+					<p class="text-sm text-muted-foreground">
+						Creating LPAR for this customer
+					</p>
+				</div>
+			{:else}
+				<!-- Show dropdown when no customer pre-selected -->
+				<div class="space-y-2">
+					<Label for="customerId">Customer <span class="text-destructive">*</span></Label>
+					<select
+						id="customer_id"
+						name="customer_id"
+						bind:value={$form.customer_id}
+						required
+						class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+					>
+						<option value="">Select a customer...</option>
+						{#each data.customers as customer}
+							<option value={customer.id}>{customer.name} ({customer.code})</option>
+						{/each}
+					</select>
+					{#if $errors.customer_id?._errors?.[0]}
+						<p class="text-sm text-destructive">{$errors.customer_id._errors[0]}</p>
+					{/if}
+				</div>
+			{/if}
 
 			<div class="space-y-2">
 				<Label for="currentPackageId">Current Package</Label>

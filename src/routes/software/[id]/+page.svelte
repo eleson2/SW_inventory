@@ -5,6 +5,7 @@
 	import Card from '$components/ui/Card.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
+	import DeleteButton from '$components/common/DeleteButton.svelte';
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
 	import CloneDialog from '$components/common/CloneDialog.svelte';
@@ -60,6 +61,12 @@
 			<Button variant="outline" onclick={() => goto(`/software/${software.id}/edit`)}>
 				Edit
 			</Button>
+			<DeleteButton
+				entityName="Software"
+				entityId={software.id}
+				entityLabel={software.name}
+				variant="destructive"
+			/>
 			<Button variant="outline" onclick={() => goto('/software')}>
 				Back to List
 			</Button>

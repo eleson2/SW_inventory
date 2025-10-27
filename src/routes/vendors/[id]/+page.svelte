@@ -5,6 +5,7 @@
 	import Card from '$components/ui/Card.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
+	import DeleteButton from '$components/common/DeleteButton.svelte';
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
 	import { formatDateTime } from '$utils/date-format';
@@ -32,6 +33,12 @@
 			<Button variant="outline" onclick={() => goto(`/vendors/${vendor.id}/edit`)}>
 				Edit
 			</Button>
+			<DeleteButton
+				entityName="Vendor"
+				entityId={vendor.id}
+				entityLabel={vendor.name}
+				variant="destructive"
+			/>
 			<Button variant="outline" onclick={() => goto('/vendors')}>
 				Back to List
 			</Button>
@@ -107,7 +114,7 @@
 	<Card class="p-6">
 		<div class="flex items-center justify-between mb-4">
 			<h2 class="text-xl font-semibold">Software Products</h2>
-			<Button size="sm" onclick={() => window.location.href = '/software/new'}>
+			<Button size="sm" onclick={() => window.location.href = `/software/new?vendor_id=${vendor.id}`}>
 				Add Software
 			</Button>
 		</div>

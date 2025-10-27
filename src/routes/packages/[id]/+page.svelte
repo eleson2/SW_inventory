@@ -4,6 +4,7 @@
 	import Card from '$components/ui/Card.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
+	import DeleteButton from '$components/common/DeleteButton.svelte';
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
 	import CloneDialog from '$components/common/CloneDialog.svelte';
 	import { formatDate } from '$utils/date-format';
@@ -45,6 +46,12 @@
 			<Button variant="outline" onclick={() => window.location.href = `/packages/${pkg.id}/edit`}>
 				Edit
 			</Button>
+			<DeleteButton
+				entityName="Package"
+				entityId={pkg.id}
+				entityLabel={pkg.name}
+				variant="destructive"
+			/>
 			<Button variant="outline" onclick={() => window.history.back()}>
 				Back
 			</Button>

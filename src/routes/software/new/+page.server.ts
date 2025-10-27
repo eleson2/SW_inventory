@@ -6,14 +6,22 @@ import { zod } from 'sveltekit-superforms/adapters';
 import { softwareWithVersionsSchema } from '$lib/schemas/software';
 
 // Load vendors and all software for dropdown
-export const load: PageServerLoad = async () => {
-	// Initialize Superforms with default values
+export const load: PageServerLoad = async ({ url }) => {
+	// Check if vendor_id is provided in URL query params
+	const vendorIdFromUrl = url.searchParams.get('vendor_id');
+
+	// Initialize Superforms with default values (pre-fill vendor_id if provided)
 	const form = await superValidate(
-		{ description: '', active: true, versions: [] },
+		{
+			description: '',
+			active: true,
+			versions: [],
+			vendor_id: vendorIdFromUrl || ''
+		},
 		zod(softwareWithVersionsSchema)
 	);
 
-	const [vendors, allSoftware] = await Promise.all([
+	const [vendors, allSoftware, preselectedVendor] = await Promise.all([
 		db.vendors.findMany({
 			where: { active: true },
 			orderBy: { name: 'asc' },
@@ -41,13 +49,21 @@ export const load: PageServerLoad = async () => {
 				}
 			},
 			orderBy: { name: 'asc' }
-		})
+		}),
+		// Get vendor info if pre-selected
+		vendorIdFromUrl
+			? db.vendors.findUnique({
+				where: { id: vendorIdFromUrl },
+				select: { id: true, name: true, code: true }
+			})
+			: Promise.resolve(null)
 	]);
 
 	return {
 		form,
 		vendors,
-		allSoftware
+		allSoftware,
+		preselectedVendor
 	};
 };
 
@@ -136,10 +152,9 @@ export const actions: Actions = {
 				return software;
 			});
 
-			throw redirect(303, '/software');
+			// Return success - client will handle redirect via onUpdated
+			return { form };
 		} catch (error) {
-			if (error instanceof Response) throw error;
-
 			console.error('Error creating software:', error);
 			return fail(500, { form });
 		}

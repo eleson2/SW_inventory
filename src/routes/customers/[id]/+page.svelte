@@ -4,6 +4,7 @@
 	import Card from '$components/ui/Card.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
+	import DeleteButton from '$components/common/DeleteButton.svelte';
 	import { formatDateTime } from '$utils/date-format';
 
 	let { data }: { data: PageData } = $props();
@@ -20,6 +21,12 @@
 			<Button variant="outline" onclick={() => window.location.href = `/customers/${customer.id}/edit`}>
 				Edit
 			</Button>
+			<DeleteButton
+				entityName="Customer"
+				entityId={customer.id}
+				entityLabel={customer.name}
+				variant="destructive"
+			/>
 			<Button variant="outline" onclick={() => window.history.back()}>
 				Back
 			</Button>
@@ -75,7 +82,7 @@
 	<Card class="p-6">
 		<div class="flex items-center justify-between mb-4">
 			<h2 class="text-xl font-semibold">LPARs</h2>
-			<Button size="sm" onclick={() => window.location.href = '/lpars/new'}>
+			<Button size="sm" onclick={() => window.location.href = `/lpars/new?customer_id=${customer.id}`}>
 				Add LPAR
 			</Button>
 		</div>
