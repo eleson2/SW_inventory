@@ -10,7 +10,10 @@
 		class: className = '',
 		error = '',
 		id = '',
-		name = ''
+		name = '',
+		oninput,
+		onblur,
+		onchange
 	}: {
 		type?: string;
 		value?: string;
@@ -21,6 +24,9 @@
 		error?: string;
 		id?: string;
 		name?: string;
+		oninput?: (e: Event) => void;
+		onblur?: (e: FocusEvent) => void;
+		onchange?: (e: Event) => void;
 	} = $props();
 </script>
 
@@ -32,6 +38,9 @@
 	{id}
 	{name}
 	bind:value
+	{oninput}
+	{onblur}
+	{onchange}
 	class={cn(
 		'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground',
 		'ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium',

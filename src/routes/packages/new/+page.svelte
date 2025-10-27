@@ -27,10 +27,11 @@
 
 	// Initialize Superforms with client-side validation
 	// @ts-expect-error - Superforms type inference issue with Zod validators
-	const { form, errors, enhance, submitting, delayed, submitted, constraints } = superForm(data.form, {
+	const { form, errors, enhance, submitting, delayed, submitted, constraints, validateField } = superForm(data.form, {
 		dataType: 'json',
 		resetForm: false,
 		validators: zod(packageSchema),
+		validationMethod: 'submit-only',
 		// Redirect after successful submission
 		onUpdated: ({ form }) => {
 			if (form.valid) {
@@ -180,9 +181,18 @@
 				name="code"
 				bind:value={$form.code}
 				placeholder="PKG-CODE"
-				helperText="Uppercase alphanumeric with dashes/underscores"
+				helperText="Uppercase alphanumeric with dashes/underscores (will auto-uppercase)"
 				error={$errors.code?._errors?.[0]}
 				constraints={$constraints.code}
+				oninput={(e) => {
+					const input = e.target as HTMLInputElement;
+					const cursorPos = input.selectionStart;
+					$form.code = input.value.toUpperCase();
+					setTimeout(() => {
+						input.setSelectionRange(cursorPos, cursorPos);
+					}, 0);
+				}}
+				onblur={() => validateField('code')}
 			/>
 
 			<FormField

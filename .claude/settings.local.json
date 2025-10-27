@@ -67,7 +67,14 @@
       "Bash(echo \"Fixed: $file\")",
       "Bash(for route in \"packages/new\" \"software/new\" \"vendors/new\" \"customers/new\")",
       "Bash(do echo -n \"$route: \")",
-      "Bash(for route in \"packages/new\" \"software/new\" \"vendors/new\" \"customers/new\" \"lpars/new\")"
+      "Bash(for route in \"packages/new\" \"software/new\" \"vendors/new\" \"customers/new\" \"lpars/new\")",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"\\d+ vendors\" -t)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -f prisma/migrations/add_trigram_indexes.sql)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"CREATE EXTENSION IF NOT EXISTS pg_trgm;\")",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT 1 as test;\" -t)",
+      "Bash(del verify-indexes.sql verify-indexes.js)",
+      "Bash(for route in \"vendors/new\" \"customers/new\" \"software/new\" \"lpars/new\")",
+      "Bash(for route in \"vendors/new\" \"customers/new\" \"software/new\" \"lpars/new\" \"packages/new\")"
     ],
     "deny": [],
     "ask": []

@@ -13,7 +13,10 @@
 		disabled = false,
 		error = '',
 		helperText = '',
-		constraints = {}
+		constraints = {},
+		oninput,
+		onblur,
+		onchange
 	}: {
 		label: string;
 		id: string;
@@ -26,6 +29,9 @@
 		error?: string;
 		helperText?: string;
 		constraints?: Record<string, any>;
+		oninput?: (e: Event) => void;
+		onblur?: (e: FocusEvent) => void;
+		onchange?: (e: Event) => void;
 	} = $props();
 
 	// Merge constraints with explicit props (explicit props take precedence)
@@ -47,6 +53,9 @@
 		bind:value
 		{placeholder}
 		{error}
+		{oninput}
+		{onblur}
+		{onchange}
 		{...mergedConstraints}
 	/>
 	{#if helperText && !error}

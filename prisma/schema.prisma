@@ -87,6 +87,7 @@ model lpars {
   @@index([code])
   @@index([current_package_id])
   @@index([customer_id])
+  @@index([name])
 }
 
 // Junction table: software items in each package
@@ -132,6 +133,7 @@ model packages {
   @@index([code])
   @@index([version])
   @@index([release_date(sort: Desc)])
+  @@index([name])
 }
 
 // Software products (e.g., CICS, DB2, Endevor)
