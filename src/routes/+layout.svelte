@@ -74,6 +74,12 @@
 					>
 						Import
 					</a>
+					<a
+						href="/reports/software-by-customer"
+						class="transition-colors hover:text-foreground/80 {isActive('/reports') ? 'text-foreground font-semibold border-b-2 border-primary' : 'text-foreground/60'}"
+					>
+						Reports
+					</a>
 				</nav>
 			</div>
 
@@ -143,6 +149,13 @@
 						class="py-2 px-4 rounded-md transition-colors min-h-[44px] flex items-center {isActive('/import') ? 'bg-accent text-foreground font-semibold' : 'text-foreground/60 hover:bg-accent/50'}"
 					>
 						Import
+					</a>
+					<a
+						href="/reports/software-by-customer"
+						onclick={handleNavClick}
+						class="py-2 px-4 rounded-md transition-colors min-h-[44px] flex items-center {isActive('/reports') ? 'bg-accent text-foreground font-semibold' : 'text-foreground/60 hover:bg-accent/50'}"
+					>
+						Reports
 					</a>
 				</nav>
 			</div>

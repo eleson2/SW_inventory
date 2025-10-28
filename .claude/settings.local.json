@@ -74,7 +74,12 @@
       "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT 1 as test;\" -t)",
       "Bash(del verify-indexes.sql verify-indexes.js)",
       "Bash(for route in \"vendors/new\" \"customers/new\" \"software/new\" \"lpars/new\")",
-      "Bash(for route in \"vendors/new\" \"customers/new\" \"software/new\" \"lpars/new\" \"packages/new\")"
+      "Bash(for route in \"vendors/new\" \"customers/new\" \"software/new\" \"lpars/new\" \"packages/new\")",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -f prisma/migrations/add_report_views.sql)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -f prisma/migrations/add_report_views.sql -t)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT COUNT(*) FROM software_per_customer;\" -t)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"\\d software_per_customer\")",
+      "Bash(for route in \"\" \"reports/software-by-customer\")"
     ],
     "deny": [],
     "ask": []
