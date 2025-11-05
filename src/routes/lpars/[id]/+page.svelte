@@ -1,10 +1,13 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import { goto } from '$app/navigation';
 	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
 	import DeleteButton from '$components/common/DeleteButton.svelte';
+	import Breadcrumb from '$components/common/Breadcrumb.svelte';
+	import PageHeader from '$components/common/PageHeader.svelte';
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
 	import CloneDialog from '$components/common/CloneDialog.svelte';
 	import RollbackDialog from '$components/common/RollbackDialog.svelte';
@@ -18,6 +21,13 @@
 	let cloning = $state(false);
 	let showRollbackDialog = $state(false);
 	let selectedSoftware = $state<any>(null);
+
+	const breadcrumbItems = [
+		{ label: 'Home', href: '/' },
+		{ label: 'LPARs', href: '/lpars' },
+		{ label: lpar.customers?.name || 'Customer', href: `/customers/${lpar.customer_id}` },
+		{ label: lpar.name }
+	];
 
 	// Compatibility score color coding and context
 	const compatibilityInfo = $derived(() => {
@@ -83,16 +93,17 @@
 </script>
 
 <div class="space-y-6">
-	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="text-3xl font-bold tracking-tight">{lpar.name}</h1>
-			<p class="text-muted-foreground mt-2">LPAR Details and Configuration</p>
-		</div>
-		<div class="flex gap-2">
+	<Breadcrumb items={breadcrumbItems} />
+
+	<PageHeader
+		title={lpar.name}
+		description="LPAR Details and Configuration"
+	>
+		{#snippet actions()}
 			<Button onclick={() => showCloneDialog = true}>
 				Clone LPAR
 			</Button>
-			<Button variant="outline" onclick={() => window.location.href = `/lpars/${lpar.id}/edit`}>
+			<Button variant="outline" onclick={() => goto(`/lpars/${lpar.id}/edit`)}>
 				Edit
 			</Button>
 			<DeleteButton
@@ -104,8 +115,8 @@
 			<Button variant="outline" onclick={() => window.history.back()}>
 				Back
 			</Button>
-		</div>
-	</div>
+		{/snippet}
+	</PageHeader>
 
 	<div class="grid gap-6 md:grid-cols-2">
 		<Card class="p-6">

@@ -1,0 +1,23 @@
+Loading svelte-check in workspace: d:\proj\SW_inventory\SW_inventory
+Getting Svelte diagnostics...
+
+
+<--- Last few GCs --->
+
+[17752:0000014BD0272000]   142903 ms: Mark-Compact 4036.3 (4128.7) -> 4020.7 (4128.2) MB, pooled: 4 MB, 2142.45 / 0.00 ms  (average mu = 0.094, current mu = 0.007) allocation failure; scavenge might not succeed
+[17752:0000014BD0272000]   144858 ms: Mark-Compact 4036.6 (4128.2) -> 4021.1 (4128.4) MB, pooled: 4 MB, 1944.23 / 0.00 ms  (average mu = 0.055, current mu = 0.006) allocation failure; scavenge might not succeed
+
+
+<--- JS stacktrace --->
+
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 00007FF7053320AD void __cdecl node::SetCppgcReference(class v8::Isolate * __ptr64,class v8::Local<class v8::Object>,void * __ptr64)+17245
+ 2: 00007FF70529A4D8 DSA_meth_get_flags+92376
+ 3: 00007FF705E1A1B1 private: void __cdecl v8::Isolate::ReportExternalAllocationLimitReached(void) __ptr64+65
+ 4: 00007FF705E07096 public: bool __cdecl v8::Function::Experimental_IsNopFunction(void)const __ptr64+2790
+ 5: 00007FF705C56920 protected: __cdecl v8::internal::StrongRootAllocatorBase::StrongRootAllocatorBase(class v8::Isolate * __ptr64) __ptr64+31392
+ 6: 00007FF705C50644 protected: __cdecl v8::internal::StrongRootAllocatorBase::StrongRootAllocatorBase(class v8::Isolate * __ptr64) __ptr64+6084
+ 7: 00007FF705C4BCF5 public: unsigned __int64 __cdecl v8::internal::ThreadIsolation::JitPageReference::Size(void)const __ptr64+188069
+ 8: 00007FF7055D13BD BIO_ssl_shutdown+189

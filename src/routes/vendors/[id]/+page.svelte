@@ -7,6 +7,7 @@
 	import StatusBadge from '$components/common/StatusBadge.svelte';
 	import DeleteButton from '$components/common/DeleteButton.svelte';
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
+	import PageHeader from '$components/common/PageHeader.svelte';
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
 	import { formatDateTime } from '$utils/date-format';
 
@@ -24,12 +25,11 @@
 	<!-- Breadcrumb Navigation -->
 	<Breadcrumb items={breadcrumbItems} />
 
-	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="text-3xl font-bold tracking-tight">{vendor.name}</h1>
-			<p class="text-muted-foreground mt-2">Vendor Details and Software Products</p>
-		</div>
-		<div class="flex gap-2">
+	<PageHeader
+		title={vendor.name}
+		description="Vendor Details and Software Products"
+	>
+		{#snippet actions()}
 			<Button variant="outline" onclick={() => goto(`/vendors/${vendor.id}/edit`)}>
 				Edit
 			</Button>
@@ -42,8 +42,8 @@
 			<Button variant="outline" onclick={() => goto('/vendors')}>
 				Back to List
 			</Button>
-		</div>
-	</div>
+		{/snippet}
+	</PageHeader>
 
 	<div class="grid gap-6 md:grid-cols-2">
 		<Card class="p-6">

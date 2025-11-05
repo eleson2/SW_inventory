@@ -8,6 +8,7 @@
 	import Pagination from '$components/common/Pagination.svelte';
 	import InstantSearch from '$components/common/InstantSearch.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
+	import PageHeader from '$components/common/PageHeader.svelte';
 	import { formatDate } from '$utils/date-format';
 
 	let { data }: { data: PageData } = $props();
@@ -67,17 +68,14 @@
 </script>
 
 <div class="space-y-6">
-	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Customers</h1>
-			<p class="text-muted-foreground mt-2">
-				Manage customer information in multi-tenant environment
-			</p>
-		</div>
-		<Button onclick={() => goto('/customers/new')}>
-			Add Customer
-		</Button>
-	</div>
+	<PageHeader
+		title="Customers"
+		description="Manage customer information in multi-tenant environment"
+	>
+		{#snippet actions()}
+			<Button onclick={() => goto('/customers/new')}>Add Customer</Button>
+		{/snippet}
+	</PageHeader>
 
 	<Card class="p-6">
 		<div class="mb-6">

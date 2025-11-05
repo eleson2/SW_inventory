@@ -7,6 +7,7 @@
 	import StatusBadge from '$components/common/StatusBadge.svelte';
 	import DeleteButton from '$components/common/DeleteButton.svelte';
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
+	import PageHeader from '$components/common/PageHeader.svelte';
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
 	import CloneDialog from '$components/common/CloneDialog.svelte';
 	import { formatDateTime } from '$utils/date-format';
@@ -46,12 +47,11 @@
 	<!-- Breadcrumb Navigation -->
 	<Breadcrumb items={breadcrumbItems} />
 
-	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="text-3xl font-bold tracking-tight">{software.name}</h1>
-			<p class="text-muted-foreground mt-2">Software Product Details</p>
-		</div>
-		<div class="flex gap-2">
+	<PageHeader
+		title={software.name}
+		description="Software Product Details"
+	>
+		{#snippet actions()}
 			<Button onclick={() => goto(`/software/${software.id}/version`)}>
 				New Version
 			</Button>
@@ -70,8 +70,8 @@
 			<Button variant="outline" onclick={() => goto('/software')}>
 				Back to List
 			</Button>
-		</div>
-	</div>
+		{/snippet}
+	</PageHeader>
 
 	<div class="grid gap-6 md:grid-cols-2">
 		<Card class="p-6">

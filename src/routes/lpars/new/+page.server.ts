@@ -4,6 +4,7 @@ import { db, createAuditLog } from '$lib/server/db';
 import { fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
+import type { LparFormData, SuperForm } from '$lib/types/superforms';
 
 // Load customers, packages, and all LPARs for dropdowns
 export const load: PageServerLoad = async ({ url }) => {
@@ -11,7 +12,6 @@ export const load: PageServerLoad = async ({ url }) => {
 	const customerIdFromUrl = url.searchParams.get('customer_id');
 
 	// Initialize Superforms with default values (pre-fill customer_id if provided)
-	// @ts-expect-error - Superforms type inference issue with Zod validators
 	const form = await superValidate(
 		{
 			description: '',
@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ url }) => {
 			customer_id: customerIdFromUrl || ''
 		},
 		zod(lparSchema)
-	);
+	) as SuperForm<typeof lparSchema>;
 
 	const [customers, packages, allLpars, preselectedCustomer] = await Promise.all([
 		db.customers.findMany({
@@ -81,18 +81,19 @@ export const load: PageServerLoad = async ({ url }) => {
 
 export const actions: Actions = {
 	default: async (event) => {
-		// Use Superforms to validate form data
-		// @ts-expect-error - Superforms type inference issue with Zod validators
-		const form = await superValidate(event, zod(lparSchema));
+	// Use Superforms to validate form data
+	const form = await superValidate(event, zod(lparSchema)) as SuperForm<typeof lparSchema>;
 
 		if (!form.valid) {
 			return fail(400, { form });
 		}
 
+		// Type-safe form data access
+		const formData = form.data as LparFormData;
+
 		// Check for unique code
 		const existing = await db.lpars.findUnique({
-			// @ts-expect-error - Type inference from Zod schema
-			where: { code: form.data.code }
+			where: { code: formData.code }
 		});
 
 		if (existing) {
@@ -108,26 +109,27 @@ export const actions: Actions = {
 			// Create LPAR
 			const lpar = await db.lpars.create({
 				data: {
-					// @ts-ignore - Type inference from Zod schema
-					name: form.data.name,
-					// @ts-ignore
-					code: form.data.code,
-					// @ts-ignore
-					customer_id: form.data.customer_id,
-					// @ts-ignore
-					description: form.data.description || null,
-					// @ts-ignore
-					current_package_id: form.data.current_package_id || null,
-					// @ts-ignore
-					active: form.data.active
+					name: formData.name,
+					code: formData.code,
+					customer_id: formData.customer_id,
+					description: formData.description || null,
+					current_package_id: formData.current_package_id || null,
+					active: formData.active
 				}
 			});
 
 			// Create audit log
 			await createAuditLog('lpar', lpar.id, 'create', lpar);
 
-			// Return success - client will handle redirect via onUpdated
-			return { form };
+			// Check if we came from a customer page (redirect back there)
+			const customerIdFromUrl = new URL(event.request.url).searchParams.get('customer_id');
+
+			if (customerIdFromUrl) {
+				redirect(303, `/customers/${customerIdFromUrl}`);
+			}
+
+			// Otherwise redirect to lpars list
+			redirect(303, '/lpars');
 		} catch (error) {
 			console.error('Error creating LPAR:', error);
 			return fail(500, { form });

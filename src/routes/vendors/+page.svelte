@@ -8,8 +8,13 @@
 	import Pagination from '$components/common/Pagination.svelte';
 	import InstantSearch from '$components/common/InstantSearch.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
+	import PageHeader from '$components/common/PageHeader.svelte';
+	import { useTableNavigation } from '$lib/utils/table-navigation.svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	// Table navigation utilities
+	const { handleSort, handlePageChange } = useTableNavigation();
 
 	const columns = [
 		{
@@ -39,40 +44,21 @@
 		goto(`/vendors/${vendor.id}`);
 	}
 
-	function handleSort(field: string) {
-		const currentSort = data.sort;
-		// Toggle direction if clicking same field, otherwise default to asc
-		const direction = currentSort?.field === field && currentSort?.direction === 'asc' ? 'desc' : 'asc';
-
-		// Build new URL with sort parameters
-		const url = new URL(window.location.href);
-		url.searchParams.set('sort', field);
-		url.searchParams.set('direction', direction);
-		url.searchParams.set('page', '1'); // Reset to first page when sorting
-
-		goto(url.toString());
-	}
-
-	function handlePageChange(page: number) {
-		const url = new URL(window.location.href);
-		url.searchParams.set('page', page.toString());
-
-		goto(url.toString());
+	// Sort handler with current sort state
+	function handleSortClick(field: string) {
+		handleSort(field, data.sort);
 	}
 </script>
 
 <div class="space-y-6">
-	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Vendors</h1>
-			<p class="text-muted-foreground mt-2">
-				Track software vendors and their contact information
-			</p>
-		</div>
-		<Button onclick={() => goto('/vendors/new')}>
-			Add Vendor
-		</Button>
-	</div>
+	<PageHeader
+		title="Vendors"
+		description="Track software vendors and their contact information"
+	>
+		{#snippet actions()}
+			<Button onclick={() => goto('/vendors/new')}>Add Vendor</Button>
+		{/snippet}
+	</PageHeader>
 
 	<Card class="p-6">
 		<div class="mb-6">
@@ -99,7 +85,7 @@
 			data={'items' in data.vendors ? data.vendors.items : []}
 			{columns}
 			onRowClick={handleRowClick}
-			onSort={handleSort}
+			onSort={handleSortClick}
 			currentSort={data.sort}
 		>
 			{#snippet emptyState()}

@@ -163,7 +163,7 @@
 			</div>
 
 			<div class="space-y-3">
-				<label class="text-sm font-medium">Reason for rollback *</label>
+				<div class="text-sm font-medium" role="group" aria-label="Reason for rollback">Reason for rollback *</div>
 
 				<div class="space-y-2">
 					{#each reasonTemplates as template}

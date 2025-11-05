@@ -8,9 +8,18 @@
 	import FormButtons from '$components/common/FormButtons.svelte';
 	import FormErrorMessage from '$components/common/FormErrorMessage.svelte';
 	import FormTextarea from '$components/common/FormTextarea.svelte';
-	import { useMasterDetailForm } from '$lib/utils/useMasterDetailForm';
+	import { useMasterDetailForm } from '$lib/utils/useMasterDetailForm.svelte';
+	import Breadcrumb from '$components/common/Breadcrumb.svelte';
+	import PageHeader from '$components/common/PageHeader.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
+
+	const breadcrumbItems = [
+		{ label: 'Home', href: '/' },
+		{ label: 'Packages', href: '/packages' },
+		{ label: `${data.package.name} (${data.package.version})`, href: `/packages/${data.package.id}` },
+		{ label: 'Edit' }
+	];
 
 	// Format date for input field (YYYY-MM-DD)
 	const formatDateForInput = (date: Date) => {
@@ -49,12 +58,12 @@
 </script>
 
 <div class="space-y-6 max-w-4xl">
-	<div>
-		<h1 class="text-3xl font-bold tracking-tight">Edit Package</h1>
-		<p class="text-muted-foreground mt-2">
-			Update package information and manage included software items
-		</p>
-	</div>
+	<Breadcrumb items={breadcrumbItems} />
+
+	<PageHeader
+		title="Edit Package"
+		description="Update package information and manage included software items"
+	/>
 
 	<form method="POST" class="space-y-6" onsubmit={handleSubmit}>
 		<!-- Master Entity: Package Information -->

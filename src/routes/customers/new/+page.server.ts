@@ -4,12 +4,12 @@ import { db, createAuditLog } from '$lib/server/db';
 import { fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
+import type { CustomerFormData, SuperForm } from '$lib/types/superforms';
 
 // Load all customers for clone dropdown
 export const load: PageServerLoad = async () => {
 	// Initialize Superforms with default values
-	// @ts-expect-error - Superforms type inference issue with Zod validators
-	const form = await superValidate({ description: '', active: true }, zod(customerSchema));
+	const form = await superValidate({ description: '', active: true }, zod(customerSchema)) as SuperForm<typeof customerSchema>;
 
 	const allCustomers = await db.customers.findMany({
 		where: { active: true },
@@ -31,18 +31,19 @@ export const load: PageServerLoad = async () => {
 
 export const actions: Actions = {
 	default: async (event) => {
-		// Use Superforms to validate form data
-		// @ts-expect-error - Superforms type inference issue with Zod validators
-		const form = await superValidate(event, zod(customerSchema));
+	// Use Superforms to validate form data
+	const form = await superValidate(event, zod(customerSchema)) as SuperForm<typeof customerSchema>;
 
 		if (!form.valid) {
 			return fail(400, { form });
 		}
 
+		// Type-safe form data access
+		const formData = form.data as CustomerFormData;
+
 		// Check for unique code
 		const existing = await db.customers.findUnique({
-			// @ts-expect-error - Type inference from Zod schema
-			where: { code: form.data.code }
+			where: { code: formData.code }
 		});
 
 		if (existing) {
@@ -58,22 +59,18 @@ export const actions: Actions = {
 			// Create customer
 			const customer = await db.customers.create({
 				data: {
-					// @ts-ignore - Type inference from Zod schema
-					name: form.data.name,
-					// @ts-ignore
-					code: form.data.code,
-					// @ts-ignore
-					description: form.data.description || null,
-					// @ts-ignore
-					active: form.data.active
+					name: formData.name,
+					code: formData.code,
+					description: formData.description || null,
+					active: formData.active
 				}
 			});
 
 			// Create audit log
 			await createAuditLog('customer', customer.id, 'create', customer);
 
-			// Return success - client will handle redirect via onUpdated
-			return { form };
+			// Redirect to customers list
+			redirect(303, '/customers');
 		} catch (error) {
 			console.error('Error creating customer:', error);
 			return fail(500, { form });

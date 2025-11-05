@@ -76,12 +76,16 @@
 		class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
 		onclick={handleBackdropClick}
 		onkeydown={handleKeydown}
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="dialog-title"
+		role="presentation"
 	>
 		<!-- Dialog -->
-		<Card class="max-w-md w-full p-6 space-y-4">
+		<Card
+			class="max-w-md w-full p-6 space-y-4"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="dialog-title"
+			tabindex="-1"
+		>
 			<!-- Title -->
 			<h2 id="dialog-title" class="text-xl font-semibold">
 				{title}

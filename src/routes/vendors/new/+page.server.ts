@@ -70,8 +70,8 @@ export const actions: Actions = {
 			// Create audit log
 			await createAuditLog('vendor', vendor.id, 'create', vendor);
 
-			// Return success - client will handle redirect via onUpdated
-			return { form };
+			// Redirect to vendor detail page
+			redirect(303, `/vendors/${vendor.id}`);
 		} catch (error) {
 			console.error('Error creating vendor:', error);
 			return fail(500, { form });

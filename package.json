@@ -6,8 +6,10 @@
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+  "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+  "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+  "check:mem": "node --max-old-space-size=4096 ./node_modules/.bin/svelte-check --tsconfig ./tsconfig.json",
+  "check:ci": "svelte-kit sync && node --max-old-space-size=4096 ./node_modules/.bin/svelte-check --tsconfig ./tsconfig.json --output json > svelte-check.json"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^3.0.0",
@@ -36,3 +38,4 @@
     "seed": "tsx prisma/seed.ts"
   }
 }
+

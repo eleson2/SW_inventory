@@ -1,10 +1,13 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import { goto } from '$app/navigation';
 	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
 	import DeleteButton from '$components/common/DeleteButton.svelte';
+	import Breadcrumb from '$components/common/Breadcrumb.svelte';
+	import PageHeader from '$components/common/PageHeader.svelte';
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
 	import CloneDialog from '$components/common/CloneDialog.svelte';
 	import { formatDate } from '$utils/date-format';
@@ -15,6 +18,12 @@
 
 	let showCloneDialog = $state(false);
 	let cloning = $state(false);
+
+	const breadcrumbItems = [
+		{ label: 'Home', href: '/' },
+		{ label: 'Packages', href: '/packages' },
+		{ label: `${pkg.name} (${pkg.version})` }
+	];
 
 	const handleClone = async (formData: Record<string, string>) => {
 		cloning = true;
@@ -34,16 +43,17 @@
 </script>
 
 <div class="space-y-6">
-	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="text-3xl font-bold tracking-tight">{pkg.name}</h1>
-			<p class="text-muted-foreground mt-2">Package Details and Software Items</p>
-		</div>
-		<div class="flex gap-2">
+	<Breadcrumb items={breadcrumbItems} />
+
+	<PageHeader
+		title={pkg.name}
+		description="Package Details and Software Items"
+	>
+		{#snippet actions()}
 			<Button onclick={() => showCloneDialog = true}>
 				Clone Package
 			</Button>
-			<Button variant="outline" onclick={() => window.location.href = `/packages/${pkg.id}/edit`}>
+			<Button variant="outline" onclick={() => goto(`/packages/${pkg.id}/edit`)}>
 				Edit
 			</Button>
 			<DeleteButton
@@ -55,8 +65,8 @@
 			<Button variant="outline" onclick={() => window.history.back()}>
 				Back
 			</Button>
-		</div>
-	</div>
+		{/snippet}
+	</PageHeader>
 
 	<div class="grid gap-6 md:grid-cols-2">
 		<Card class="p-6">

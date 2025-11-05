@@ -1,9 +1,9 @@
 <script lang="ts">
-	// @ts-nocheck - Superforms type inference issues with client-side validation
 	import type { PageData } from './$types';
 	import { superForm } from 'sveltekit-superforms';
 	import { zod } from 'sveltekit-superforms/adapters';
 	import { customerSchema } from '$schemas';
+	import type { SuperFormClient } from '$lib/types/superforms';
 	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
@@ -13,8 +13,11 @@
 	import FormTextarea from '$components/common/FormTextarea.svelte';
 	import FormValidationSummary from '$components/common/FormValidationSummary.svelte';
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
+	import PageHeader from '$components/common/PageHeader.svelte';
 
-	let { data }: { data: PageData } = $props();
+	export let data: PageData;
+
+	const typedForm = data.form as unknown as SuperFormClient<typeof customerSchema>;
 
 	const breadcrumbItems = [
 		{ label: 'Home', href: '/' },
@@ -23,16 +26,14 @@
 	];
 
 	// Initialize Superforms with client-side validation
-	// @ts-expect-error - Superforms type inference issue with Zod validators
-	const { form, errors, enhance, submitting, delayed, submitted, constraints, validateField } = superForm(data.form, {
+	const { form, errors, enhance, submitting, delayed, submitted, constraints, validateField } = superForm(typedForm, {
 		dataType: 'json',
 		resetForm: false,
 		validators: zod(customerSchema),
 		validationMethod: 'submit-only',
-		// Redirect after successful submission
-		onUpdated: ({ form }) => {
-			if (form.valid) {
-				goto('/customers');
+		onResult: ({ result }) => {
+			if (result.type === 'redirect') {
+				goto(result.location);
 			}
 		}
 	});
@@ -63,12 +64,10 @@
 <div class="space-y-6 max-w-2xl">
 	<Breadcrumb items={breadcrumbItems} />
 
-	<div>
-		<h1 class="text-3xl font-bold tracking-tight">New Customer</h1>
-		<p class="text-muted-foreground mt-2">
-			Add a new customer to the system
-		</p>
-	</div>
+	<PageHeader
+		title="New Customer"
+		description="Add a new customer to the system"
+	/>
 
 	<Card class="p-6">
 		<form method="POST" class="space-y-6" use:enhance>

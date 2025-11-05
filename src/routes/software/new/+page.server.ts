@@ -152,8 +152,15 @@ export const actions: Actions = {
 				return software;
 			});
 
-			// Return success - client will handle redirect via onUpdated
-			return { form };
+			// Check if we came from a vendor page (redirect back there)
+			const vendorIdFromUrl = new URL(event.request.url).searchParams.get('vendor_id');
+
+			if (vendorIdFromUrl) {
+				redirect(303, `/vendors/${vendorIdFromUrl}`);
+			}
+
+			// Otherwise redirect to software list
+			redirect(303, '/software');
 		} catch (error) {
 			console.error('Error creating software:', error);
 			return fail(500, { form });

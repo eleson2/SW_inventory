@@ -1,24 +1,34 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import { goto } from '$app/navigation';
 	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
 	import DeleteButton from '$components/common/DeleteButton.svelte';
+	import Breadcrumb from '$components/common/Breadcrumb.svelte';
+	import PageHeader from '$components/common/PageHeader.svelte';
 	import { formatDateTime } from '$utils/date-format';
 
 	let { data }: { data: PageData } = $props();
 	const { customer } = data;
+
+	const breadcrumbItems = [
+		{ label: 'Home', href: '/' },
+		{ label: 'Customers', href: '/customers' },
+		{ label: customer.name }
+	];
 </script>
 
 <div class="space-y-6">
-	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="text-3xl font-bold tracking-tight">{customer.name}</h1>
-			<p class="text-muted-foreground mt-2">Customer Details and Configuration</p>
-		</div>
-		<div class="flex gap-2">
-			<Button variant="outline" onclick={() => window.location.href = `/customers/${customer.id}/edit`}>
+	<Breadcrumb items={breadcrumbItems} />
+
+	<PageHeader
+		title={customer.name}
+		description="Customer Details and Configuration"
+	>
+		{#snippet actions()}
+			<Button variant="outline" onclick={() => goto(`/customers/${customer.id}/edit`)}>
 				Edit
 			</Button>
 			<DeleteButton
@@ -30,8 +40,8 @@
 			<Button variant="outline" onclick={() => window.history.back()}>
 				Back
 			</Button>
-		</div>
-	</div>
+		{/snippet}
+	</PageHeader>
 
 	<div class="grid gap-6 md:grid-cols-2">
 		<Card class="p-6">

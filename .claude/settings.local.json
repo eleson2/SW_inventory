@@ -79,7 +79,8 @@
       "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -f prisma/migrations/add_report_views.sql -t)",
       "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT COUNT(*) FROM software_per_customer;\" -t)",
       "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"\\d software_per_customer\")",
-      "Bash(for route in \"\" \"reports/software-by-customer\")"
+      "Bash(for route in \"\" \"reports/software-by-customer\")",
+      "Bash(del \"src\\lib\\utils\\useMasterDetailForm.ts\")"
     ],
     "deny": [],
     "ask": []

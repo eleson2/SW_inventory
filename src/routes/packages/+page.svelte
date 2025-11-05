@@ -6,6 +6,7 @@
 	import Card from '$components/ui/Card.svelte';
 	import Pagination from '$components/common/Pagination.svelte';
 	import InstantSearch from '$components/common/InstantSearch.svelte';
+	import PageHeader from '$components/common/PageHeader.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import { formatDate } from '$utils/date-format';
 	import { cn } from '$utils/cn';
@@ -36,17 +37,16 @@
 </script>
 
 <div class="space-y-6">
-	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Software Packages</h1>
-			<p class="text-muted-foreground mt-2">
-				Manage software packages for coordinated deployments
-			</p>
-		</div>
-		<a href="/packages/new" data-sveltekit-reload class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
-			Create Package
-		</a>
-	</div>
+	<PageHeader
+		title="Software Packages"
+		description="Manage software packages for coordinated deployments"
+	>
+		{#snippet actions()}
+			<a href="/packages/new" data-sveltekit-reload class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+				Create Package
+			</a>
+		{/snippet}
+	</PageHeader>
 
 	<Card class="p-6">
 		<div class="mb-6">

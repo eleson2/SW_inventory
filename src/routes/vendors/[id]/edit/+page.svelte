@@ -1,20 +1,30 @@
 <script lang="ts">
-	// @ts-nocheck - Superforms type inference issues with client-side validation
 	import type { PageData } from './$types';
 	import { superForm } from 'sveltekit-superforms';
 	import { zod } from 'sveltekit-superforms/adapters';
 	import { vendorSchema } from '$schemas';
+	import type { SuperFormClient } from '$lib/types/superforms';
 	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
 	import FormCheckbox from '$components/common/FormCheckbox.svelte';
 	import FormButtons from '$components/common/FormButtons.svelte';
 	import FormErrorMessage from '$components/common/FormErrorMessage.svelte';
+	import Breadcrumb from '$components/common/Breadcrumb.svelte';
+	import PageHeader from '$components/common/PageHeader.svelte';
 
-	let { data }: { data: PageData } = $props();
+	export let data: PageData;
 
-	// @ts-expect-error - Superforms type inference issue with Zod validators
-	const { form, errors, enhance, message, constraints } = superForm(data.form, {
+	const typedForm = data.form as unknown as SuperFormClient<typeof vendorSchema>;
+
+	const breadcrumbItems = [
+		{ label: 'Home', href: '/' },
+		{ label: 'Vendors', href: '/vendors' },
+		{ label: data.vendor.name, href: `/vendors/${data.vendor.id}` },
+		{ label: 'Edit' }
+	];
+
+	const { form, errors, enhance, message, constraints } = superForm(typedForm, {
 		dataType: 'json',
 		resetForm: false,
 		validators: zod(vendorSchema),
@@ -28,12 +38,12 @@
 </script>
 
 <div class="space-y-6 max-w-2xl">
-	<div>
-		<h1 class="text-3xl font-bold tracking-tight">Edit Vendor</h1>
-		<p class="text-muted-foreground mt-2">
-			Update vendor information
-		</p>
-	</div>
+	<Breadcrumb items={breadcrumbItems} />
+
+	<PageHeader
+		title="Edit Vendor"
+		description="Update vendor information"
+	/>
 
 	<Card class="p-6">
 		<form method="POST" class="space-y-6" use:enhance>

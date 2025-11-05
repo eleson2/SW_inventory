@@ -8,9 +8,19 @@
 	import FormButtons from '$components/common/FormButtons.svelte';
 	import FormErrorMessage from '$components/common/FormErrorMessage.svelte';
 	import FormTextarea from '$components/common/FormTextarea.svelte';
-	import { useMasterDetailForm } from '$lib/utils/useMasterDetailForm';
+	import { useMasterDetailForm } from '$lib/utils/useMasterDetailForm.svelte';
+	import Breadcrumb from '$components/common/Breadcrumb.svelte';
+	import PageHeader from '$components/common/PageHeader.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
+
+	const breadcrumbItems = [
+		{ label: 'Home', href: '/' },
+		{ label: 'Software', href: '/software' },
+		{ label: data.software.vendors?.name || 'Vendor', href: `/vendors/${data.software.vendor_id}` },
+		{ label: data.software.name, href: `/software/${data.software.id}` },
+		{ label: 'Edit' }
+	];
 
 	// Helper to safely access errors
 	const errors = $derived(
@@ -60,12 +70,12 @@
 </script>
 
 <div class="space-y-6 max-w-4xl">
-	<div>
-		<h1 class="text-3xl font-bold tracking-tight">Edit Software</h1>
-		<p class="text-muted-foreground mt-2">
-			Update software product information and manage versions
-		</p>
-	</div>
+	<Breadcrumb items={breadcrumbItems} />
+
+	<PageHeader
+		title="Edit Software"
+		description="Update software product information and manage versions"
+	/>
 
 	<form method="POST" class="space-y-6" onsubmit={handleSubmit}>
 		<!-- Master Entity: Software Information -->

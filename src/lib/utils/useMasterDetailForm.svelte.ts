@@ -66,6 +66,8 @@ export function useMasterDetailForm(options: MasterDetailFormOptions) {
 
 	return {
 		handleSubmit,
-		submitting
+		get submitting() {
+			return submitting;
+		}
 	};
 }

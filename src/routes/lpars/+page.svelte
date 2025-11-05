@@ -8,6 +8,7 @@
 	import Pagination from '$components/common/Pagination.svelte';
 	import InstantSearch from '$components/common/InstantSearch.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
+	import PageHeader from '$components/common/PageHeader.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 
 	let { data }: { data: PageData } = $props();
@@ -81,17 +82,14 @@
 </script>
 
 <div class="space-y-6">
-	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="text-3xl font-bold tracking-tight">LPARs</h1>
-			<p class="text-muted-foreground mt-2">
-				Monitor LPAR configurations and installed software
-			</p>
-		</div>
-		<Button onclick={() => goto('/lpars/new')}>
-			Add LPAR
-		</Button>
-	</div>
+	<PageHeader
+		title="LPARs"
+		description="Monitor LPAR configurations and installed software"
+	>
+		{#snippet actions()}
+			<Button onclick={() => goto('/lpars/new')}>Add LPAR</Button>
+		{/snippet}
+	</PageHeader>
 
 	<Card class="p-6">
 		<div class="mb-6">

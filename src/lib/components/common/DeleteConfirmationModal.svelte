@@ -27,6 +27,12 @@
 			handleCancel();
 		}
 	}
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape') {
+			handleCancel();
+		}
+	}
 </script>
 
 {#if show}
@@ -34,8 +40,8 @@
 	<div
 		class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
 		onclick={handleBackdropClick}
-		role="button"
-		tabindex="-1"
+		onkeydown={handleKeydown}
+		role="presentation"
 	>
 		<!-- Modal -->
 		<div

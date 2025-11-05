@@ -8,6 +8,7 @@
 	import Pagination from '$components/common/Pagination.svelte';
 	import InstantSearch from '$components/common/InstantSearch.svelte';
 	import StatusBadge from '$components/common/StatusBadge.svelte';
+	import PageHeader from '$components/common/PageHeader.svelte';
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
 
 	let { data }: { data: PageData } = $props();
@@ -73,17 +74,14 @@
 </script>
 
 <div class="space-y-6">
-	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Software Products</h1>
-			<p class="text-muted-foreground mt-2">
-				Manage software products with versions and PTF levels
-			</p>
-		</div>
-		<Button onclick={() => goto('/software/new')}>
-			Add Software
-		</Button>
-	</div>
+	<PageHeader
+		title="Software Products"
+		description="Manage software products with versions and PTF levels"
+	>
+		{#snippet actions()}
+			<Button onclick={() => goto('/software/new')}>Add Software</Button>
+		{/snippet}
+	</PageHeader>
 
 	<Card class="p-6">
 		<div class="mb-6">

@@ -9,9 +9,19 @@
 	import LparSoftwareManager from '$components/domain/LparSoftwareManager.svelte';
 	import FormErrorMessage from '$components/common/FormErrorMessage.svelte';
 	import FormTextarea from '$components/common/FormTextarea.svelte';
-	import { useMasterDetailForm } from '$lib/utils/useMasterDetailForm';
+	import { useMasterDetailForm } from '$lib/utils/useMasterDetailForm.svelte';
+	import Breadcrumb from '$components/common/Breadcrumb.svelte';
+	import PageHeader from '$components/common/PageHeader.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
+
+	const breadcrumbItems = [
+		{ label: 'Home', href: '/' },
+		{ label: 'LPARs', href: '/lpars' },
+		{ label: data.lpar.customers?.name || 'Customer', href: `/customers/${data.lpar.customer_id}` },
+		{ label: data.lpar.name, href: `/lpars/${data.lpar.id}` },
+		{ label: 'Edit' }
+	];
 
 	// Helper to safely access errors
 	const errors = $derived(
@@ -59,12 +69,12 @@
 </script>
 
 <div class="space-y-6">
-	<div>
-		<h1 class="text-3xl font-bold tracking-tight">Edit LPAR</h1>
-		<p class="text-muted-foreground mt-2">
-			Update LPAR information and manage software installations
-		</p>
-	</div>
+	<Breadcrumb items={breadcrumbItems} />
+
+	<PageHeader
+		title="Edit LPAR"
+		description="Update LPAR information and manage software installations"
+	/>
 
 	<form method="POST" class="space-y-6" onsubmit={handleSubmit}>
 		<!-- LPAR Information Card -->

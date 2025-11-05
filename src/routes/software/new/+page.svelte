@@ -1,9 +1,9 @@
 <script lang="ts">
-	// @ts-nocheck - Superforms type inference issues with client-side validation
 	import type { PageData } from './$types';
 	import { superForm } from 'sveltekit-superforms';
 	import { zod } from 'sveltekit-superforms/adapters';
-	import { softwareSchema } from '$schemas';
+	import { softwareWithVersionsSchema } from '$lib/schemas/software';
+	import type { SuperFormClient } from '$lib/types/superforms';
 	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import Label from '$components/ui/Label.svelte';
@@ -16,8 +16,13 @@
 	import FormTextarea from '$components/common/FormTextarea.svelte';
 	import FormValidationSummary from '$components/common/FormValidationSummary.svelte';
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
+	import PageHeader from '$components/common/PageHeader.svelte';
 
-	let { data }: { data: PageData } = $props();
+	export let data: PageData;
+
+	// Cast the server-provided Superforms payload to the client type so we can
+	// keep full typing without resorting to ts-ignore.
+	const typedForm = data.form as unknown as SuperFormClient<typeof softwareWithVersionsSchema>;
 
 	// Check if we have a pre-selected vendor
 	const hasPreselectedVendor = !!data.preselectedVendor;
@@ -36,20 +41,13 @@
 		];
 
 	// Initialize Superforms with client-side validation
-	// @ts-expect-error - Superforms type inference issue with Zod validators
-	const { form, errors, enhance, submitting, delayed, submitted, constraints } = superForm(data.form, {
+	const { form, errors, enhance, submitting, delayed, submitted, constraints, message } = superForm(typedForm, {
 		dataType: 'json',
 		resetForm: false,
-		validators: zod(softwareSchema),
-		// Redirect after successful submission
-		onUpdated: ({ form }) => {
-			if (form.valid) {
-				// Redirect back to vendor page if we came from there
-				if (hasPreselectedVendor) {
-					goto(`/vendors/${data.preselectedVendor!.id}`);
-				} else {
-					goto('/software');
-				}
+		validators: zod(softwareWithVersionsSchema),
+		onResult: ({ result }) => {
+			if (result.type === 'redirect') {
+				goto(result.location);
 			}
 		}
 	});
@@ -132,16 +130,12 @@
 <div class="space-y-6">
 	<Breadcrumb items={breadcrumbItems} />
 
-	<div>
-		<h1 class="text-3xl font-bold tracking-tight">New Software Product</h1>
-		<p class="text-muted-foreground mt-2">
-			{#if hasPreselectedVendor}
-				Create a new software product for {data.preselectedVendor!.name}
-			{:else}
-				Create a new software product with version history in one step
-			{/if}
-		</p>
-	</div>
+	<PageHeader
+		title="New Software Product"
+		description={hasPreselectedVendor
+			? `Create a new software product for ${data.preselectedVendor!.name}`
+			: "Create a new software product with version history in one step"}
+	/>
 
 	<form method="POST" class="space-y-6" use:enhance>
 		<FormValidationSummary errors={$errors} submitted={$submitted} />
@@ -227,7 +221,7 @@
 					constraints={$constraints.active}
 				/>
 
-				<FormErrorMessage message={form?.message} />
+				<FormErrorMessage message={$message} />
 			</div>
 		</Card>
 
