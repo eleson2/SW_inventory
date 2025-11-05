@@ -25,8 +25,7 @@
 	const columns = [
 		{
 			key: 'name',
-			label: 'Software Name',
-			sortable: true
+			label: 'Software Name'
 		},
 		{
 			key: 'vendor',
@@ -48,7 +47,6 @@
 		{
 			key: 'active',
 			label: 'Status',
-			sortable: true,
 			render: (item: Software) => item.active ? 'Active' : 'Inactive'
 		}
 	];

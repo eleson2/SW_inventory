@@ -114,7 +114,7 @@
 	<Card class="p-6">
 		<div class="flex items-center justify-between mb-4">
 			<h2 class="text-xl font-semibold">Software Products</h2>
-			<Button size="sm" onclick={() => window.location.href = `/software/new?vendor_id=${vendor.id}`}>
+			<Button size="sm" onclick={() => goto(`/software/new?vendor_id=${vendor.id}`)}>
 				Add Software
 			</Button>
 		</div>

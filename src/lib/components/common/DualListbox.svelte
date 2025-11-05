@@ -30,6 +30,10 @@
 	let selectedAvailable = $state<Set<string>>(new Set());
 	let selectedFromSelected = $state<Set<string>>(new Set());
 
+	// Derived counts for reactivity
+	const selectedAvailableCount = $derived(selectedAvailable.size);
+	const selectedFromSelectedCount = $derived(selectedFromSelected.size);
+
 	// Filter available items by search
 	const filteredAvailable = $derived(
 		available.filter((item) => {
@@ -69,14 +73,14 @@
 		const toMove = available.filter((item) => selectedAvailable.has(item.id));
 		available = available.filter((item) => !selectedAvailable.has(item.id));
 		selected = [...selected, ...toMove];
-		selectedAvailable.clear();
+		selectedAvailable = new Set();
 	}
 
 	function moveToAvailable() {
 		const toMove = selected.filter((item) => selectedFromSelected.has(item.id));
 		selected = selected.filter((item) => !selectedFromSelected.has(item.id));
 		available = [...available, ...toMove];
-		selectedFromSelected.clear();
+		selectedFromSelected = new Set();
 	}
 
 	function selectAll() {
@@ -84,11 +88,11 @@
 	}
 
 	function clearAvailable() {
-		selectedAvailable.clear();
+		selectedAvailable = new Set();
 	}
 
 	function clearSelected() {
-		selectedFromSelected.clear();
+		selectedFromSelected = new Set();
 	}
 
 	function selectAllSelected() {
@@ -98,49 +102,50 @@
 	function moveAllToSelected() {
 		selected = [...selected, ...filteredAvailable];
 		available = [];
-		selectedAvailable.clear();
+		selectedAvailable = new Set();
 	}
 
 	function removeAllFromSelected() {
 		available = [...available, ...filteredSelected];
 		selected = [];
-		selectedFromSelected.clear();
+		selectedFromSelected = new Set();
 	}
 
 	function toggleAvailableItem(id: string) {
-		if (selectedAvailable.has(id)) {
-			selectedAvailable.delete(id);
+		const newSet = new Set(selectedAvailable);
+		if (newSet.has(id)) {
+			newSet.delete(id);
 		} else {
-			selectedAvailable.add(id);
+			newSet.add(id);
 		}
-		selectedAvailable = selectedAvailable;
+		selectedAvailable = newSet;
 	}
 
 	function toggleSelectedItem(id: string) {
-		if (selectedFromSelected.has(id)) {
-			selectedFromSelected.delete(id);
+		const newSet = new Set(selectedFromSelected);
+		if (newSet.has(id)) {
+			newSet.delete(id);
 		} else {
-			selectedFromSelected.add(id);
+			newSet.add(id);
 		}
-		selectedFromSelected = selectedFromSelected;
+		selectedFromSelected = newSet;
 	}
 
 	function selectGroup(groupName: string) {
 		const groupItems = groupedAvailable()?.get(groupName) || [];
-		groupItems.forEach((item) => selectedAvailable.add(item.id));
-		selectedAvailable = selectedAvailable;
+		const newSet = new Set(selectedAvailable);
+		groupItems.forEach((item) => newSet.add(item.id));
+		selectedAvailable = newSet;
 	}
 
 	// Handle double-click to move item
 	function handleAvailableDoubleClick(item: T) {
-		selectedAvailable.clear();
-		selectedAvailable.add(item.id);
+		selectedAvailable = new Set([item.id]);
 		moveToSelected();
 	}
 
 	function handleSelectedDoubleClick(item: T) {
-		selectedFromSelected.clear();
-		selectedFromSelected.add(item.id);
+		selectedFromSelected = new Set([item.id]);
 		moveToAvailable();
 	}
 </script>
@@ -196,6 +201,7 @@
 									type="checkbox"
 									checked={selectedAvailable.has(item.id)}
 									class="rounded border-input"
+									onchange={() => toggleAvailableItem(item.id)}
 									onclick={(e) => e.stopPropagation()}
 								/>
 								<div class="flex-1">
@@ -224,6 +230,7 @@
 							type="checkbox"
 							checked={selectedAvailable.has(item.id)}
 							class="rounded border-input"
+							onchange={() => toggleAvailableItem(item.id)}
 							onclick={(e) => e.stopPropagation()}
 						/>
 						<div class="flex-1">
@@ -257,7 +264,7 @@
 			variant="outline"
 			size="sm"
 			onclick={moveToSelected}
-			disabled={selectedAvailable.size === 0}
+			disabled={selectedAvailableCount === 0}
 			title="Move selected items (or use double-click)"
 		>
 			Add →
@@ -266,7 +273,7 @@
 			variant="outline"
 			size="sm"
 			onclick={moveToAvailable}
-			disabled={selectedFromSelected.size === 0}
+			disabled={selectedFromSelectedCount === 0}
 			title="Remove selected items (or use double-click)"
 		>
 			← Remove
@@ -322,6 +329,7 @@
 							type="checkbox"
 							checked={selectedFromSelected.has(item.id)}
 							class="rounded border-input"
+							onchange={() => toggleSelectedItem(item.id)}
 							onclick={(e) => e.stopPropagation()}
 						/>
 						<div class="flex-1">

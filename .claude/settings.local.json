@@ -85,7 +85,10 @@
       "WebFetch(domain:localhost)",
       "Bash(npm install:*)",
       "Bash(for comp in \"CloneDialog\" \"FormSelect\" \"SearchFilter\" \"Toast\" \"Skeleton\" \"Table\")",
-      "Bash(do echo \"=== $comp ===\")"
+      "Bash(do echo \"=== $comp ===\")",
+      "Bash(nul)",
+      "Bash(for route in \"customers\" \"software\" \"lpars\" \"packages\")",
+      "Bash(do echo -n \"/$route: \")"
     ],
     "deny": [],
     "ask": []

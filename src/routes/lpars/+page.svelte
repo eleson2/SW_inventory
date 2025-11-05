@@ -25,13 +25,11 @@
 	const columns = [
 		{
 			key: 'code',
-			label: 'LPAR Code',
-			sortable: true
+			label: 'LPAR Code'
 		},
 		{
 			key: 'name',
-			label: 'Name',
-			sortable: true
+			label: 'Name'
 		},
 		{
 			key: 'customer',
@@ -56,7 +54,6 @@
 		{
 			key: 'active',
 			label: 'Status',
-			sortable: true,
 			render: (item: Lpar) => item.active ? 'Active' : 'Inactive'
 		}
 	];

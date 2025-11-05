@@ -50,7 +50,10 @@
 		description="Package Details and Software Items"
 	>
 		{#snippet actions()}
-			<Button onclick={() => showCloneDialog = true}>
+			<Button onclick={() => goto(`/packages/${pkg.id}/deploy`)}>
+				Deploy Package
+			</Button>
+			<Button variant="outline" onclick={() => showCloneDialog = true}>
 				Clone Package
 			</Button>
 			<Button variant="outline" onclick={() => goto(`/packages/${pkg.id}/edit`)}>
@@ -127,7 +130,7 @@
 	<Card class="p-6">
 		<div class="flex items-center justify-between mb-4">
 			<h2 class="text-xl font-semibold">Package Items</h2>
-			<Button size="sm" onclick={() => window.location.href = `/packages/${pkg.id}/edit`}>
+			<Button size="sm" onclick={() => goto(`/packages/${pkg.id}/edit`)}>
 				Manage Items
 			</Button>
 		</div>

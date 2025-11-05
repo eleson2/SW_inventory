@@ -19,13 +19,11 @@
 	const columns = [
 		{
 			key: 'code',
-			label: 'Code',
-			sortable: true
+			label: 'Code'
 		},
 		{
 			key: 'name',
-			label: 'Name',
-			sortable: true
+			label: 'Name'
 		},
 		{
 			key: 'contact_email',
@@ -35,7 +33,6 @@
 		{
 			key: 'active',
 			label: 'Status',
-			sortable: true,
 			render: (item: Vendor) => item.active ? 'Active' : 'Inactive'
 		}
 	];

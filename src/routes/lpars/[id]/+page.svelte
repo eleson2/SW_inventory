@@ -219,7 +219,7 @@
 	<Card class="p-6">
 		<div class="flex items-center justify-between mb-4">
 			<h2 class="text-xl font-semibold">Installed Software</h2>
-			<Button size="sm" onclick={() => window.location.href = `/lpars/${lpar.id}/edit`}>
+			<Button size="sm" onclick={() => goto(`/lpars/${lpar.id}/edit`)}>
 				Manage Software
 			</Button>
 		</div>

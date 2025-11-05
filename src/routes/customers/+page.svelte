@@ -20,13 +20,11 @@
 	const columns = [
 		{
 			key: 'code',
-			label: 'Code',
-			sortable: true
+			label: 'Code'
 		},
 		{
 			key: 'name',
-			label: 'Name',
-			sortable: true
+			label: 'Name'
 		},
 		{
 			key: 'description',
@@ -36,13 +34,11 @@
 		{
 			key: 'active',
 			label: 'Status',
-			sortable: true,
 			render: (item: Customer) => item.active ? 'Active' : 'Inactive'
 		},
 		{
 			key: 'created_at',
 			label: 'Created',
-			sortable: true,
 			render: (item: Customer) => formatDate(item.created_at)
 		}
 	];

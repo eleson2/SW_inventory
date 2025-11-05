@@ -1,10 +1,12 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import Button from '$components/ui/Button.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import TermTooltip from '$components/common/TermTooltip.svelte';
 	import { formatDateTime, formatDate } from '$utils/date-format';
+	import { Users, Building2, Layers, Package, HardDrive } from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -13,21 +15,27 @@
 			title: 'Customers',
 			description: 'Manage customer information in multi-tenant environment',
 			href: '/customers',
-			icon: '👥',
+			icon: Users,
+			iconColor: 'text-blue-600',
+			iconBg: 'bg-blue-100',
 			count: data.stats.customers
 		},
 		{
 			title: 'Vendors',
 			description: 'Track software vendors and their contact information',
 			href: '/vendors',
-			icon: '🏢',
+			icon: Building2,
+			iconColor: 'text-purple-600',
+			iconBg: 'bg-purple-100',
 			count: data.stats.vendors
 		},
 		{
 			title: 'Software',
 			description: 'Manage software products with versions and PTF levels',
 			href: '/software',
-			icon: '💿',
+			icon: Layers,
+			iconColor: 'text-green-600',
+			iconBg: 'bg-green-100',
 			count: data.stats.software
 		},
 		{
@@ -35,7 +43,9 @@
 			description: 'Create and manage software package releases',
 			descriptionWithTooltip: true,
 			href: '/packages',
-			icon: '📦',
+			icon: Package,
+			iconColor: 'text-orange-600',
+			iconBg: 'bg-orange-100',
 			count: data.stats.packages
 		},
 		{
@@ -43,7 +53,9 @@
 			description: 'Monitor LPAR configurations and installed software',
 			descriptionWithTooltip: true,
 			href: '/lpars',
-			icon: '🖥️',
+			icon: HardDrive,
+			iconColor: 'text-cyan-600',
+			iconBg: 'bg-cyan-100',
 			count: data.stats.lpars
 		}
 	]);
@@ -114,11 +126,14 @@
 
 	<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 		{#each modules as module}
+			{@const Icon = module.icon}
 			<Card class="p-6 hover:shadow-md transition-shadow">
 				<div class="flex flex-col space-y-4">
 					<div class="flex items-center justify-between">
 						<div class="flex items-center space-x-4">
-							<div class="text-4xl">{module.icon}</div>
+							<div class="p-3 {module.iconBg} rounded-lg">
+								<Icon class="w-8 h-8 {module.iconColor}" />
+							</div>
 							<div class="flex-1">
 								<h3 class="text-lg font-semibold">{module.title}</h3>
 							</div>
@@ -136,7 +151,7 @@
 							{module.description}
 						{/if}
 					</p>
-					<Button variant="outline" onclick={() => window.location.href = module.href}>
+					<Button variant="outline" onclick={() => goto(module.href)}>
 						View {module.title}
 					</Button>
 				</div>

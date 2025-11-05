@@ -92,7 +92,7 @@
 	<Card class="p-6">
 		<div class="flex items-center justify-between mb-4">
 			<h2 class="text-xl font-semibold">LPARs</h2>
-			<Button size="sm" onclick={() => window.location.href = `/lpars/new?customer_id=${customer.id}`}>
+			<Button size="sm" onclick={() => goto(`/lpars/new?customer_id=${customer.id}`)}>
 				Add LPAR
 			</Button>
 		</div>

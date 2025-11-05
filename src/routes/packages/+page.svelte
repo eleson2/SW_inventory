@@ -20,13 +20,11 @@
 	const columns = [
 		{
 			key: 'code',
-			label: 'Package Code',
-			sortable: true
+			label: 'Package Code'
 		},
 		{
 			key: 'name',
-			label: 'Name',
-			sortable: true
+			label: 'Name'
 		},
 		{
 			key: 'version',
@@ -40,13 +38,11 @@
 		{
 			key: 'release_date',
 			label: 'Release Date',
-			sortable: true,
 			render: (item: Package) => formatDate(item.release_date)
 		},
 		{
 			key: 'active',
 			label: 'Status',
-			sortable: true,
 			render: (item: Package) => item.active ? 'Active' : 'Inactive'
 		}
 	];
