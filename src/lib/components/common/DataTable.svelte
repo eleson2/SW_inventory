@@ -1,6 +1,8 @@
 <script lang="ts" generics="T">
 	import { cn } from '$utils/cn';
 	import Button from '$components/ui/Button.svelte';
+	import TableSkeleton from '$components/common/TableSkeleton.svelte';
+	import EmptyState from '$components/common/EmptyState.svelte';
 	import type { SortOptions } from '$types';
 	import type { Snippet } from 'svelte';
 

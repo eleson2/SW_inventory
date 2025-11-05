@@ -100,7 +100,7 @@ export const actions: Actions = {
 		if (existing) {
 			return {
 				success: false,
-				errors: { code: ['A package with this code and version already exists.'] },
+				errors: { code: { _errors: ['A package with this code and version already exists.'] } },
 				message: 'Validation failed'
 			};
 		}
@@ -111,7 +111,7 @@ export const actions: Actions = {
 		if (orderIndices.length !== uniqueOrderIndices.size) {
 			return {
 				success: false,
-				errors: { items: ['Order indices must be unique'] },
+				errors: { items: { _errors: ['Order indices must be unique'] } },
 				message: 'Validation failed'
 			};
 		}

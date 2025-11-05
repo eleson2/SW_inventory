@@ -4,6 +4,7 @@ import { db, createAuditLog } from '$lib/server/db';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
+import type { SuperForm } from '$lib/types/superforms';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const vendor = await db.vendors.findUnique({
@@ -15,14 +16,14 @@ export const load: PageServerLoad = async ({ params }) => {
 	}
 
 	// Initialize Superforms with existing vendor data
-	const form = await superValidate(vendor, zod(vendorUpdateSchema));
+	const form = await superValidate(vendor, zod(vendorUpdateSchema)) as SuperForm<typeof vendorUpdateSchema>;
 
 	return { form, vendor };
 };
 
 export const actions: Actions = {
 	default: async (event) => {
-		const form = await superValidate(event, zod(vendorUpdateSchema));
+	const form = await superValidate(event, zod(vendorUpdateSchema)) as SuperForm<typeof vendorUpdateSchema>;
 
 		if (!form.valid) {
 			return fail(400, { form });

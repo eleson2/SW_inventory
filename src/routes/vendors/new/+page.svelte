@@ -14,7 +14,7 @@
 	import FormValidationSummary from '$components/common/FormValidationSummary.svelte';
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
 
-	export let data: PageData;
+	let { data }: { data: PageData } = $props();
 
 	const typedForm = data.form as unknown as SuperFormClient<typeof vendorSchema>;
 

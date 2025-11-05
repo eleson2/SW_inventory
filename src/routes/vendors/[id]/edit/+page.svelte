@@ -13,7 +13,7 @@
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
 	import PageHeader from '$components/common/PageHeader.svelte';
 
-	export let data: PageData;
+	let { data }: { data: PageData } = $props();
 
 	const typedForm = data.form as unknown as SuperFormClient<typeof vendorSchema>;
 

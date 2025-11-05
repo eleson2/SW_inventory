@@ -4,6 +4,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { softwareWithVersionsSchema } from '$lib/schemas/software';
+import type { SuperForm } from '$lib/types/superforms';
 
 // Load vendors and all software for dropdown
 export const load: PageServerLoad = async ({ url }) => {
@@ -19,7 +20,7 @@ export const load: PageServerLoad = async ({ url }) => {
 			vendor_id: vendorIdFromUrl || ''
 		},
 		zod(softwareWithVersionsSchema)
-	);
+	) as SuperForm<typeof softwareWithVersionsSchema>;
 
 	const [vendors, allSoftware, preselectedVendor] = await Promise.all([
 		db.vendors.findMany({
@@ -69,8 +70,8 @@ export const load: PageServerLoad = async ({ url }) => {
 
 export const actions: Actions = {
 	default: async (event) => {
-		// Use Superforms to validate form data
-		const form = await superValidate(event, zod(softwareWithVersionsSchema));
+	// Use Superforms to validate form data
+	const form = await superValidate(event, zod(softwareWithVersionsSchema)) as SuperForm<typeof softwareWithVersionsSchema>;
 
 		if (!form.valid) {
 			return fail(400, { form });

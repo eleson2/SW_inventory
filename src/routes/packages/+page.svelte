@@ -4,35 +4,60 @@
 	import { goto } from '$app/navigation';
 	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
+	import DataTable from '$components/common/DataTable.svelte';
 	import Pagination from '$components/common/Pagination.svelte';
 	import InstantSearch from '$components/common/InstantSearch.svelte';
 	import PageHeader from '$components/common/PageHeader.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import { formatDate } from '$utils/date-format';
-	import { cn } from '$utils/cn';
+	import { useTableNavigation } from '$lib/utils/table-navigation.svelte';
 
 	let { data }: { data: PageData } = $props();
 
-	const packages = $derived('items' in data.packages ? data.packages.items : []);
+	// Table navigation utilities
+	const { handleSort: handleSortUtil, handlePageChange } = useTableNavigation();
 
-	function handleSort(field: string) {
-		const currentSort = data.sort;
-		const direction =
-			currentSort?.field === field && currentSort?.direction === 'asc' ? 'desc' : 'asc';
+	const columns = [
+		{
+			key: 'code',
+			label: 'Package Code',
+			sortable: true
+		},
+		{
+			key: 'name',
+			label: 'Name',
+			sortable: true
+		},
+		{
+			key: 'version',
+			label: 'Version'
+		},
+		{
+			key: 'package_items',
+			label: 'Software Count',
+			render: (item: Package) => item.package_items?.length || 0
+		},
+		{
+			key: 'release_date',
+			label: 'Release Date',
+			sortable: true,
+			render: (item: Package) => formatDate(item.release_date)
+		},
+		{
+			key: 'active',
+			label: 'Status',
+			sortable: true,
+			render: (item: Package) => item.active ? 'Active' : 'Inactive'
+		}
+	];
 
-		const url = new URL(window.location.href);
-		url.searchParams.set('sort', field);
-		url.searchParams.set('direction', direction);
-		url.searchParams.set('page', '1');
-
-		goto(url.toString());
+	function handleRowClick(pkg: Package) {
+		goto(`/packages/${pkg.id}`);
 	}
 
-	function handlePageChange(page: number) {
-		const url = new URL(window.location.href);
-		url.searchParams.set('page', page.toString());
-
-		goto(url.toString());
+	// Sort handler with current sort state
+	function handleSort(field: string) {
+		handleSortUtil(field, data.sort);
 	}
 </script>
 
@@ -42,9 +67,7 @@
 		description="Manage software packages for coordinated deployments"
 	>
 		{#snippet actions()}
-			<a href="/packages/new" data-sveltekit-reload class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
-				Create Package
-			</a>
+			<Button onclick={() => goto('/packages/new')}>Create Package</Button>
 		{/snippet}
 	</PageHeader>
 
@@ -69,159 +92,38 @@
 			/>
 		</div>
 
-		<div class="rounded-md border">
-			<table class="w-full">
-				<thead>
-					<tr class="border-b bg-muted/50">
-						<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground {data.sort?.field === 'code' ? 'bg-accent/50' : ''}">
-							<button
-								class="flex items-center gap-2 hover:text-foreground transition-colors {data.sort?.field === 'code' ? 'text-foreground font-bold' : ''}"
-								onclick={() => handleSort('code')}
-								title={data.sort?.field === 'code'
-									? `Sorted ${data.sort.direction === 'asc' ? 'ascending' : 'descending'}. Click to ${data.sort.direction === 'asc' ? 'sort descending' : 'sort ascending'}`
-									: 'Click to sort'}
-							>
-								Package Code
-								{#if data.sort?.field === 'code'}
-									<span class="text-base font-bold">
-										{data.sort.direction === 'asc' ? '▲' : '▼'}
-									</span>
-								{/if}
-							</button>
-						</th>
-						<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground {data.sort?.field === 'name' ? 'bg-accent/50' : ''}">
-							<button
-								class="flex items-center gap-2 hover:text-foreground transition-colors {data.sort?.field === 'name' ? 'text-foreground font-bold' : ''}"
-								onclick={() => handleSort('name')}
-								title={data.sort?.field === 'name'
-									? `Sorted ${data.sort.direction === 'asc' ? 'ascending' : 'descending'}. Click to ${data.sort.direction === 'asc' ? 'sort descending' : 'sort ascending'}`
-									: 'Click to sort'}
-							>
-								Name
-								{#if data.sort?.field === 'name'}
-									<span class="text-base font-bold">
-										{data.sort.direction === 'asc' ? '▲' : '▼'}
-									</span>
-								{/if}
-							</button>
-						</th>
-						<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-							Version
-						</th>
-						<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-							Software Count
-						</th>
-						<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground {data.sort?.field === 'releaseDate' ? 'bg-accent/50' : ''}">
-							<button
-								class="flex items-center gap-2 hover:text-foreground transition-colors {data.sort?.field === 'releaseDate' ? 'text-foreground font-bold' : ''}"
-								onclick={() => handleSort('releaseDate')}
-								title={data.sort?.field === 'releaseDate'
-									? `Sorted ${data.sort.direction === 'asc' ? 'ascending' : 'descending'}. Click to ${data.sort.direction === 'asc' ? 'sort descending' : 'sort ascending'}`
-									: 'Click to sort'}
-							>
-								Release Date
-								{#if data.sort?.field === 'releaseDate'}
-									<span class="text-base font-bold">
-										{data.sort.direction === 'asc' ? '▲' : '▼'}
-									</span>
-								{/if}
-							</button>
-						</th>
-						<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground {data.sort?.field === 'active' ? 'bg-accent/50' : ''}">
-							<button
-								class="flex items-center gap-2 hover:text-foreground transition-colors {data.sort?.field === 'active' ? 'text-foreground font-bold' : ''}"
-								onclick={() => handleSort('active')}
-								title={data.sort?.field === 'active'
-									? `Sorted ${data.sort.direction === 'asc' ? 'ascending' : 'descending'}. Click to ${data.sort.direction === 'asc' ? 'sort descending' : 'sort ascending'}`
-									: 'Click to sort'}
-							>
-								Status
-								{#if data.sort?.field === 'active'}
-									<span class="text-base font-bold">
-										{data.sort.direction === 'asc' ? '▲' : '▼'}
-									</span>
-								{/if}
-							</button>
-						</th>
-						<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-							Actions
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#if packages.length === 0}
-						<tr>
-							<td colspan="7" class="h-32 text-center">
-								<p class="text-muted-foreground">No packages found</p>
-							</td>
-						</tr>
-					{:else}
-						{#each packages as pkg, index}
-							<tr
-								class={cn(
-									'border-b transition-colors',
-									index % 2 === 0 ? 'bg-background' : 'bg-muted/20',
-									'hover:bg-accent/50'
-								)}
-							>
-								<td
-									class="p-4 align-middle cursor-pointer"
-									onclick={() => goto(`/packages/${pkg.id}`)}
-								>
-									{pkg.code}
-								</td>
-								<td
-									class="p-4 align-middle cursor-pointer"
-									onclick={() => goto(`/packages/${pkg.id}`)}
-								>
-									{pkg.name}
-								</td>
-								<td
-									class="p-4 align-middle cursor-pointer"
-									onclick={() => goto(`/packages/${pkg.id}`)}
-								>
-									{pkg.version}
-								</td>
-								<td
-									class="p-4 align-middle cursor-pointer"
-									onclick={() => goto(`/packages/${pkg.id}`)}
-								>
-									{pkg.package_items?.length || 0}
-								</td>
-								<td
-									class="p-4 align-middle cursor-pointer"
-									onclick={() => goto(`/packages/${pkg.id}`)}
-								>
-									{formatDate(pkg.release_date)}
-								</td>
-								<td
-									class="p-4 align-middle cursor-pointer"
-									onclick={() => goto(`/packages/${pkg.id}`)}
-								>
-									<Badge variant={pkg.active ? 'default' : 'secondary'}>
-										{pkg.active ? 'Active' : 'Inactive'}
-									</Badge>
-								</td>
-								<td class="p-4 align-middle">
-									<div class="flex gap-2">
-										<Button
-											variant="outline"
-											size="sm"
-											onclick={(e) => {
-												e.stopPropagation();
-												goto(`/packages/${pkg.id}/deploy`);
-											}}
-										>
-											Deploy
-										</Button>
-									</div>
-								</td>
-							</tr>
-						{/each}
-					{/if}
-				</tbody>
-			</table>
-		</div>
+		<DataTable
+			data={'items' in data.packages ? data.packages.items : []}
+			{columns}
+			onRowClick={handleRowClick}
+			onSort={handleSort}
+			currentSort={data.sort}
+		>
+			{#snippet emptyState()}
+				<div class="text-center">
+					<svg
+						class="mx-auto h-12 w-12 text-muted-foreground"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						aria-hidden="true"
+					>
+						<path
+							vector-effect="non-scaling-stroke"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+						></path>
+					</svg>
+					<h3 class="mt-2 text-sm font-semibold">No packages found</h3>
+					<p class="mt-1 text-sm text-muted-foreground">Get started by creating a new package.</p>
+					<div class="mt-6">
+						<Button onclick={() => goto('/packages/new')}>Create Package</Button>
+					</div>
+				</div>
+			{/snippet}
+		</DataTable>
 
 		<div class="mt-4">
 			<Pagination

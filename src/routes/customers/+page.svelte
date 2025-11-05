@@ -10,8 +10,12 @@
 	import StatusBadge from '$components/common/StatusBadge.svelte';
 	import PageHeader from '$components/common/PageHeader.svelte';
 	import { formatDate } from '$utils/date-format';
+	import { useTableNavigation } from '$lib/utils/table-navigation.svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	// Table navigation utilities
+	const { handleSort: handleSortUtil, handlePageChange } = useTableNavigation();
 
 	const columns = [
 		{
@@ -47,23 +51,9 @@
 		goto(`/customers/${customer.id}`);
 	}
 
+	// Sort handler with current sort state
 	function handleSort(field: string) {
-		const url = new URL(window.location.href);
-		const currentDirection = data.sort?.direction || 'asc';
-		const newDirection = data.sort?.field === field && currentDirection === 'asc' ? 'desc' : 'asc';
-
-		url.searchParams.set('sort', field);
-		url.searchParams.set('direction', newDirection);
-		url.searchParams.set('page', '1'); // Reset to first page when sorting
-
-		goto(url.toString());
-	}
-
-	function handlePageChange(page: number) {
-		const url = new URL(window.location.href);
-		url.searchParams.set('page', page.toString());
-
-		goto(url.toString());
+		handleSortUtil(field, data.sort);
 	}
 </script>
 

@@ -18,7 +18,7 @@
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
 	import PageHeader from '$components/common/PageHeader.svelte';
 
-	export let data: PageData;
+	let { data }: { data: PageData } = $props();
 
 	const typedForm = data.form as unknown as SuperFormClient<typeof packageWithItemsSchema>;
 
@@ -49,11 +49,18 @@
 
 	// Track unsaved changes
 	const unsavedChanges = useUnsavedChanges();
-	const initialFormState = JSON.stringify({
-		name: $form.name,
-		code: $form.code,
-		version: $form.version,
-		items: packageItems
+	let initialFormState = $state('');
+
+	// Capture initial form state once on mount
+	$effect.pre(() => {
+		if (!initialFormState) {
+			initialFormState = JSON.stringify({
+				name: $form.name,
+				code: $form.code,
+				version: $form.version,
+				items: packageItems
+			});
+		}
 	});
 
 	// When clone source is selected, pre-fill form

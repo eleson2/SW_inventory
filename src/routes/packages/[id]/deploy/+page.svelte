@@ -21,7 +21,7 @@
 	let previewData = $state<any>(null);
 	let isDeploying = $state(false);
 	let isLoadingPreview = $state(false);
-	let deployFormRef: HTMLFormElement;
+	let deployFormRef = $state<HTMLFormElement>();
 	let hasViewedPreview = $state(false);
 
 	// Calculate summary stats

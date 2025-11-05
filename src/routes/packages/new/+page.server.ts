@@ -4,6 +4,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { packageWithItemsSchema } from '$lib/schemas/package';
+import type { SuperForm } from '$lib/types/superforms';
 
 // Load all packages for clone dropdown and all software for PackageItemsManager
 export const load: PageServerLoad = async () => {
@@ -11,7 +12,7 @@ export const load: PageServerLoad = async () => {
 	const form = await superValidate(
 		{ description: '', active: true, items: [] },
 		zod(packageWithItemsSchema)
-	);
+	) as SuperForm<typeof packageWithItemsSchema>;
 
 	const [allPackages, allSoftware] = await Promise.all([
 		db.packages.findMany({
@@ -62,8 +63,8 @@ export const load: PageServerLoad = async () => {
 
 export const actions: Actions = {
 	default: async (event) => {
-		// Use Superforms to validate form data
-		const form = await superValidate(event, zod(packageWithItemsSchema));
+	// Use Superforms to validate form data
+	const form = await superValidate(event, zod(packageWithItemsSchema)) as SuperForm<typeof packageWithItemsSchema>;
 
 		if (!form.valid) {
 			return fail(400, { form });
@@ -81,7 +82,7 @@ export const actions: Actions = {
 			return fail(400, {
 				form: {
 					...form,
-					errors: { ...form.errors, code: ['A package with this code and version already exists.'] }
+					errors: { ...form.errors, code: { _errors: ['A package with this code and version already exists.'] } }
 				}
 			});
 		}
@@ -94,7 +95,7 @@ export const actions: Actions = {
 				return fail(400, {
 					form: {
 						...form,
-						errors: { ...form.errors, items: ['Order indices must be unique'] }
+						errors: { ...form.errors, items: { _errors: ['Order indices must be unique'] } }
 					}
 				});
 			}

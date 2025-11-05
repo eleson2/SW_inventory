@@ -18,7 +18,7 @@
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
 	import PageHeader from '$components/common/PageHeader.svelte';
 
-	export let data: PageData;
+	let { data }: { data: PageData } = $props();
 
 	// Cast the server-provided Superforms payload to the client type so we can
 	// keep full typing without resorting to ts-ignore.
