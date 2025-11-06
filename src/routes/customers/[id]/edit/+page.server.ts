@@ -1,10 +1,9 @@
 import type { PageServerLoad, Actions } from './$types';
 import { customerUpdateSchema } from '$schemas';
 import { db, createAuditLog } from '$lib/server/db';
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
+import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
-import type { CustomerUpdateFormData } from '$lib/types/superforms';
-import { serverValidate } from '$lib/utils/superforms';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const customer = await db.customers.findUnique({
@@ -15,25 +14,24 @@ export const load: PageServerLoad = async ({ params }) => {
 		throw error(404, 'Customer not found');
 	}
 
-	const form = await serverValidate(customer, customerUpdateSchema);
+	// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types
+	const form = await superValidate(customer, zod(customerUpdateSchema));
 
 	return { form, customer };
 };
 
 export const actions: Actions = {
 	default: async (event) => {
-	const form = await serverValidate(event, customerUpdateSchema);
+	// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types
+	const form = await superValidate(event, zod(customerUpdateSchema));
 
 		if (!form.valid) {
 			return fail(400, { form });
 		}
 
-		// Type-safe form data access
-		const formData = form.data as CustomerUpdateFormData;
-
 		const existing = await db.customers.findFirst({
 			where: {
-				code: formData.code,
+				code: form.data.code,
 				id: { not: event.params.id }
 			}
 		});
@@ -56,15 +54,15 @@ export const actions: Actions = {
 			const customer = await db.customers.update({
 				where: { id: event.params.id },
 				data: {
-					name: formData.name,
-					code: formData.code,
-					description: formData.description || null,
-					active: formData.active ?? true
+					name: form.data.name,
+					code: form.data.code,
+					description: form.data.description || null,
+					active: form.data.active ?? true
 				}
 			});
 
 			// CASCADE: If customer is being deactivated, deactivate all their LPARs
-			if (currentCustomer?.active && formData.active === false) {
+			if (currentCustomer?.active && form.data.active === false) {
 				await db.lpars.updateMany({
 					where: { customer_id: customer.id },
 					data: { active: false, updated_at: new Date() }

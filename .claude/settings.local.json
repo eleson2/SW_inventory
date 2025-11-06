@@ -91,7 +91,8 @@
       "Bash(do echo -n \"/$route: \")",
       "mcp__ide__getDiagnostics",
       "Bash(for route in \"vendors\" \"customers\" \"software\" \"lpars\" \"packages\" \"vendors/new\")",
-      "Bash(for route in \"\" \"vendors\" \"vendors/new\" \"customers\" \"customers/new\" \"software\" \"software/new\" \"lpars\" \"lpars/new\" \"packages\" \"packages/new\")"
+      "Bash(for route in \"\" \"vendors\" \"vendors/new\" \"customers\" \"customers/new\" \"software\" \"software/new\" \"lpars\" \"lpars/new\" \"packages\" \"packages/new\")",
+      "Bash($env:NODE_OPTIONS=\"--max-old-space-size=8192\")"
     ],
     "deny": [],
     "ask": []

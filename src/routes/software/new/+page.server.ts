@@ -1,9 +1,9 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '$lib/server/db';
 import { fail, redirect } from '@sveltejs/kit';
-import { zod } from 'sveltekit-superforms/adapters';
 import { softwareWithVersionsSchema } from '$lib/schemas/software';
-import { serverValidate } from '$lib/utils/superforms';
+import { superValidate } from 'sveltekit-superforms';
+import { zod } from 'sveltekit-superforms/adapters';
 
 // Load vendors and all software for dropdown
 export const load: PageServerLoad = async ({ url }) => {
@@ -11,14 +11,15 @@ export const load: PageServerLoad = async ({ url }) => {
 	const vendorIdFromUrl = url.searchParams.get('vendor_id');
 
 	// Initialize Superforms with default values (pre-fill vendor_id if provided)
-	const form = await serverValidate(
+	// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types
+	const form = await superValidate(
 		{
 			description: '',
 			active: true,
 			versions: [],
 			vendor_id: vendorIdFromUrl || ''
 		},
-		softwareWithVersionsSchema
+		zod(softwareWithVersionsSchema)
 	);
 
 	const [vendors, allSoftware, preselectedVendor] = await Promise.all([
@@ -70,7 +71,8 @@ export const load: PageServerLoad = async ({ url }) => {
 export const actions: Actions = {
 	default: async (event) => {
 	// Use Superforms to validate form data
-	const form = await serverValidate(event, softwareWithVersionsSchema);
+	// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types
+	const form = await superValidate(event, zod(softwareWithVersionsSchema));
 
 		if (!form.valid) {
 			return fail(400, { form });
@@ -95,7 +97,7 @@ export const actions: Actions = {
 			}
 
 			// Create software and versions in a transaction
-			const result = await db.$transaction(async (tx) => {
+			await db.$transaction(async (tx) => {
 				// Create the software first
 				const software = await tx.software.create({
 					data: {

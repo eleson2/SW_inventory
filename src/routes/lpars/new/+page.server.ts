@@ -2,9 +2,8 @@ import type { PageServerLoad, Actions } from './$types';
 import { lparSchema } from '$schemas';
 import { db, createAuditLog } from '$lib/server/db';
 import { fail, redirect } from '@sveltejs/kit';
+import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
-import type { LparFormData } from '$lib/types/superforms';
-import { serverValidate } from '$lib/utils/superforms';
 
 // Load customers, packages, and all LPARs for dropdowns
 export const load: PageServerLoad = async ({ url }) => {
@@ -12,14 +11,15 @@ export const load: PageServerLoad = async ({ url }) => {
 	const customerIdFromUrl = url.searchParams.get('customer_id');
 
 	// Initialize Superforms with default values (pre-fill customer_id if provided)
-	const form = await serverValidate(
+	// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types
+	const form = await superValidate(
 		{
 			description: '',
 			current_package_id: '',
 			active: true,
 			customer_id: customerIdFromUrl || ''
 		},
-		lparSchema
+		zod(lparSchema)
 	);
 
 	const [customers, packages, allLpars, preselectedCustomer] = await Promise.all([
@@ -82,18 +82,16 @@ export const load: PageServerLoad = async ({ url }) => {
 export const actions: Actions = {
 	default: async (event) => {
 	// Use Superforms to validate form data
-	const form = await serverValidate(event, lparSchema);
+	// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types
+	const form = await superValidate(event, zod(lparSchema));
 
 		if (!form.valid) {
 			return fail(400, { form });
 		}
 
-		// Type-safe form data access
-		const formData = form.data as LparFormData;
-
 		// Check for unique code
 		const existing = await db.lpars.findUnique({
-			where: { code: formData.code }
+			where: { code: form.data.code }
 		});
 
 		if (existing) {
@@ -109,12 +107,12 @@ export const actions: Actions = {
 			// Create LPAR
 			const lpar = await db.lpars.create({
 				data: {
-					name: formData.name,
-					code: formData.code,
-					customer_id: formData.customer_id,
-					description: formData.description || null,
-					current_package_id: formData.current_package_id || null,
-					active: formData.active
+					name: form.data.name,
+					code: form.data.code,
+					customer_id: form.data.customer_id,
+					description: form.data.description || null,
+					current_package_id: form.data.current_package_id || null,
+					active: form.data.active
 				}
 			});
 

@@ -1,7 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '$lib/server/db';
 import { fail, redirect } from '@sveltejs/kit';
-import { zod } from 'sveltekit-superforms/adapters';
 import { packageWithItemsSchema } from '$lib/schemas/package';
 import { serverValidate } from '$lib/utils/superforms';
 

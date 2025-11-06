@@ -20,7 +20,7 @@
  */
 
 import type { SuperValidated, Infer } from 'sveltekit-superforms';
-import type { AnyZodObject } from 'zod';
+import type { z, ZodTypeAny } from 'zod';
 import type {
 	vendorSchema,
 	vendorUpdateSchema,
@@ -39,22 +39,22 @@ import type {
  * Properly typed SuperValidated form data
  * Usage: SuperForm<typeof vendorSchema>
  */
-export type SuperForm<T extends AnyZodObject> = SuperValidated<Infer<T>>;
+export type SuperForm<T extends ZodTypeAny> = SuperValidated<z.infer<T>>;
 
 /**
  * Validated form data type from a Zod schema
  * Usage: ValidatedFormData<typeof vendorSchema>
  */
-export type ValidatedFormData<T extends AnyZodObject> = Infer<T>;
+export type ValidatedFormData<T extends ZodTypeAny> = z.infer<T>;
 
 /**
  * Type-safe form data accessor
  * Usage: const data = formData(form, vendorSchema);
  */
-export function formData<T extends AnyZodObject>(
-	form: SuperValidated<Infer<T>>,
+export function formData<T extends ZodTypeAny>(
+	form: SuperValidated<z.infer<T>>,
 	_schema: T
-): Infer<T> {
+): z.infer<T> {
 	return form.data;
 }
 

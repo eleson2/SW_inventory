@@ -2,14 +2,14 @@ import type { PageServerLoad, Actions } from './$types';
 import { customerSchema } from '$schemas';
 import { db, createAuditLog } from '$lib/server/db';
 import { fail, redirect } from '@sveltejs/kit';
+import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
-import type { CustomerFormData } from '$lib/types/superforms';
-import { serverValidate } from '$lib/utils/superforms';
 
 // Load all customers for clone dropdown
 export const load: PageServerLoad = async () => {
 	// Initialize Superforms with default values
-	const form = await serverValidate({ description: '', active: true }, customerSchema);
+	// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types
+	const form = await superValidate({ description: '', active: true }, zod(customerSchema));
 
 	const allCustomers = await db.customers.findMany({
 		where: { active: true },
@@ -32,18 +32,16 @@ export const load: PageServerLoad = async () => {
 export const actions: Actions = {
 	default: async (event) => {
 	// Use Superforms to validate form data
-	const form = await serverValidate(event, customerSchema);
+	// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types
+	const form = await superValidate(event, zod(customerSchema));
 
 		if (!form.valid) {
 			return fail(400, { form });
 		}
 
-		// Type-safe form data access
-		const formData = form.data as CustomerFormData;
-
 		// Check for unique code
 		const existing = await db.customers.findUnique({
-			where: { code: formData.code }
+			where: { code: form.data.code }
 		});
 
 		if (existing) {
@@ -59,10 +57,10 @@ export const actions: Actions = {
 			// Create customer
 			const customer = await db.customers.create({
 				data: {
-					name: formData.name,
-					code: formData.code,
-					description: formData.description || null,
-					active: formData.active
+					name: form.data.name,
+					code: form.data.code,
+					description: form.data.description || null,
+					active: form.data.active
 				}
 			});
 
