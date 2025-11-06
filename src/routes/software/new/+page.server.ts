@@ -1,10 +1,9 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '$lib/server/db';
 import { fail, redirect } from '@sveltejs/kit';
-import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { softwareWithVersionsSchema } from '$lib/schemas/software';
-import type { SuperForm } from '$lib/types/superforms';
+import { serverValidate } from '$lib/utils/superforms';
 
 // Load vendors and all software for dropdown
 export const load: PageServerLoad = async ({ url }) => {
@@ -12,15 +11,15 @@ export const load: PageServerLoad = async ({ url }) => {
 	const vendorIdFromUrl = url.searchParams.get('vendor_id');
 
 	// Initialize Superforms with default values (pre-fill vendor_id if provided)
-	const form = await superValidate(
+	const form = await serverValidate(
 		{
 			description: '',
 			active: true,
 			versions: [],
 			vendor_id: vendorIdFromUrl || ''
 		},
-		zod(softwareWithVersionsSchema)
-	) as SuperForm<typeof softwareWithVersionsSchema>;
+		softwareWithVersionsSchema
+	);
 
 	const [vendors, allSoftware, preselectedVendor] = await Promise.all([
 		db.vendors.findMany({
@@ -71,7 +70,7 @@ export const load: PageServerLoad = async ({ url }) => {
 export const actions: Actions = {
 	default: async (event) => {
 	// Use Superforms to validate form data
-	const form = await superValidate(event, zod(softwareWithVersionsSchema)) as SuperForm<typeof softwareWithVersionsSchema>;
+	const form = await serverValidate(event, softwareWithVersionsSchema);
 
 		if (!form.valid) {
 			return fail(400, { form });

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import type { PackageItem } from '$lib/schemas/package';
-	import { superForm } from 'sveltekit-superforms';
 	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
@@ -14,6 +13,8 @@
 	import FormValidationSummary from '$components/common/FormValidationSummary.svelte';
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
 	import PageHeader from '$components/common/PageHeader.svelte';
+	import { typedSuperForm } from '$lib/utils/superforms';
+	import { packageWithItemsSchema } from '$lib/schemas/package';
 
 	let { data }: { data: PageData } = $props();
 
@@ -23,8 +24,8 @@
 		{ label: 'New Package' }
 	];
 
-	// Initialize Superforms with client-side validation
-	const { form, errors, enhance, submitting, delayed, posted, constraints, validate } = superForm(data.form, {
+	// Initialize Superforms with client-side validation (typed helper)
+	const { form, errors, enhance, submitting, delayed, submitted, constraints, validateField } = typedSuperForm(data.form, packageWithItemsSchema, {
 		dataType: 'json',
 		resetForm: false,
 		onResult: ({ result }) => {
@@ -191,7 +192,7 @@
 						input.setSelectionRange(cursorPos, cursorPos);
 					}, 0);
 				}}
-				onblur={() => validate('code')}
+				onblur={() => validateField && validateField('code')}
 			/>
 
 			<FormField

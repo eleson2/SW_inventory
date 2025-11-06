@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { superForm } from 'sveltekit-superforms';
+	import { typedSuperForm } from '$lib/utils/superforms';
+	import { softwareWithVersionsSchema } from '$lib/schemas/software';
 	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import Label from '$components/ui/Label.svelte';
@@ -34,15 +35,16 @@
 		];
 
 	// Initialize Superforms (validation handled server-side)
-	const { form, errors, enhance, submitting, delayed, posted, constraints, message } = superForm(data.form, {
-		dataType: 'json',
-		resetForm: false,
-		onResult: ({ result }) => {
-			if (result.type === 'redirect') {
-				goto(result.location);
+	const { form, errors, enhance, submitting, delayed, submitted, constraints, message } =
+		typedSuperForm(data.form, softwareWithVersionsSchema, {
+			dataType: 'json',
+			resetForm: false,
+			onResult: ({ result }) => {
+				if (result.type === 'redirect') {
+					goto(result.location);
+				}
 			}
-		}
-	});
+		});
 
 	let creationMode = $state<'blank' | 'clone'>('blank');
 	let cloneSourceId = $state('');
@@ -130,7 +132,7 @@
 	/>
 
 	<form method="POST" class="space-y-6" use:enhance>
-		<FormValidationSummary errors={$errors} submitted={$posted} />
+		<FormValidationSummary errors={$errors} submitted={$submitted} />
 
 		<!-- Software Information Card -->
 		<Card class="p-6">

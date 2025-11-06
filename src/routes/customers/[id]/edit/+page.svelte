@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { superForm } from 'sveltekit-superforms';
+	import { typedSuperForm } from '$lib/utils/superforms';
+	import { customerUpdateSchema } from '$lib/schemas/customer';
 	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
@@ -20,7 +21,7 @@
 		{ label: 'Edit' }
 	];
 
-	const { form, errors, enhance, message, constraints } = superForm(data.form, {
+	const { form, errors, enhance, message, constraints } = typedSuperForm(data.form, customerUpdateSchema, {
 		dataType: 'json',
 		resetForm: false,
 		// Redirect after successful submission

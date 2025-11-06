@@ -2,17 +2,16 @@ import type { PageServerLoad, Actions } from './$types';
 import { vendorSchema } from '$schemas';
 import { db, createAuditLog } from '$lib/server/db';
 import { fail, redirect } from '@sveltejs/kit';
-import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
-import type { SuperForm } from '$lib/types/superforms';
+import { serverValidate } from '$lib/utils/superforms';
 
 // Load all vendors for clone dropdown
 export const load: PageServerLoad = async () => {
 	// Initialize Superforms with default values
-	const form = await superValidate(
+	const form = await serverValidate(
 		{ website: '', contact_email: '', active: true },
-		zod(vendorSchema)
-	) as SuperForm<typeof vendorSchema>;
+		vendorSchema
+	);
 
 	const allVendors = await db.vendors.findMany({
 		where: { active: true },
@@ -36,7 +35,7 @@ export const load: PageServerLoad = async () => {
 export const actions: Actions = {
 	default: async (event) => {
 	// Use Superforms to validate form data
-	const form = await superValidate(event, zod(vendorSchema)) as SuperForm<typeof vendorSchema>;
+	const form = await serverValidate(event, vendorSchema);
 
 		if (!form.valid) {
 			return fail(400, { form });

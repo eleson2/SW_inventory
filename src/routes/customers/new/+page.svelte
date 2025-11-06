@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { superForm } from 'sveltekit-superforms';
+	import { typedSuperForm } from '$lib/utils/superforms';
+	import { customerSchema } from '$lib/schemas/customer';
 	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
@@ -21,15 +22,16 @@
 	];
 
 	// Initialize Superforms (validation handled server-side)
-	const { form, errors, enhance, submitting, delayed, posted, constraints, validate } = superForm(data.form, {
-		dataType: 'json',
-		resetForm: false,
-		onResult: ({ result }) => {
-			if (result.type === 'redirect') {
-				goto(result.location);
+	const { form, errors, enhance, submitting, delayed, submitted, constraints, validateField } =
+		typedSuperForm(data.form, customerSchema, {
+			dataType: 'json',
+			resetForm: false,
+			onResult: ({ result }) => {
+				if (result.type === 'redirect') {
+					goto(result.location);
+				}
 			}
-		}
-	});
+		});
 
 	let creationMode = $state<'blank' | 'clone'>('blank');
 	let cloneSourceId = $state('');
@@ -64,7 +66,7 @@
 
 	<Card class="p-6">
 		<form method="POST" class="space-y-6" use:enhance>
-			<FormValidationSummary errors={$errors} submitted={$posted} />
+			<FormValidationSummary errors={$errors} submitted={$submitted} />
 
 			<!-- Creation Mode Toggle -->
 			<CloneModeToggle
@@ -108,7 +110,7 @@
 						input.setSelectionRange(cursorPos, cursorPos);
 					}, 0);
 				}}
-				onblur={() => validate('code')}
+				onblur={() => validateField('code')}
 			/>
 
 			<FormTextarea
