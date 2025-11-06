@@ -1,9 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { superForm } from 'sveltekit-superforms';
-	import { zod } from 'sveltekit-superforms/adapters';
-	import { lparSchema } from '$schemas';
-	import type { SuperFormClient } from '$lib/types/superforms';
 	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import Label from '$components/ui/Label.svelte';
@@ -17,8 +14,6 @@
 	import PageHeader from '$components/common/PageHeader.svelte';
 
 	let { data }: { data: PageData } = $props();
-
-	const typedForm = data.form as unknown as SuperFormClient<typeof lparSchema>;
 
 	// Check if we have a pre-selected customer
 	const hasPreselectedCustomer = !!data.preselectedCustomer;
@@ -36,12 +31,10 @@
 			{ label: 'New LPAR' }
 		];
 
-	// Initialize Superforms with client-side validation
-	const { form, errors, enhance, submitting, delayed, submitted, constraints, validateField } = superForm(typedForm, {
+	// Initialize Superforms (validation handled server-side)
+	const { form, errors, enhance, submitting, delayed, posted, constraints, validate } = superForm(data.form, {
 		dataType: 'json',
 		resetForm: false,
-		validators: zod(lparSchema),
-		validationMethod: 'submit-only',
 		onResult: ({ result }) => {
 			if (result.type === 'redirect') {
 				goto(result.location);
@@ -91,7 +84,7 @@
 
 	<Card class="p-6">
 		<form method="POST" class="space-y-6" use:enhance>
-			<FormValidationSummary errors={$errors} submitted={$submitted} />
+			<FormValidationSummary errors={$errors} submitted={$posted} />
 
 			<!-- Creation Mode Toggle -->
 			<CloneModeToggle
@@ -135,7 +128,7 @@
 						input.setSelectionRange(cursorPos, cursorPos);
 					}, 0);
 				}}
-				onblur={() => validateField('code')}
+				onblur={() => validate('code')}
 			/>
 
 			{#if hasPreselectedCustomer}

@@ -2,9 +2,6 @@
 	import type { PageData } from './$types';
 	import type { PackageItem } from '$lib/schemas/package';
 	import { superForm } from 'sveltekit-superforms';
-	import { zod } from 'sveltekit-superforms/adapters';
-	import { packageWithItemsSchema } from '$lib/schemas/package';
-	import type { SuperFormClient } from '$lib/types/superforms';
 	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
@@ -20,8 +17,6 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const typedForm = data.form as unknown as SuperFormClient<typeof packageWithItemsSchema>;
-
 	const breadcrumbItems = [
 		{ label: 'Home', href: '/' },
 		{ label: 'Packages', href: '/packages' },
@@ -29,11 +24,9 @@
 	];
 
 	// Initialize Superforms with client-side validation
-	const { form, errors, enhance, submitting, delayed, submitted, constraints, validateField } = superForm(typedForm, {
+	const { form, errors, enhance, submitting, delayed, posted, constraints, validate } = superForm(data.form, {
 		dataType: 'json',
 		resetForm: false,
-		validators: zod(packageWithItemsSchema),
-		validationMethod: 'submit-only',
 		onResult: ({ result }) => {
 			if (result.type === 'redirect') {
 				goto(result.location);
@@ -150,7 +143,7 @@
 	{/if}
 
 	<form method="POST" class="space-y-6" use:enhance>
-		<FormValidationSummary errors={$errors} submitted={$submitted} />
+		<FormValidationSummary errors={$errors} submitted={$posted} />
 
 		<!-- Package Information Card -->
 		<Card class="p-6">
@@ -198,7 +191,7 @@
 						input.setSelectionRange(cursorPos, cursorPos);
 					}, 0);
 				}}
-				onblur={() => validateField('code')}
+				onblur={() => validate('code')}
 			/>
 
 			<FormField

@@ -10,11 +10,13 @@
  *     const form = await superValidate(event, zod(mySchema)) as SuperForm<typeof mySchema>;
  *
  * - Client-side: the server returns a Superforms payload in `data.form`. Cast it to
- *   `SuperFormClient<typeof schema>` and pass that into `superForm(...)` to avoid
- *   `@ts-nocheck` and `@ts-expect-error` usage. Example:
- *     export let data: PageData;
- *     const typedForm = data.form as unknown as SuperFormClient<typeof mySchema>;
+ *   `SuperForm<typeof schema>` (NOT SuperFormClient) and pass that into `superForm(...)`. Example:
+ *     let { data }: { data: PageData } = $props();
+ *     const typedForm = data.form as SuperForm<typeof mySchema>;
  *     const { form, errors, enhance } = superForm(typedForm, { validators: zod(mySchema) });
+ *
+ * Note: SuperForm<T> is the INPUT type (SuperValidated), while the library's superForm()
+ * returns an object with form, errors, enhance, etc. as properties (not a type we export).
  */
 
 import type { SuperValidated, Infer } from 'sveltekit-superforms';
@@ -68,10 +70,18 @@ export type SoftwareWithVersionsFormData = Infer<typeof softwareWithVersionsSche
 export type PackageWithItemsFormData = Infer<typeof packageWithItemsSchema>;
 
 /**
- * Client-side Superforms instance type
- * Usage: SuperFormClient<typeof vendorSchema>
+ * @deprecated DO NOT USE - This type is incorrect and misleading.
+ *
+ * Use `SuperForm<typeof schema>` for the INPUT to superForm(), not this type.
+ * This type was an attempt to type the OUTPUT (return value) of superForm(),
+ * but it's incomplete and should not be used. TypeScript will infer the correct
+ * return type automatically when you destructure the result.
+ *
+ * Correct usage:
+ *   const typedForm = data.form as SuperForm<typeof schema>;
+ *   const { form, errors, enhance } = superForm(typedForm, { ... });
  */
-export type SuperFormClient<T extends AnyZodObject> = {
+export type SuperFormClient<T extends ZodSchema> = {
 	form: {
 		subscribe: (fn: (value: Infer<T>) => void) => void;
 	};
@@ -90,9 +100,9 @@ export type SuperFormClient<T extends AnyZodObject> = {
 	delayed: {
 		subscribe: (fn: (value: boolean) => void) => void;
 	};
-	submitted: {
+	posted: {
 		subscribe: (fn: (value: boolean) => void) => void;
 	};
 	enhance: (form: HTMLFormElement) => { destroy(): void };
-	validateField?: (field: string) => Promise<void>;
+	validate?: (field: string) => Promise<string[] | undefined>;
 };

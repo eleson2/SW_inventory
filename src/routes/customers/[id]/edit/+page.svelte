@@ -1,9 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { superForm } from 'sveltekit-superforms';
-	import { zod } from 'sveltekit-superforms/adapters';
-	import { customerSchema } from '$schemas';
-	import type { SuperFormClient } from '$lib/types/superforms';
 	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
@@ -16,8 +13,6 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const typedForm = data.form as unknown as SuperFormClient<typeof customerSchema>;
-
 	const breadcrumbItems = [
 		{ label: 'Home', href: '/' },
 		{ label: 'Customers', href: '/customers' },
@@ -25,10 +20,9 @@
 		{ label: 'Edit' }
 	];
 
-	const { form, errors, enhance, message, constraints } = superForm(typedForm, {
+	const { form, errors, enhance, message, constraints } = superForm(data.form, {
 		dataType: 'json',
 		resetForm: false,
-		validators: zod(customerSchema),
 		// Redirect after successful submission
 		onUpdated: ({ form }) => {
 			if (form.valid) {

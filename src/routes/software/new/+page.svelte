@@ -1,9 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { superForm } from 'sveltekit-superforms';
-	import { zod } from 'sveltekit-superforms/adapters';
-	import { softwareWithVersionsSchema } from '$lib/schemas/software';
-	import type { SuperFormClient } from '$lib/types/superforms';
 	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import Label from '$components/ui/Label.svelte';
@@ -19,10 +16,6 @@
 	import PageHeader from '$components/common/PageHeader.svelte';
 
 	let { data }: { data: PageData } = $props();
-
-	// Cast the server-provided Superforms payload to the client type so we can
-	// keep full typing without resorting to ts-ignore.
-	const typedForm = data.form as unknown as SuperFormClient<typeof softwareWithVersionsSchema>;
 
 	// Check if we have a pre-selected vendor
 	const hasPreselectedVendor = !!data.preselectedVendor;
@@ -40,11 +33,10 @@
 			{ label: 'New Software' }
 		];
 
-	// Initialize Superforms with client-side validation
-	const { form, errors, enhance, submitting, delayed, submitted, constraints, message } = superForm(typedForm, {
+	// Initialize Superforms (validation handled server-side)
+	const { form, errors, enhance, submitting, delayed, posted, constraints, message } = superForm(data.form, {
 		dataType: 'json',
 		resetForm: false,
-		validators: zod(softwareWithVersionsSchema),
 		onResult: ({ result }) => {
 			if (result.type === 'redirect') {
 				goto(result.location);
@@ -138,7 +130,7 @@
 	/>
 
 	<form method="POST" class="space-y-6" use:enhance>
-		<FormValidationSummary errors={$errors} submitted={$submitted} />
+		<FormValidationSummary errors={$errors} submitted={$posted} />
 
 		<!-- Software Information Card -->
 		<Card class="p-6">
@@ -226,7 +218,7 @@
 		</Card>
 
 		<!-- Version Management Card -->
-		<VersionManager bind:versions onVersionsChange={handleVersionsChange} errors={errors} />
+		<VersionManager bind:versions onVersionsChange={handleVersionsChange} errors={$errors} />
 
 		<!-- Submit Buttons -->
 		<Card class="p-6">

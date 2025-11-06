@@ -88,7 +88,10 @@
       "Bash(do echo \"=== $comp ===\")",
       "Bash(nul)",
       "Bash(for route in \"customers\" \"software\" \"lpars\" \"packages\")",
-      "Bash(do echo -n \"/$route: \")"
+      "Bash(do echo -n \"/$route: \")",
+      "mcp__ide__getDiagnostics",
+      "Bash(for route in \"vendors\" \"customers\" \"software\" \"lpars\" \"packages\" \"vendors/new\")",
+      "Bash(for route in \"\" \"vendors\" \"vendors/new\" \"customers\" \"customers/new\" \"software\" \"software/new\" \"lpars\" \"lpars/new\" \"packages\" \"packages/new\")"
     ],
     "deny": [],
     "ask": []

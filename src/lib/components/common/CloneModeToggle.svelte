@@ -7,7 +7,7 @@
 		entityNamePlural?: string;
 		items: T[];
 		displayField: keyof T;
-		secondaryField?: keyof T;
+		secondaryField?: keyof T | string; // Allow nested paths like "vendors.name"
 		mode: 'blank' | 'clone';
 		selectedId: string;
 		onModeChange: (mode: 'blank' | 'clone') => void;
