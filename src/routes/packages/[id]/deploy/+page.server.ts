@@ -1,6 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '$lib/server/db';
 import { error, fail } from '@sveltejs/kit';
+import { compareVersions } from '$lib/utils/version-parser';
 
 export const load: PageServerLoad = async ({ params }) => {
 	// Get package details with items
@@ -93,6 +94,8 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const lparIds = JSON.parse(formData.get('lpar_ids') as string) as string[];
 
+		console.log('Preview for LPARs:', lparIds, 'Package:', params.id);
+
 		// Use database function to check impact for each LPAR
 		const previews = await Promise.all(
 			lparIds.map(async (lparId) => {
@@ -112,20 +115,38 @@ export const actions: Actions = {
 					)
 				`;
 
+				console.log('Impact for LPAR', lparId, ':', impact);
+
 				const lpar = await db.lpars.findUnique({
 					where: { id: lparId },
 					select: { name: true, code: true }
 				});
 
 				// Map to expected format for frontend
-				const changes = impact.map((item) => ({
-					software_name: item.software_name,
-					current_version: item.current_version
-						? `${item.current_version}${item.current_ptf_level ? ` (${item.current_ptf_level})` : ''}`
-						: null,
-					target_version: `${item.new_version}${item.new_ptf_level ? ` (${item.new_ptf_level})` : ''}`,
-					action: item.change_type
-				}));
+				const changes = impact
+					.filter((item) => item.software_name !== null) // Exclude items without software name (removed software)
+					.map((item) => {
+						let action = item.change_type.toLowerCase();
+
+						// Differentiate upgrade vs downgrade using version comparison
+						if (action === 'upgrade' && item.current_version && item.new_version) {
+							const comparison = compareVersions(item.new_version, item.current_version);
+							if (comparison < 0) {
+								action = 'downgrade';
+							}
+						}
+
+						return {
+							software_name: item.software_name,
+							current_version: item.current_version
+								? `${item.current_version}${item.current_ptf_level ? ` (${item.current_ptf_level})` : ''}`
+								: null,
+							target_version: item.new_version
+								? `${item.new_version}${item.new_ptf_level ? ` (${item.new_ptf_level})` : ''}`
+								: null,
+							action
+						};
+					});
 
 				return {
 					lparId,
@@ -136,6 +157,7 @@ export const actions: Actions = {
 			})
 		);
 
+		console.log('Final previews:', previews);
 		return { success: true, previews };
 	},
 

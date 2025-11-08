@@ -101,7 +101,11 @@
       "Bash(tee:*)",
       "Bash(powershell -ExecutionPolicy Bypass -File \"D:\\proj\\SW_inventory\\SW_inventory\\fix-errors-format.ps1\")",
       "Bash(del \"D:\\proj\\SW_inventory\\SW_inventory\\fix-errors-format.ps1\")",
-      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -f \"D:\\proj\\SW_inventory\\SW_inventory\\prisma\\migrations\\add_views_and_functions.sql\")"
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -f \"D:\\proj\\SW_inventory\\SW_inventory\\prisma\\migrations\\add_views_and_functions.sql\")",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT COUNT(*) FROM pg_proc WHERE proname = ''check_package_deployment_impact'';\" -t)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT id, name, code FROM packages LIMIT 3;\" -t)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT COUNT(*) as lpars FROM lpars WHERE active = true;\" -t)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT id, name FROM packages LIMIT 1\" -t -A)"
     ],
     "deny": [],
     "ask": []

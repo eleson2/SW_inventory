@@ -22,7 +22,6 @@
 	let isDeploying = $state(false);
 	let isLoadingPreview = $state(false);
 	let deployFormRef = $state<HTMLFormElement>();
-	let hasViewedPreview = $state(false);
 
 	// Calculate summary stats
 	const summary = $derived(() => {
@@ -62,7 +61,6 @@
 	async function loadPreview() {
 		if (selectedLpars.length === 0) {
 			previewData = null;
-			hasViewedPreview = false;
 			return;
 		}
 
@@ -79,10 +77,31 @@
 			});
 
 			const result = await response.json();
-			if (result.success) {
-				previewData = result.previews;
+			console.log('Preview response:', result);
+			console.log('Response type:', result.type);
+			console.log('Response data:', result.data);
+
+			// SvelteKit wraps form action responses
+			if (result.type === 'success' && result.data) {
+				// Extract data - handle both direct object and devalue-serialized array
+				const data = Array.isArray(result.data) ? result.data[0] : result.data;
+				console.log('Extracted data:', data);
+				console.log('Data has success?', data?.success);
+				console.log('Data has previews?', data?.previews);
+
+				if (data?.success && data?.previews) {
+					previewData = data.previews;
+					console.log('Preview data set:', previewData);
+				} else {
+					console.error('Preview failed - no success in data:', data);
+					console.error('data.success =', data?.success);
+					console.error('data.previews =', data?.previews);
+					previewData = null;
+				}
 			} else {
-				console.error('Preview failed:', result);
+				console.error('Preview failed - wrong type or no data');
+				console.error('result.type =', result.type);
+				console.error('result.data =', result.data);
 				previewData = null;
 			}
 		} catch (error) {
@@ -90,6 +109,7 @@
 			previewData = null;
 		} finally {
 			isLoadingPreview = false;
+			console.log('previewData length:', previewData?.length);
 		}
 	}
 
@@ -99,7 +119,6 @@
 			loadPreview();
 		} else {
 			previewData = null;
-			hasViewedPreview = false;
 		}
 	});
 
@@ -285,6 +304,15 @@
 					<span class="text-muted-foreground">Loading deployment preview...</span>
 				</div>
 			</Card>
+		{:else if previewData === null && selectedLpars.length > 0}
+			<Card class="p-6 border-destructive">
+				<div class="text-center text-destructive py-8">
+					<p class="font-semibold mb-2">⚠️ Failed to load deployment preview</p>
+					<p class="text-sm text-muted-foreground">
+						Check the browser console for errors. The server may be unable to calculate the deployment impact.
+					</p>
+				</div>
+			</Card>
 		{:else if previewData && previewData.length > 0}
 			<Card class="p-6 border-primary">
 				<div class="mb-4">
@@ -320,34 +348,18 @@
 										{:else if change.action === 'install'}
 											<span class="text-primary font-medium">{change.target_version}</span>
 											<Badge variant="secondary" class="text-xs bg-blue-100 text-blue-800">new install</Badge>
-										{:else}
+										{:else if change.action === 'no_change'}
 											<span class="text-muted-foreground">{change.current_version}</span>
-											<Badge variant="secondary" class="text-xs">no change</Badge>
+											<Badge variant="secondary" class="text-xs bg-gray-100 text-gray-600">already installed</Badge>
+										{:else}
+											<span class="text-muted-foreground">{change.current_version || 'N/A'}</span>
+											<Badge variant="secondary" class="text-xs">{change.action}</Badge>
 										{/if}
 									</div>
 								{/each}
 							</div>
 						</div>
 					{/each}
-				</div>
-
-				<!-- Acknowledgment Checkbox -->
-				<div class="mt-4 pt-4 border-t">
-					<label class="flex items-start gap-3 cursor-pointer">
-						<input
-							type="checkbox"
-							bind:checked={hasViewedPreview}
-							class="h-4 w-4 mt-0.5 rounded border-gray-300"
-						/>
-						<div>
-							<div class="text-sm font-medium">
-								I have reviewed the deployment impact above
-							</div>
-							<div class="text-xs text-muted-foreground">
-								You must review and acknowledge the changes before deploying
-							</div>
-						</div>
-					</label>
 				</div>
 			</Card>
 		{/if}
@@ -357,19 +369,13 @@
 			<div class="flex gap-3">
 				<Button
 					onclick={handleDeployClick}
-					disabled={isDeploying || !hasViewedPreview || selectedLpars.length === 0}
+					disabled={isDeploying || selectedLpars.length === 0 || !previewData || previewData.length === 0}
 				>
 					{isDeploying ? 'Deploying...' : 'Deploy Package'}
 				</Button>
 
 				<Button variant="ghost" href="/packages/{data.package.id}">Cancel</Button>
 			</div>
-
-			{#if selectedLpars.length > 0 && !hasViewedPreview && previewData}
-				<p class="text-sm text-amber-600 mt-3">
-					⚠️ Please review and acknowledge the deployment impact above before deploying
-				</p>
-			{/if}
 
 			<!-- Hidden form for submission -->
 			<form
