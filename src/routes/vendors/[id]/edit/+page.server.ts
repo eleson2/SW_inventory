@@ -5,6 +5,7 @@ import { error, fail } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 
+// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types in function return
 export const load: PageServerLoad = async ({ params }) => {
 	const vendor = await db.vendors.findUnique({
 		where: { id: params.id }
@@ -15,7 +16,6 @@ export const load: PageServerLoad = async ({ params }) => {
 	}
 
 	// Initialize Superforms with existing vendor data
-	// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types
 	const form = await superValidate(vendor, zod(vendorUpdateSchema));
 
 	return { form, vendor };

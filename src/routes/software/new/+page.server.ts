@@ -6,12 +6,12 @@ import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 
 // Load vendors and all software for dropdown
+// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types in function return
 export const load: PageServerLoad = async ({ url }) => {
 	// Check if vendor_id is provided in URL query params
 	const vendorIdFromUrl = url.searchParams.get('vendor_id');
 
 	// Initialize Superforms with default values (pre-fill vendor_id if provided)
-	// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types
 	const form = await superValidate(
 		{
 			description: '',

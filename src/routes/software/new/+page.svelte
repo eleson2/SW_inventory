@@ -35,11 +35,11 @@
 		];
 
 	// Initialize Superforms (validation handled server-side)
-	const { form, errors, enhance, submitting, delayed, submitted, constraints, message } =
+	const { form, errors, enhance, submitting, delayed, posted, constraints, message } =
 		typedSuperForm(data.form, softwareWithVersionsSchema, {
 			dataType: 'json',
 			resetForm: false,
-			onResult: ({ result }) => {
+			onResult: ({ result }: { result: any }) => {
 				if (result.type === 'redirect') {
 					goto(result.location);
 				}
@@ -132,7 +132,7 @@
 	/>
 
 	<form method="POST" class="space-y-6" use:enhance>
-		<FormValidationSummary errors={$errors} submitted={$submitted} />
+		<FormValidationSummary errors={$errors} submitted={$posted} />
 
 		<!-- Software Information Card -->
 		<Card class="p-6">
@@ -159,7 +159,7 @@
 					name="name"
 					bind:value={$form.name}
 					placeholder="Enter software name"
-					error={$errors.name?._errors?.[0]}
+					error={$errors.name?.[0]}
 					constraints={$constraints.name}
 				/>
 
@@ -192,8 +192,8 @@
 								<option value={vendor.id}>{vendor.name} ({vendor.code})</option>
 							{/each}
 						</select>
-						{#if $errors.vendor_id?._errors?.[0]}
-							<p class="text-sm text-destructive">{$errors.vendor_id._errors[0]}</p>
+						{#if $errors.vendor_id?.[0]}
+							<p class="text-sm text-destructive">{$errors.vendor_id?.[0]}</p>
 						{/if}
 					</div>
 				{/if}
@@ -202,7 +202,7 @@
 					label="Description"
 					id="description"
 					name="description"
-					bind:value={$form.description}
+					bind:value={$form.description as any}
 					placeholder="Enter software description (optional)"
 					constraints={$constraints.description}
 				/>
@@ -220,7 +220,7 @@
 		</Card>
 
 		<!-- Version Management Card -->
-		<VersionManager bind:versions onVersionsChange={handleVersionsChange} errors={$errors} />
+		<VersionManager bind:versions onVersionsChange={handleVersionsChange} errors={$errors as any} />
 
 		<!-- Submit Buttons -->
 		<Card class="p-6">

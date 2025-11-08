@@ -97,10 +97,14 @@ export const actions: Actions = {
 		const previews = await Promise.all(
 			lparIds.map(async (lparId) => {
 				const impact = await db.$queryRaw<Array<{
+					software_id: string;
 					software_name: string;
 					current_version: string | null;
-					target_version: string;
-					action: string;
+					current_ptf_level: string | null;
+					new_version: string;
+					new_ptf_level: string | null;
+					change_type: string;
+					required: boolean;
 				}>>`
 					SELECT * FROM check_package_deployment_impact(
 						${lparId}::uuid,
@@ -113,11 +117,21 @@ export const actions: Actions = {
 					select: { name: true, code: true }
 				});
 
+				// Map to expected format for frontend
+				const changes = impact.map((item) => ({
+					software_name: item.software_name,
+					current_version: item.current_version
+						? `${item.current_version}${item.current_ptf_level ? ` (${item.current_ptf_level})` : ''}`
+						: null,
+					target_version: `${item.new_version}${item.new_ptf_level ? ` (${item.new_ptf_level})` : ''}`,
+					action: item.change_type
+				}));
+
 				return {
 					lparId,
 					lparName: lpar?.name,
 					lparCode: lpar?.code,
-					changes: impact
+					changes
 				};
 			})
 		);

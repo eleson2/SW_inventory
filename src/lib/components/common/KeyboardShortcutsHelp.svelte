@@ -41,6 +41,14 @@
 			open = false;
 		}
 	}
+
+	function handleBackdropKeydown(event: KeyboardEvent) {
+		// Close dialog when Enter or Space is pressed on backdrop
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			open = false;
+		}
+	}
 </script>
 
 <svelte:window onkeydown={handleEscape} />
@@ -49,8 +57,11 @@
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
 		onclick={() => open = false}
+		onkeydown={handleBackdropKeydown}
 		role="dialog"
 		aria-modal="true"
+		aria-labelledby="shortcuts-title"
+		tabindex="-1"
 		transition:fade={{ duration: 200 }}
 	>
 		<Card
@@ -60,7 +71,7 @@
 			<div class="p-6">
 				<div class="flex items-center justify-between mb-6">
 					<div>
-						<h2 class="text-2xl font-bold">Keyboard Shortcuts</h2>
+						<h2 id="shortcuts-title" class="text-2xl font-bold">Keyboard Shortcuts</h2>
 						<p class="text-sm text-muted-foreground mt-1">
 							Speed up your workflow with these shortcuts
 						</p>

@@ -24,8 +24,8 @@
 		dataType: 'json',
 		resetForm: false,
 		// Redirect after successful submission
-		onUpdated: ({ form }) => {
-			if (form.valid) {
+		onUpdated: ({ form: updateForm }: { form: any }) => {
+			if (updateForm.valid) {
 				goto('/vendors');
 			}
 		}
@@ -48,7 +48,7 @@
 				name="name"
 				bind:value={$form.name}
 				placeholder="Enter vendor name"
-				error={$errors.name?._errors?.[0]}
+				error={$errors.name?.[0]}
 				constraints={$constraints.name}
 			/>
 
@@ -59,7 +59,7 @@
 				bind:value={$form.code}
 				placeholder="VENDOR-CODE"
 				helperText="Uppercase alphanumeric with dashes/underscores"
-				error={$errors.code?._errors?.[0]}
+				error={$errors.code?.[0]}
 				constraints={$constraints.code}
 			/>
 
@@ -71,7 +71,7 @@
 				bind:value={$form.website}
 				placeholder="https://www.example.com"
 				helperText="Optional - full URL including https://"
-				error={$errors.website?._errors?.[0]}
+				error={$errors.website?.[0]}
 				constraints={$constraints.website}
 			/>
 
@@ -83,7 +83,7 @@
 				bind:value={$form.contact_email}
 				placeholder="contact@example.com"
 				helperText="Optional - main contact email for this vendor"
-				error={$errors.contact_email?._errors?.[0]}
+				error={$errors.contact_email?.[0]}
 				constraints={$constraints.contact_email}
 			/>
 
@@ -91,7 +91,7 @@
 				label="Active"
 				id="active"
 				name="active"
-				bind:checked={$form.active}
+				bind:checked={$form.active as any}
 				constraints={$constraints.active}
 			/>
 

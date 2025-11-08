@@ -25,8 +25,8 @@
 		dataType: 'json',
 		resetForm: false,
 		// Redirect after successful submission
-		onUpdated: ({ form }) => {
-			if (form.valid) {
+		onUpdated: ({ form: updateForm }: { form: any }) => {
+			if (updateForm.valid) {
 				goto('/customers');
 			}
 		}
@@ -49,7 +49,7 @@
 				name="name"
 				bind:value={$form.name}
 				placeholder="Enter customer name"
-				error={$errors.name?._errors?.[0]}
+				error={$errors.name?.[0]}
 				constraints={$constraints.name}
 			/>
 
@@ -60,7 +60,7 @@
 				bind:value={$form.code}
 				placeholder="CUSTOMER-CODE"
 				helperText="Uppercase alphanumeric with dashes/underscores"
-				error={$errors.code?._errors?.[0]}
+				error={$errors.code?.[0]}
 				constraints={$constraints.code}
 			/>
 
@@ -68,7 +68,7 @@
 				label="Description"
 				id="description"
 				name="description"
-				bind:value={$form.description}
+				bind:value={$form.description as any}
 				placeholder="Enter customer description (optional)"
 				constraints={$constraints.description}
 			/>
@@ -77,7 +77,7 @@
 				label="Active"
 				id="active"
 				name="active"
-				bind:checked={$form.active}
+				bind:checked={$form.active as any}
 				constraints={$constraints.active}
 			/>
 

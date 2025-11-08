@@ -2,14 +2,16 @@ import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '$lib/server/db';
 import { fail, redirect } from '@sveltejs/kit';
 import { packageWithItemsSchema } from '$lib/schemas/package';
-import { serverValidate } from '$lib/utils/superforms';
+import { superValidate } from 'sveltekit-superforms';
+import { zod } from 'sveltekit-superforms/adapters';
 
 // Load all packages for clone dropdown and all software for PackageItemsManager
 export const load: PageServerLoad = async () => {
 	// Initialize Superforms with default values
-	const form = await serverValidate(
+	// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types
+	const form = await superValidate(
 		{ description: '', active: true, items: [] },
-		packageWithItemsSchema
+		zod(packageWithItemsSchema)
 	);
 
 	const [allPackages, allSoftware] = await Promise.all([
@@ -62,7 +64,8 @@ export const load: PageServerLoad = async () => {
 export const actions: Actions = {
 	default: async (event) => {
 	// Use Superforms to validate form data
-	const form = await serverValidate(event, packageWithItemsSchema);
+	// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types
+	const form = await superValidate(event, zod(packageWithItemsSchema));
 
 		if (!form.valid) {
 			return fail(400, { form });

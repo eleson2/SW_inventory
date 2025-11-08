@@ -22,11 +22,11 @@
 	];
 
 	// Initialize Superforms (validation handled server-side)
-	const { form, errors, enhance, submitting, delayed, submitted, constraints, validateField } =
+	const { form, errors, enhance, submitting, delayed, posted, constraints, validate } =
 		typedSuperForm(data.form, customerSchema, {
 			dataType: 'json',
 			resetForm: false,
-			onResult: ({ result }) => {
+			onResult: ({ result }: { result: any }) => {
 				if (result.type === 'redirect') {
 					goto(result.location);
 				}
@@ -66,7 +66,7 @@
 
 	<Card class="p-6">
 		<form method="POST" class="space-y-6" use:enhance>
-			<FormValidationSummary errors={$errors} submitted={$submitted} />
+			<FormValidationSummary errors={$errors} submitted={$posted} />
 
 			<!-- Creation Mode Toggle -->
 			<CloneModeToggle
@@ -89,7 +89,7 @@
 				name="name"
 				bind:value={$form.name}
 				placeholder="Enter customer name"
-				error={$errors.name?._errors?.[0]}
+				error={$errors.name?.[0]}
 				constraints={$constraints.name}
 			/>
 
@@ -100,7 +100,7 @@
 				bind:value={$form.code}
 				placeholder="CUSTOMER-CODE"
 				helperText="Uppercase alphanumeric with dashes/underscores (will auto-uppercase)"
-				error={$errors.code?._errors?.[0]}
+				error={$errors.code?.[0]}
 				constraints={$constraints.code}
 				oninput={(e) => {
 					const input = e.target as HTMLInputElement;
@@ -110,14 +110,14 @@
 						input.setSelectionRange(cursorPos, cursorPos);
 					}, 0);
 				}}
-				onblur={() => validateField('code')}
+				onblur={() => validate('code')}
 			/>
 
 			<FormTextarea
 				label="Description"
 				id="description"
 				name="description"
-				bind:value={$form.description}
+				bind:value={$form.description as any}
 				placeholder="Enter customer description (optional)"
 				constraints={$constraints.description}
 			/>

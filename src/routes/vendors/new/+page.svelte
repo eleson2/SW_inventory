@@ -21,11 +21,11 @@
 	];
 
 	// Initialize Superforms with client-side validation (typed helper)
-	const { form, errors, enhance, submitting, delayed, submitted, constraints, validateField } = typedSuperForm(data.form, vendorSchema, {
+	const { form, errors, enhance, submitting, delayed, posted, constraints, validate } = typedSuperForm(data.form, vendorSchema, {
 		dataType: 'json',
 		resetForm: false,
 		validationMethod: 'submit-only',
-		onResult: ({ result }) => {
+		onResult: ({ result }: { result: any }) => {
 			if (result.type === 'redirect') {
 				goto(result.location);
 			}
@@ -63,7 +63,7 @@
 
 	<Card class="p-6">
 		<form method="POST" class="space-y-6" use:enhance>
-		<FormValidationSummary errors={$errors} submitted={$submitted} />
+		<FormValidationSummary errors={$errors} submitted={$posted} />
 
 			<!-- Required fields legend -->
 			<p class="text-sm text-muted-foreground pb-2 border-b">
@@ -91,7 +91,7 @@
 				name="name"
 				bind:value={$form.name}
 				placeholder="Enter vendor name"
-				error={$errors.name?._errors?.[0]}
+				error={$errors.name?.[0]}
 				constraints={$constraints.name}
 			/>
 
@@ -102,7 +102,7 @@
 				bind:value={$form.code}
 				placeholder="VENDOR-CODE"
 				helperText="Uppercase alphanumeric with dashes/underscores (will auto-uppercase)"
-				error={$errors.code?._errors?.[0]}
+				error={$errors.code?.[0]}
 				constraints={$constraints.code}
 				oninput={(e) => {
 					// Auto-uppercase as user types
@@ -114,7 +114,7 @@
 						input.setSelectionRange(cursorPos, cursorPos);
 					}, 0);
 				}}
-				onblur={() => validateField && validateField('code')}
+				onblur={() => validate('code')}
 			/>
 
 			<FormField
@@ -125,7 +125,7 @@
 				bind:value={$form.website}
 				placeholder="https://www.example.com"
 				helperText="Optional - full URL including https://"
-				error={$errors.website?._errors?.[0]}
+				error={$errors.website?.[0]}
 				constraints={$constraints.website}
 			/>
 
@@ -137,7 +137,7 @@
 				bind:value={$form.contact_email}
 				placeholder="contact@example.com"
 				helperText="Optional - main contact email for this vendor"
-				error={$errors.contact_email?._errors?.[0]}
+				error={$errors.contact_email?.[0]}
 				constraints={$constraints.contact_email}
 			/>
 

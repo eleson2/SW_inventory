@@ -5,6 +5,7 @@ import { error, fail } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 
+// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types in function return
 export const load: PageServerLoad = async ({ params }) => {
 	const customer = await db.customers.findUnique({
 		where: { id: params.id }
@@ -14,7 +15,6 @@ export const load: PageServerLoad = async ({ params }) => {
 		throw error(404, 'Customer not found');
 	}
 
-	// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types
 	const form = await superValidate(customer, zod(customerUpdateSchema));
 
 	return { form, customer };

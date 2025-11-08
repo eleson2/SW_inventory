@@ -92,7 +92,16 @@
       "mcp__ide__getDiagnostics",
       "Bash(for route in \"vendors\" \"customers\" \"software\" \"lpars\" \"packages\" \"vendors/new\")",
       "Bash(for route in \"\" \"vendors\" \"vendors/new\" \"customers\" \"customers/new\" \"software\" \"software/new\" \"lpars\" \"lpars/new\" \"packages\" \"packages/new\")",
-      "Bash($env:NODE_OPTIONS=\"--max-old-space-size=8192\")"
+      "Bash($env:NODE_OPTIONS=\"--max-old-space-size=8192\")",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"\\df check_package_deployment_impact\" -t)",
+      "Bash(Get-ChildItem -Path \"src/routes\" -Filter \"*proxy*\" -Recurse -ErrorAction SilentlyContinue)",
+      "Bash(dir:*)",
+      "Bash(npx svelte-kit sync:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"D:\\proj\\SW_inventory\\SW_inventory\\analyze-problems.ps1\")",
+      "Bash(tee:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"D:\\proj\\SW_inventory\\SW_inventory\\fix-errors-format.ps1\")",
+      "Bash(del \"D:\\proj\\SW_inventory\\SW_inventory\\fix-errors-format.ps1\")",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -f \"D:\\proj\\SW_inventory\\SW_inventory\\prisma\\migrations\\add_views_and_functions.sql\")"
     ],
     "deny": [],
     "ask": []

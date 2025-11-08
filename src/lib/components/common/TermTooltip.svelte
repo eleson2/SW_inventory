@@ -44,8 +44,9 @@
 		onmouseleave={() => showTooltip = false}
 		onfocus={() => showTooltip = true}
 		onblur={() => showTooltip = false}
-		role="tooltip"
+		role="button"
 		tabindex="0"
+		aria-label={`Show definition for ${term}`}
 	>
 		{@render children()}
 	</span>

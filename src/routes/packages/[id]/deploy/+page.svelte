@@ -79,11 +79,15 @@
 			});
 
 			const result = await response.json();
-			if (result.type === 'success') {
-				previewData = result.data.previews;
+			if (result.success) {
+				previewData = result.previews;
+			} else {
+				console.error('Preview failed:', result);
+				previewData = null;
 			}
 		} catch (error) {
 			console.error('Preview error:', error);
+			previewData = null;
 		} finally {
 			isLoadingPreview = false;
 		}

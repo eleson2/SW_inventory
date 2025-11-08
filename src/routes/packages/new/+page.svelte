@@ -25,10 +25,10 @@
 	];
 
 	// Initialize Superforms with client-side validation (typed helper)
-	const { form, errors, enhance, submitting, delayed, submitted, constraints, validateField } = typedSuperForm(data.form, packageWithItemsSchema, {
+	const { form, errors, enhance, submitting, delayed, posted, constraints, validate } = typedSuperForm(data.form, packageWithItemsSchema, {
 		dataType: 'json',
 		resetForm: false,
-		onResult: ({ result }) => {
+		onResult: ({ result }: { result: any }) => {
 			if (result.type === 'redirect') {
 				goto(result.location);
 			}
@@ -64,8 +64,8 @@
 			$form.name = `${source.name} (Copy)`;
 			$form.code = `${source.code}-COPY`;
 			$form.version = `${source.version}.1`; // Increment version
-			$form.description = source.description || '';
-			$form.release_date = new Date().toISOString().split('T')[0];
+			($form.description as any) = source.description || '';
+			($form.release_date as any) = new Date().toISOString().split('T')[0];
 			$form.active = source.active;
 
 			// Clone package items if they exist
@@ -86,8 +86,8 @@
 		$form.name = '';
 		$form.code = '';
 		$form.version = '';
-		$form.description = '';
-		$form.release_date = '';
+		($form.description as any) = '';
+		($form.release_date as any) = '';
 		$form.active = true;
 		packageItems = [];
 	}
@@ -171,7 +171,7 @@
 				name="name"
 				bind:value={$form.name}
 				placeholder="Enter package name"
-				error={$errors.name?._errors?.[0]}
+				error={$errors.name?.[0]}
 				constraints={$constraints.name}
 			/>
 
@@ -182,7 +182,7 @@
 				bind:value={$form.code}
 				placeholder="PKG-CODE"
 				helperText="Uppercase alphanumeric with dashes/underscores (will auto-uppercase)"
-				error={$errors.code?._errors?.[0]}
+				error={$errors.code?.[0]}
 				constraints={$constraints.code}
 				oninput={(e) => {
 					const input = e.target as HTMLInputElement;
@@ -192,7 +192,7 @@
 						input.setSelectionRange(cursorPos, cursorPos);
 					}, 0);
 				}}
-				onblur={() => validateField && validateField('code')}
+				onblur={() => validate('code')}
 			/>
 
 			<FormField
@@ -202,7 +202,7 @@
 				bind:value={$form.version}
 				placeholder="e.g., 2025.1.0"
 				helperText="Package version number"
-				error={$errors.version?._errors?.[0]}
+				error={$errors.version?.[0]}
 				constraints={$constraints.version}
 			/>
 
@@ -211,8 +211,8 @@
 				id="release_date"
 				name="release_date"
 				type="date"
-				bind:value={$form.release_date}
-				error={$errors.release_date?._errors?.[0]}
+				bind:value={$form.release_date as any}
+				error={$errors.release_date?.[0]}
 				constraints={$constraints.release_date}
 			/>
 
@@ -220,7 +220,7 @@
 				label="Description"
 				id="description"
 				name="description"
-				bind:value={$form.description}
+				bind:value={$form.description as any}
 				placeholder="Enter package description (optional)"
 				constraints={$constraints.description}
 			/>
