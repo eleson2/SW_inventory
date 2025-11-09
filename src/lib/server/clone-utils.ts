@@ -5,44 +5,83 @@
 import { db, createAuditLog } from './db';
 
 /**
- * Clone a software product
+ * Clone a software product with optional version cloning
  * Creates a new software with all metadata from the source
  */
 export async function cloneSoftware(
 	sourceId: string,
 	newName: string,
 	newDescription?: string,
+	cloneVersions: boolean = true,
 	userId?: string
 ) {
 	const source = await db.software.findUnique({
 		where: { id: sourceId },
-		include: { vendors: true }
+		include: {
+			vendors: true,
+			versions: cloneVersions // Only include if cloning
+		}
 	});
 
 	if (!source) {
 		throw new Error('Source software not found');
 	}
 
-	const cloned = await db.software.create({
-		data: {
-			name: newName,
-			vendor_id: source.vendor_id,
-			description: newDescription || source.description,
-			current_version_id: source.current_version_id,
-			active: source.active
+	return await db.$transaction(async (tx) => {
+		// Create the new software first (without current_version_id)
+		const cloned = await tx.software.create({
+			data: {
+				name: newName,
+				vendor_id: source.vendor_id,
+				description: newDescription || source.description,
+				active: source.active
+				// current_version_id will be set after cloning versions
+			}
+		});
+
+		let currentVersionId: string | null = null;
+
+		// Clone versions if requested
+		if (cloneVersions && source.versions && source.versions.length > 0) {
+			for (const version of source.versions) {
+				const clonedVersion = await tx.software_versions.create({
+					data: {
+						software_id: cloned.id, // Link to NEW software
+						version: version.version,
+						ptf_level: version.ptf_level,
+						release_date: version.release_date,
+						end_of_support: version.end_of_support,
+						release_notes: version.release_notes,
+						is_current: version.is_current
+					}
+				});
+
+				if (version.is_current) {
+					currentVersionId = clonedVersion.id;
+				}
+			}
+
+			// Update software with current version if one was marked current
+			if (currentVersionId) {
+				await tx.software.update({
+					where: { id: cloned.id },
+					data: { current_version_id: currentVersionId }
+				});
+			}
 		}
+
+		// Create audit log
+		await createAuditLog('software', cloned.id, 'create', {
+			action: 'clone',
+			sourceId,
+			sourceName: source.name,
+			newName,
+			versionsCloned: cloneVersions ? (source.versions?.length || 0) : 0,
+			...cloned
+		}, userId);
+
+		return cloned;
 	});
-
-	// Create audit log
-	await createAuditLog('software', cloned.id, 'create', {
-		action: 'clone',
-		sourceId,
-		sourceName: source.name,
-		newName,
-		...cloned
-	}, userId);
-
-	return cloned;
 }
 
 /**

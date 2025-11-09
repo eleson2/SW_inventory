@@ -1,17 +1,38 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '$lib/server/db';
-import { error, fail } from '@sveltejs/kit';
-import { compareVersions } from '$lib/utils/version-parser';
+import { fail, redirect } from '@sveltejs/kit';
+import { z } from 'zod';
+import { serverValidate } from '$lib/utils/superforms';
+
+// Schema for deployment form
+const deploymentSchema = z.object({
+	lparIds: z.array(z.string()).min(1, 'Select at least one LPAR')
+});
 
 export const load: PageServerLoad = async ({ params }) => {
-	// Get package details with items
+	const packageId = params.id;
+
+	// Validate form with default empty array
+	const form = await serverValidate({ lparIds: [] }, deploymentSchema);
+
+	// Get the package with its items
 	const pkg = await db.packages.findUnique({
-		where: { id: params.id },
+		where: { id: packageId },
 		include: {
 			package_items: {
 				include: {
-					software: true,
-					software_version: true
+					software: {
+						select: {
+							name: true,
+							vendor_id: true
+						}
+					},
+					software_version: {
+						select: {
+							version: true,
+							ptf_level: true
+						}
+					}
 				},
 				orderBy: { order_index: 'asc' }
 			}
@@ -19,247 +40,82 @@ export const load: PageServerLoad = async ({ params }) => {
 	});
 
 	if (!pkg) {
-		throw error(404, 'Package not found');
+		throw redirect(303, '/packages');
 	}
 
-	// Get all LPARs with their current package and customer info
+	// Get all active LPARs with their current packages
 	const lpars = await db.lpars.findMany({
 		where: { active: true },
 		include: {
 			customers: {
-				select: { id: true, name: true, code: true }
+				select: {
+					id: true,
+					name: true
+				}
 			},
-			packages: {
-				select: { id: true, name: true, code: true, version: true }
-			},
-			lpar_software: {
-				include: {
-					software: true
+			current_package: {
+				select: {
+					id: true,
+					name: true,
+					version: true
 				}
 			}
 		},
-		orderBy: [{ customers: { name: 'asc' } }, { name: 'asc' }]
-	});
-
-	// Enrich LPARs with deployment status
-	const lparsWithStatus = lpars.map((lpar) => {
-		const isCompliant = lpar.current_package_id === pkg.id;
-
-		// Calculate changes needed
-		let changesNeeded = 0;
-		let newInstalls = 0;
-
-		pkg.package_items.forEach((item) => {
-			const currentInstall = lpar.lpar_software.find(
-				(ls) => ls.software_id === item.software_id
-			);
-
-			if (!currentInstall) {
-				newInstalls++;
-			} else {
-				// Compare version strings instead of IDs
-				const targetVersion = item.software_version.version;
-				const targetPtf = item.software_version.ptf_level || null;
-				const currentVersion = currentInstall.current_version;
-				const currentPtf = currentInstall.current_ptf_level || null;
-
-				if (currentVersion !== targetVersion || currentPtf !== targetPtf) {
-					changesNeeded++;
-				}
-			}
-		});
-
-		return {
-			id: lpar.id,
-			name: lpar.name,
-			code: lpar.code,
-			customer: lpar.customers,
-			currentPackage: lpar.packages,
-			isCompliant,
-			changesNeeded,
-			newInstalls,
-			status: isCompliant ? 'compliant' : changesNeeded + newInstalls > 0 ? 'needs_update' : 'unknown'
-		};
+		orderBy: { name: 'asc' }
 	});
 
 	return {
+		form,
 		package: pkg,
-		lpars: lparsWithStatus
+		lpars
 	};
 };
 
 export const actions: Actions = {
-	// Preview deployment impact for selected LPARs
-	preview: async ({ params, request }) => {
-		const formData = await request.formData();
-		const lparIds = JSON.parse(formData.get('lpar_ids') as string) as string[];
+	default: async ({ params, request }) => {
+		const packageId = params.id;
 
-		console.log('Preview for LPARs:', lparIds, 'Package:', params.id);
+		// Validate form data
+		const form = await serverValidate(request, deploymentSchema);
 
-		// Use database function to check impact for each LPAR
-		const previews = await Promise.all(
-			lparIds.map(async (lparId) => {
-				const impact = await db.$queryRaw<Array<{
-					software_id: string;
-					software_name: string;
-					current_version: string | null;
-					current_ptf_level: string | null;
-					new_version: string;
-					new_ptf_level: string | null;
-					change_type: string;
-					required: boolean;
-				}>>`
-					SELECT * FROM check_package_deployment_impact(
-						${lparId}::uuid,
-						${params.id}::uuid
-					)
-				`;
-
-				console.log('Impact for LPAR', lparId, ':', impact);
-
-				const lpar = await db.lpars.findUnique({
-					where: { id: lparId },
-					select: { name: true, code: true }
-				});
-
-				// Map to expected format for frontend
-				const changes = impact
-					.filter((item) => item.software_name !== null) // Exclude items without software name (removed software)
-					.map((item) => {
-						let action = item.change_type.toLowerCase();
-
-						// Differentiate upgrade vs downgrade using version comparison
-						if (action === 'upgrade' && item.current_version && item.new_version) {
-							const comparison = compareVersions(item.new_version, item.current_version);
-							if (comparison < 0) {
-								action = 'downgrade';
-							}
-						}
-
-						return {
-							software_name: item.software_name,
-							current_version: item.current_version
-								? `${item.current_version}${item.current_ptf_level ? ` (${item.current_ptf_level})` : ''}`
-								: null,
-							target_version: item.new_version
-								? `${item.new_version}${item.new_ptf_level ? ` (${item.new_ptf_level})` : ''}`
-								: null,
-							action
-						};
-					});
-
-				return {
-					lparId,
-					lparName: lpar?.name,
-					lparCode: lpar?.code,
-					changes
-				};
-			})
-		);
-
-		console.log('Final previews:', previews);
-		return { success: true, previews };
-	},
-
-	// Deploy package to selected LPARs
-	deploy: async ({ params, request }) => {
-		const formData = await request.formData();
-		const lparIds = JSON.parse(formData.get('lpar_ids') as string) as string[];
-		const deploymentMode = formData.get('deployment_mode') as string; // 'sequential' | 'parallel'
-		const stopOnError = formData.get('stop_on_error') === 'true';
-
-		// Get package items
-		const packageItems = await db.package_items.findMany({
-			where: { package_id: params.id },
-			include: { software_version: true }
-		});
-
-		const results = [];
-
-		// Deployment logic
-		for (const lparId of lparIds) {
-			try {
-				// Update each software installation
-				for (const item of packageItems) {
-					const currentInstall = await db.lpar_software.findUnique({
-						where: {
-							lpar_id_software_id: {
-								lpar_id: lparId,
-								software_id: item.software_id
-							}
-						}
-					});
-
-					await db.lpar_software.upsert({
-						where: {
-							lpar_id_software_id: {
-								lpar_id: lparId,
-								software_id: item.software_id
-							}
-						},
-						update: {
-							previous_version: currentInstall?.current_version || null,
-							previous_ptf_level: currentInstall?.current_ptf_level || null,
-							current_version: item.software_version.version,
-							current_ptf_level: item.software_version.ptf_level || null,
-							installed_date: new Date(),
-							rolled_back: false,
-							rolled_back_at: null,
-							rollback_reason: null
-						},
-						create: {
-							lpar_id: lparId,
-							software_id: item.software_id,
-							current_version: item.software_version.version,
-							current_ptf_level: item.software_version.ptf_level || null,
-							installed_date: new Date()
-						}
-					});
-				}
-
-				// Update LPAR's package assignment
-				await db.lpars.update({
-					where: { id: lparId },
-					data: { current_package_id: params.id }
-				});
-
-				// Audit log
-				await createAuditLog('lpar', lparId, 'package_applied', {
-					package_id: params.id,
-					items_updated: packageItems.length,
-					deployment_mode: deploymentMode
-				});
-
-				results.push({ lparId, status: 'success' });
-			} catch (err) {
-				console.error(`Error deploying to LPAR ${lparId}:`, err);
-				results.push({
-					lparId,
-					status: 'failed',
-					error: err instanceof Error ? err.message : 'Unknown error'
-				});
-
-				if (stopOnError) {
-					break;
-				}
-			}
+		if (!form.valid) {
+			return fail(400, { form });
 		}
 
-		const successCount = results.filter((r) => r.status === 'success').length;
-		const failCount = results.filter((r) => r.status === 'failed').length;
+		const lparIds = form.data.lparIds;
 
-		if (failCount === 0) {
-			return {
-				success: true,
-				message: `Successfully deployed package to ${successCount} LPAR(s)`,
-				results
-			};
-		} else {
-			return fail(400, {
-				success: false,
-				message: `Deployed to ${successCount} LPAR(s), ${failCount} failed`,
-				results
+		try {
+			// Update each selected LPAR to point to this package
+			await db.$transaction(async (tx) => {
+				for (const lparId of lparIds) {
+					// Update the LPAR's current package
+					await tx.lpars.update({
+						where: { id: lparId },
+						data: {
+							current_package_id: packageId,
+							updated_at: new Date()
+						}
+					});
+
+					// Create audit log for the deployment
+					await createAuditLog(
+						'lpar',
+						lparId,
+						'update',
+						{
+							action: 'package_deployment',
+							package_id: packageId,
+							deployed_at: new Date()
+						}
+					);
+				}
 			});
+
+			// Redirect back to package page
+			redirect(303, `/packages/${packageId}`);
+		} catch (error) {
+			console.error('Error deploying package:', error);
+			return fail(500, { form });
 		}
 	}
 };

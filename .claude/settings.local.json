@@ -105,7 +105,10 @@
       "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT COUNT(*) FROM pg_proc WHERE proname = ''check_package_deployment_impact'';\" -t)",
       "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT id, name, code FROM packages LIMIT 3;\" -t)",
       "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT COUNT(*) as lpars FROM lpars WHERE active = true;\" -t)",
-      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT id, name FROM packages LIMIT 1\" -t -A)"
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT id, name FROM packages LIMIT 1\" -t -A)",
+      "Bash(for route in \"customers/new\" \"vendors/new\" \"software/new\" \"lpars/new\" \"packages/new\")",
+      "Bash(test -f:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

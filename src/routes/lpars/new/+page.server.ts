@@ -2,24 +2,22 @@ import type { PageServerLoad, Actions } from './$types';
 import { lparSchema } from '$schemas';
 import { db, createAuditLog } from '$lib/server/db';
 import { fail, redirect } from '@sveltejs/kit';
-import { superValidate } from 'sveltekit-superforms';
-import { zod } from 'sveltekit-superforms/adapters';
+import { serverValidate } from '$lib/utils/superforms';
 
 // Load customers, packages, and all LPARs for dropdowns
-// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types in function return
 export const load: PageServerLoad = async ({ url }) => {
 	// Check if customer_id is provided in URL query params
 	const customerIdFromUrl = url.searchParams.get('customer_id');
 
 	// Initialize Superforms with default values (pre-fill customer_id if provided)
-	const form = await superValidate(
+	const form = await serverValidate(
 		{
 			description: '',
 			current_package_id: '',
 			active: true,
 			customer_id: customerIdFromUrl || ''
 		},
-		zod(lparSchema)
+		lparSchema
 	);
 
 	const [customers, packages, allLpars, preselectedCustomer] = await Promise.all([
@@ -82,8 +80,7 @@ export const load: PageServerLoad = async ({ url }) => {
 export const actions: Actions = {
 	default: async (event) => {
 	// Use Superforms to validate form data
-	// @ts-expect-error - TypeScript has difficulty inferring complex Zod schema types
-	const form = await superValidate(event, zod(lparSchema));
+	const form = await serverValidate(event, lparSchema);
 
 		if (!form.valid) {
 			return fail(400, { form });

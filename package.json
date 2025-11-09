@@ -9,7 +9,10 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "check:mem": "node --max-old-space-size=4096 ./node_modules/.bin/svelte-check --tsconfig ./tsconfig.json",
-    "check:ci": "svelte-kit sync && node --max-old-space-size=4096 ./node_modules/.bin/svelte-check --tsconfig ./tsconfig.json --output json > svelte-check.json"
+    "check:ci": "svelte-kit sync && node --max-old-space-size=4096 ./node_modules/.bin/svelte-check --tsconfig ./tsconfig.json --output json > svelte-check.json",
+    "migrate-prisma": "node scripts/migrate-prisma.js",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.js,.svelte"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^3.0.0",

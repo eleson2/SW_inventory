@@ -1,0 +1,6 @@
+{
+  "timestamp": "2025-11-09T00:00:00.000Z",
+  "script": "scripts/migrate-prisma.js",
+  "changedFiles": [],
+  "notes": "No direct 'new PrismaClient' instantiations found under src/ (script scan result). If you believe files should have been migrated, run: node scripts/migrate-prisma.js and review generated .bak files next to modified sources."
+}
