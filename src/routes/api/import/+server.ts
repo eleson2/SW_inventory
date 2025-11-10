@@ -60,8 +60,6 @@ export const POST: RequestHandler = async ({ request }) => {
 
 async function importVendors(data: any[][]): Promise<ImportResult> {
   const vendors = new Set<string>();
-  let created = 0;
-  let updated = 0;
 
   // Extract unique vendors starting from row 3
   for (let i = 3; i < data.length; i++) {
@@ -72,27 +70,48 @@ async function importVendors(data: any[][]): Promise<ImportResult> {
     }
   }
 
-  for (const vendorName of Array.from(vendors)) {
-    const code = vendorName.toUpperCase().replace(/[^A-Z0-9]/g, '-');
+  const vendorData = Array.from(vendors).map(vendorName => ({
+    code: vendorName.toUpperCase().replace(/[^A-Z0-9]/g, '-'),
+    name: vendorName,
+    active: true
+  }));
 
-    const existing = await db.vendors.findUnique({ where: { code } });
+  // Fetch all existing vendors at once
+  const existingVendors = await db.vendors.findMany({
+    where: {
+      code: { in: vendorData.map(v => v.code) }
+    },
+    select: { code: true }
+  });
 
-    if (existing) {
-      await db.vendors.update({
-        where: { code },
-        data: { name: vendorName }
-      });
-      updated++;
-    } else {
-      await db.vendors.create({
-        data: {
-          code,
-          name: vendorName,
-          active: true
-        }
-      });
-      created++;
-    }
+  const existingCodes = new Set(existingVendors.map(v => v.code));
+
+  // Split into creates and updates
+  const toCreate = vendorData.filter(v => !existingCodes.has(v.code));
+  const toUpdate = vendorData.filter(v => existingCodes.has(v.code));
+
+  // Batch create new vendors
+  let created = 0;
+  if (toCreate.length > 0) {
+    await db.vendors.createMany({
+      data: toCreate,
+      skipDuplicates: true
+    });
+    created = toCreate.length;
+  }
+
+  // Batch update existing vendors
+  let updated = 0;
+  if (toUpdate.length > 0) {
+    await db.$transaction(
+      toUpdate.map(vendor =>
+        db.vendors.update({
+          where: { code: vendor.code },
+          data: { name: vendor.name }
+        })
+      )
+    );
+    updated = toUpdate.length;
   }
 
   return {

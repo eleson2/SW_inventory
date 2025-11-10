@@ -108,7 +108,13 @@
       "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT id, name FROM packages LIMIT 1\" -t -A)",
       "Bash(for route in \"customers/new\" \"vendors/new\" \"software/new\" \"lpars/new\" \"packages/new\")",
       "Bash(test -f:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -f prisma/migrations/add_views_and_functions.sql -t)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"\\dv lpar_package_compliance\" -t)",
+      "Bash(del run-views-migration.js verify-views.js)",
+      "Bash(for route in \"lpars\" \"software\" \"packages\")",
+      "Bash(/tmp/deploy-original.svelte)",
+      "Bash(del create-deployment-function.js)"
     ],
     "deny": [],
     "ask": []

@@ -5,7 +5,6 @@
 	Features:
 	- Add/edit/delete package items
 	- Software and version dropdowns
-	- Drag-and-drop reordering
 	- Inline validation
 	- Visual state tracking (new/modified/deleted)
 -->
@@ -38,7 +37,6 @@
 
 	// Track which item is being edited (inline editing)
 	let editingIndex = $state<number | null>(null);
-	let draggedIndex = $state<number | null>(null);
 
 	// Confirmation dialog state
 	let showDeleteConfirmation = $state(false);
@@ -46,12 +44,9 @@
 
 	// Add a new item
 	function addItem() {
-		const maxOrder = items.reduce((max, item) => Math.max(max, item.order_index), -1);
 		items.push({
 			software_id: '',
-			software_version_id: '',
-			required: true,
-			order_index: maxOrder + 1
+			software_version_id: ''
 		});
 		editingIndex = items.length - 1;
 	}
@@ -105,35 +100,6 @@
 			: version.version;
 	}
 
-	// Drag and drop handlers
-	function handleDragStart(index: number) {
-		draggedIndex = index;
-	}
-
-	function handleDragOver(event: DragEvent, index: number) {
-		event.preventDefault();
-		if (draggedIndex === null || draggedIndex === index) return;
-
-		const draggedItem = items[draggedIndex];
-		items.splice(draggedIndex, 1);
-		items.splice(index, 0, draggedItem);
-		draggedIndex = index;
-
-		// Reorder indices
-		reorderIndices();
-	}
-
-	function handleDragEnd() {
-		draggedIndex = null;
-	}
-
-	// Reorder indices after drag
-	function reorderIndices() {
-		items.forEach((item, index) => {
-			item.order_index = index;
-		});
-	}
-
 	// Filter out deleted items for display
 	const visibleItems = $derived(items.filter(item => item._action !== 'delete'));
 
@@ -158,16 +124,8 @@
 		<div>
 			<h3 class="text-lg font-semibold">Package Items</h3>
 			<p class="text-sm text-muted-foreground">
-				Add and configure software items for this package. <strong>Drag items to reorder installation sequence.</strong>
+				Add and configure software items for this package.
 			</p>
-			<div class="flex items-start gap-2 mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-				<svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-					<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-				</svg>
-				<div>
-					<strong>Installation Order Matters:</strong> Software dependencies must be installed before the products that need them. Number 1 installs first, then 2, and so on.
-				</div>
-			</div>
 			<p class="text-xs text-muted-foreground mt-2">
 				💡 Changes are saved when you submit the entire form below.
 			</p>
@@ -211,34 +169,13 @@
 				{@const isEditing = editingIndex === index}
 
 				<div
-					class="border rounded-lg p-4 transition-all
-						{draggedIndex === index ? 'opacity-50 scale-95' : 'hover:bg-accent/5'}
+					class="border rounded-lg p-4 transition-all hover:bg-accent/5
 						{error ? 'bg-destructive/5 border-destructive' : 'bg-card'}
 						{status === 'new' ? 'border-blue-500' : ''}
 						{isEditing ? 'ring-2 ring-primary bg-primary/5' : ''}"
 					role="listitem"
-					draggable="true"
-					ondragstart={() => handleDragStart(index)}
-					ondragover={(e) => {
-						e.preventDefault();
-						handleDragOver(e, index);
-					}}
-					ondragend={handleDragEnd}
 				>
 					<div class="flex items-start gap-4">
-						<!-- Installation Order Badge -->
-						<div class="flex flex-col items-center gap-1 pt-1">
-							<div
-								class="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm"
-								title="Installation order - items are installed in this sequence during deployment"
-							>
-								{item.order_index + 1}
-							</div>
-							<svg class="w-5 h-5 cursor-move text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Drag to reorder">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
-							</svg>
-						</div>
-
 						<!-- Content -->
 						<div class="flex-1 space-y-3">
 							{#if isEditing}
@@ -287,29 +224,6 @@
 												</option>
 											{/each}
 										</select>
-									</div>
-								</div>
-
-								<div class="flex items-center gap-4">
-									<Label class="flex items-center gap-2 cursor-pointer">
-										<input
-											type="checkbox"
-											bind:checked={item.required}
-											class="h-4 w-4 rounded border-gray-300"
-										/>
-										<span>Required</span>
-									</Label>
-
-									<div class="flex items-center gap-2">
-										<Badge variant="secondary" class="font-semibold">
-											Install Order: {item.order_index + 1}
-										</Badge>
-										<span
-											class="text-xs text-muted-foreground cursor-help"
-											title="Software is installed in numerical order. Dependencies must be installed before the software that needs them."
-										>
-											ⓘ
-										</span>
 									</div>
 								</div>
 
@@ -363,22 +277,6 @@
 										<div class="text-sm text-muted-foreground">
 											Version: <span class="font-medium">{getVersionDisplay(item.software_version_id, item.software_id)}</span>
 										</div>
-										<div class="flex items-center gap-2 text-sm">
-											{#if item.required}
-												<Badge variant="default">Required</Badge>
-											{:else}
-												<Badge variant="outline">Optional</Badge>
-											{/if}
-											<Badge variant="secondary" class="font-semibold">
-												Install Order: {item.order_index + 1}
-											</Badge>
-											<span
-												class="text-xs text-muted-foreground cursor-help"
-												title="Software is installed in numerical order during deployment. Drag items to reorder them."
-											>
-												ⓘ
-											</span>
-										</div>
 									</div>
 
 									<div class="flex gap-2">
@@ -412,10 +310,6 @@
 	{#if visibleItems.length > 0}
 		<div class="flex items-center gap-4 text-sm text-muted-foreground pt-2 border-t">
 			<span>{visibleItems.length} item{visibleItems.length !== 1 ? 's' : ''} total</span>
-			<span>•</span>
-			<span>{visibleItems.filter(i => i.required).length} required</span>
-			<span>•</span>
-			<span>{visibleItems.filter(i => !i.required).length} optional</span>
 			{#if items.filter(i => !i.id).length > 0}
 				<span>•</span>
 				<span class="text-blue-600">{items.filter(i => !i.id).length} new</span>

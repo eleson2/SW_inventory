@@ -14,11 +14,38 @@ export const load: PageServerLoad = async ({ url }) => {
 		model: db.lpars,
 		dataKey: 'lpars',
 		include: {
-			customers: true, // Relation field name from schema
-			packages: true, // Relation field name from schema (current package)
-			lpar_software: { // Relation field name from schema
-				include: {
-					software: true
+			customers: {
+				select: {
+					id: true,
+					name: true,
+					code: true
+				}
+			},
+			packages: {
+				select: {
+					id: true,
+					name: true,
+					code: true,
+					version: true
+				}
+			},
+			lpar_software: {
+				select: {
+					id: true,
+					software_id: true,
+					current_version: true,
+					current_ptf_level: true,
+					rolled_back: true,
+					software: {
+						select: {
+							id: true,
+							name: true
+						}
+					}
+				},
+				take: 10, // Limit to first 10 for list display
+				orderBy: {
+					installed_date: 'desc'
 				}
 			}
 		},

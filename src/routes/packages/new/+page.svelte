@@ -15,6 +15,7 @@
 	import PageHeader from '$components/common/PageHeader.svelte';
 	import { typedSuperForm } from '$lib/utils/superforms';
 	import { packageWithItemsSchema } from '$lib/schemas/package';
+	import TransactionId from '$components/common/TransactionId.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -115,6 +116,11 @@
 </script>
 
 <div class="space-y-6">
+	<!-- Transaction ID -->
+	<div class="flex justify-start mb-4">
+		<TransactionId prefix="PKG-NEW" label="Form ID" />
+	</div>
+
 	<Breadcrumb items={breadcrumbItems} />
 
 	<PageHeader

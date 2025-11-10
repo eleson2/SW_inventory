@@ -61,7 +61,7 @@
 	]);
 
 	const hasAlerts = $derived(
-		data.alerts.outOfCompliance.length > 0 || data.alerts.endOfSupport.length > 0
+		data.alerts.endOfSupport.length > 0
 	);
 </script>
 
@@ -83,24 +83,6 @@
 				<div class="flex-1">
 					<h2 class="text-lg font-semibold text-amber-800 mb-3">Attention Required</h2>
 					<div class="space-y-3">
-						{#if data.alerts.outOfCompliance.length > 0}
-							<div>
-								<h3 class="text-sm font-medium text-amber-800 mb-2">
-									{data.alerts.outOfCompliance.length} LPAR{data.alerts.outOfCompliance.length !== 1 ? 's' : ''} Out of Compliance
-								</h3>
-								<ul class="space-y-1">
-									{#each data.alerts.outOfCompliance as lpar}
-										<li class="text-sm text-amber-700">
-											<a href="/lpars/{lpar.lpar_id}" class="hover:underline font-medium">
-												{lpar.lpar_name} ({lpar.lpar_code})
-											</a>
-											<span class="text-amber-600"> - {lpar.mismatch_count} version mismatch{lpar.mismatch_count !== 1 ? 'es' : ''}</span>
-										</li>
-									{/each}
-								</ul>
-							</div>
-						{/if}
-
 						{#if data.alerts.endOfSupport.length > 0}
 							<div>
 								<h3 class="text-sm font-medium text-amber-800 mb-2">

@@ -111,18 +111,6 @@
 					<dt class="text-sm font-medium text-muted-foreground">Total Software Items</dt>
 					<dd class="text-2xl font-bold mt-1">{pkg.package_items.length}</dd>
 				</div>
-				<div>
-					<dt class="text-sm font-medium text-muted-foreground">Required Items</dt>
-					<dd class="text-2xl font-bold mt-1">
-						{pkg.package_items.filter((item: { required: boolean }) => item.required).length}
-					</dd>
-				</div>
-				<div>
-					<dt class="text-sm font-medium text-muted-foreground">Optional Items</dt>
-					<dd class="text-2xl font-bold mt-1">
-						{pkg.package_items.filter((item: { required: boolean }) => !item.required).length}
-					</dd>
-				</div>
 			</dl>
 		</Card>
 	</div>
@@ -143,9 +131,6 @@
 					<div class="flex items-center justify-between p-4 border rounded-lg">
 						<div class="flex-1">
 							<div class="flex items-center gap-3">
-								<span class="text-sm font-medium text-muted-foreground w-8">
-									#{item.orderIndex}
-								</span>
 								<div>
 									<div class="font-medium">
 										<a
@@ -169,13 +154,6 @@
 								</div>
 							</div>
 						</div>
-						<div class="flex items-center gap-2">
-							{#if item.required}
-								<Badge variant="default">Required</Badge>
-							{:else}
-								<Badge variant="outline">Optional</Badge>
-							{/if}
-						</div>
 					</div>
 				{/each}
 			</div>
@@ -196,8 +174,7 @@
 	preview={{
 		code: pkg.code,
 		version: pkg.version,
-		'item count': pkg.package_items.length,
-		'required items': pkg.package_items.filter((i: { required: boolean }) => i.required).length
+		'item count': pkg.package_items.length
 	}}
 	onClone={handleClone}
 	loading={cloning}

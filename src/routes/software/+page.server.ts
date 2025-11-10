@@ -15,7 +15,13 @@ export const load: PageServerLoad = async ({ url }) => {
 		dataKey: 'software',
 		searchFields: ['name'], // Only search by name for software
 		include: {
-			vendors: true, // Relation field name from schema
+			vendors: {
+				select: {
+					id: true,
+					name: true,
+					code: true
+				}
+			}, // Relation field name from schema
 			current_version: true // Include current version details
 		},
 		filterBuilder: (url) => {

@@ -53,10 +53,15 @@ export async function getPaginated<T>(
 /**
  * Soft delete - set active to false instead of deleting
  */
-export async function softDelete(model: any, id: string) {
+export async function softDelete(model: any, id: string, userId?: string) {
 	return model.update({
 		where: { id },
-		data: { active: false, updatedAt: new Date() }
+		data: {
+			active: false,
+			deleted_at: new Date(),
+			deleted_by: userId,
+			updated_at: new Date()
+		}
 	});
 }
 

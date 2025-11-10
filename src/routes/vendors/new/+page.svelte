@@ -11,6 +11,7 @@
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
 	import { typedSuperForm } from '$lib/utils/superforms';
 	import { vendorSchema } from '$schemas';
+	import TransactionId from '$components/common/TransactionId.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -58,6 +59,11 @@
 </script>
 
 <div class="space-y-6 max-w-2xl">
+	<!-- Transaction ID -->
+	<div class="flex justify-start mb-4">
+		<TransactionId prefix="VND-NEW" label="Form ID" />
+	</div>
+
 	<Breadcrumb items={breadcrumbItems} />
 	<PageHeader title="New Vendor" description="Add a new software vendor to the system" />
 

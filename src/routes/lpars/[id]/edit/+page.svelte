@@ -12,6 +12,7 @@
 	import { useMasterDetailForm } from '$lib/utils/useMasterDetailForm.svelte';
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
 	import PageHeader from '$components/common/PageHeader.svelte';
+	import TransactionId from '$components/common/TransactionId.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -69,6 +70,11 @@
 </script>
 
 <div class="space-y-6">
+	<!-- Transaction ID -->
+	<div class="flex justify-start mb-4">
+		<TransactionId prefix="LPAR-EDIT" label="Form ID" />
+	</div>
+
 	<Breadcrumb items={breadcrumbItems} />
 
 	<PageHeader
