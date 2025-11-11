@@ -46,12 +46,23 @@ export const load: PageServerLoad = async ({ params }) => {
 		orderBy: { name: 'asc' }
 	});
 
-	// Initialize Superforms with package data
+	// Initialize Superforms with package data (only fields matching schema)
 	const form = await serverValidate(
 		{
-			...pkg,
+			name: pkg.name,
+			code: pkg.code,
+			version: pkg.version,
 			description: pkg.description || '',
-			items: pkg.package_items
+			release_date: pkg.release_date,
+			active: pkg.active,
+			items: pkg.package_items.map(item => ({
+				id: item.id,
+				software_id: item.software_id,
+				software_version_id: item.software_version_id,
+				required: item.required,
+				order_index: item.order_index,
+				_action: 'keep' as const
+			}))
 		},
 		packageUpdateSchema
 	);

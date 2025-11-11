@@ -99,7 +99,7 @@
 				]}
 				resultCount={'items' in data.lpars ? {
 					current: data.lpars.items.length,
-					total: data.lpars.totalCount
+					total: data.lpars.total
 				} : null}
 			/>
 		</div>

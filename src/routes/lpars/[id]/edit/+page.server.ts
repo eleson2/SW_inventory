@@ -54,13 +54,22 @@ export const load: PageServerLoad = async ({ params }) => {
 		throw error(404, 'LPAR not found');
 	}
 
-	// Initialize Superforms with LPAR data
+	// Initialize Superforms with LPAR data (only fields matching schema)
 	const form = await serverValidate(
 		{
-			...lpar,
+			name: lpar.name,
+			code: lpar.code,
+			customer_id: lpar.customer_id,
 			description: lpar.description || '',
 			current_package_id: lpar.current_package_id || '',
-			software_installations: lpar.lpar_software
+			active: lpar.active,
+			software_installations: lpar.lpar_software.map(ls => ({
+				id: ls.id,
+				software_id: ls.software_id,
+				software_version_id: ls.software_id, // This should map to a version ID
+				installed_date: ls.installed_date,
+				_action: 'keep' as const
+			}))
 		},
 		lparWithSoftwareSchema
 	);

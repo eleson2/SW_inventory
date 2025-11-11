@@ -92,7 +92,7 @@
 				]}
 				resultCount={'items' in data.software ? {
 					current: data.software.items.length,
-					total: data.software.totalCount
+					total: data.software.total
 				} : null}
 			/>
 		</div>

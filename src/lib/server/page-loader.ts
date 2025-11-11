@@ -22,6 +22,8 @@ export interface PageLoaderOptions<T = any> {
 	dataKey: string;
 	/** Additional filter function to build custom where clauses */
 	filterBuilder?: (url: URL) => Record<string, any>;
+	/** Custom search builder for complex searches (e.g., searching relations) */
+	searchBuilder?: (searchTerm: string) => Record<string, any>;
 }
 
 /**
@@ -62,7 +64,8 @@ export function createPageLoader<T = any>(options: PageLoaderOptions<T>) {
 		searchFields = ['name', 'code'],
 		include,
 		dataKey,
-		filterBuilder
+		filterBuilder,
+		searchBuilder
 	} = options;
 
 	return async (url: URL) => {
@@ -78,11 +81,17 @@ export function createPageLoader<T = any>(options: PageLoaderOptions<T>) {
 
 		// Add search filter
 		if (search) {
-			whereConditions.push({
-				OR: searchFields.map(field => ({
-					[field]: { contains: search, mode: 'insensitive' as const }
-				}))
-			});
+			if (searchBuilder) {
+				// Use custom search builder for complex searches
+				whereConditions.push(searchBuilder(search));
+			} else {
+				// Use default field-based search
+				whereConditions.push({
+					OR: searchFields.map(field => ({
+						[field]: { contains: search, mode: 'insensitive' as const }
+					}))
+				});
+			}
 		}
 
 		// Add custom filters

@@ -79,7 +79,7 @@
 				]}
 				resultCount={'items' in data.customers ? {
 					current: data.customers.items.length,
-					total: data.customers.totalCount
+					total: data.customers.total
 				} : null}
 			/>
 		</div>

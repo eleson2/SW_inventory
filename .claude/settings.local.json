@@ -114,7 +114,12 @@
       "Bash(del run-views-migration.js verify-views.js)",
       "Bash(for route in \"lpars\" \"software\" \"packages\")",
       "Bash(/tmp/deploy-original.svelte)",
-      "Bash(del create-deployment-function.js)"
+      "Bash(del create-deployment-function.js)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT COUNT(*) FROM vendors;\" -t)",
+      "Bash(for route in \"activity\" \"vendors/new\" \"customers/new\" \"software/new\" \"lpars/new\" \"packages/new\")",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -f \"D:\\proj\\SW_inventory\\SW_inventory\\prisma\\scripts\\import-ibm-products.sql\")",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT COUNT(*) as count FROM software WHERE vendor_id IN (SELECT id FROM vendors WHERE code=''IBM'');\" -t)",
+      "Bash(del test-db.mjs check-and-import.mjs)"
     ],
     "deny": [],
     "ask": []

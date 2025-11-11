@@ -83,7 +83,7 @@
 				]}
 				resultCount={'items' in data.packages ? {
 					current: data.packages.items.length,
-					total: data.packages.totalCount
+					total: data.packages.total
 				} : null}
 			/>
 		</div>

@@ -13,7 +13,6 @@ export const load: PageServerLoad = async ({ url }) => {
 	const pageData = await createPageLoader({
 		model: db.software,
 		dataKey: 'software',
-		searchFields: ['name'], // Only search by name for software
 		include: {
 			vendors: {
 				select: {
@@ -24,6 +23,12 @@ export const load: PageServerLoad = async ({ url }) => {
 			}, // Relation field name from schema
 			current_version: true // Include current version details
 		},
+		searchBuilder: (searchTerm) => ({
+			OR: [
+				{ name: { contains: searchTerm, mode: 'insensitive' } },
+				{ vendors: { name: { contains: searchTerm, mode: 'insensitive' } } }
+			]
+		}),
 		filterBuilder: (url) => {
 			const filters: Record<string, any> = {};
 

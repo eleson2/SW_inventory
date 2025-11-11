@@ -10,26 +10,10 @@ import { dev } from '$app/environment';
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
 export const db = globalForPrisma.prisma || new PrismaClient({
-	log: dev ? ['query', 'warn', 'error'] : ['error']
+	log: ['error']
 });
 
 if (dev) globalForPrisma.prisma = db;
-
-// Slow query detection middleware
-if (dev) {
-	db.$use(async (params, next) => {
-		const before = Date.now();
-		const result = await next(params);
-		const after = Date.now();
-
-		const duration = after - before;
-		if (duration > 1000) {
-			console.warn(`⚠️  Slow query (${duration}ms): ${params.model}.${params.action}`);
-		}
-
-		return result;
-	});
-}
 
 // Helper functions for common queries
 

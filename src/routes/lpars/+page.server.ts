@@ -49,6 +49,13 @@ export const load: PageServerLoad = async ({ url }) => {
 				}
 			}
 		},
+		searchBuilder: (searchTerm) => ({
+			OR: [
+				{ name: { contains: searchTerm, mode: 'insensitive' } },
+				{ code: { contains: searchTerm, mode: 'insensitive' } },
+				{ customers: { name: { contains: searchTerm, mode: 'insensitive' } } }
+			]
+		}),
 		filterBuilder: (url) => {
 			const filters: Record<string, any> = {};
 

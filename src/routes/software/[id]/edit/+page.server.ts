@@ -33,12 +33,23 @@ export const load: PageServerLoad = async ({ params }) => {
 		select: { id: true, name: true, code: true }
 	});
 
-	// Initialize Superforms with software data
+	// Initialize Superforms with software data (only fields matching schema)
 	const form = await serverValidate(
 		{
-			...software,
+			name: software.name,
+			vendor_id: software.vendor_id,
 			description: software.description || '',
-			versions: software.versions
+			active: software.active,
+			current_version_id: software.current_version_id || '',
+			versions: software.versions.map(v => ({
+				id: v.id,
+				version: v.version,
+				ptf_level: v.ptf_level || '',
+				release_date: v.release_date,
+				end_of_support: v.end_of_support,
+				release_notes: v.release_notes || '',
+				is_current: v.is_current
+			}))
 		},
 		softwareWithVersionsSchema
 	);

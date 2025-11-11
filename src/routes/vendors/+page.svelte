@@ -73,7 +73,7 @@
 				]}
 				resultCount={'items' in data.vendors ? {
 					current: data.vendors.items.length,
-					total: data.vendors.totalCount
+					total: data.vendors.total
 				} : null}
 			/>
 		</div>
