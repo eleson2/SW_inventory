@@ -94,7 +94,7 @@ export function createPageLoader<T = any>(options: PageLoaderOptions<T>) {
 			}
 		}
 
-		// Add custom filters
+		// Add custom filters (including column filters via filterBuilder)
 		if (filterBuilder) {
 			const customFilters = filterBuilder(url);
 			if (Object.keys(customFilters).length > 0) {

@@ -103,6 +103,7 @@
 			onRowClick={handleRowClick}
 			onSort={handleSort}
 			currentSort={data.sort}
+			showFilters={true}
 		/>
 		<Pagination
 			currentPage={'page' in data.software ? data.software.page : 1}

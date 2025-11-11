@@ -6,6 +6,8 @@
 	import { Search, X } from 'lucide-svelte';
 	import type { SortOptions } from '$types';
 	import type { Snippet } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 
 	type Column<T> = {
 		key: keyof T | string;
@@ -13,6 +15,7 @@
 		sortable?: boolean;
 		filterable?: boolean;
 		render?: (item: T) => any;
+		filterKey?: string; // Optional: different key for server-side filtering
 	};
 
 	let {
@@ -24,7 +27,7 @@
 		loading = false,
 		emptyMessage = 'No data available',
 		emptyState,
-		showFilters = true
+		showFilters = false // Changed default to false - use InstantSearch instead
 	}: {
 		data: T[];
 		columns: Column<T>[];
@@ -37,36 +40,71 @@
 		showFilters?: boolean;
 	} = $props();
 
-	// Column filters state
-	let columnFilters = $state<Record<string, string>>({});
+	// Column filters state - initialized from URL
+	const initialFilters = $derived(() => {
+		const filters: Record<string, string> = {};
+		if (typeof window !== 'undefined') {
+			const urlParams = new URLSearchParams(window.location.search);
+			columns.forEach(col => {
+				const filterParam = `col_${col.key}`;
+				const value = urlParams.get(filterParam);
+				if (value) {
+					filters[col.key as string] = value;
+				}
+			});
+		}
+		return filters;
+	});
 
-	// Filtered data based on column filters
-	const filteredData = $derived(() => {
-		if (!showFilters || Object.keys(columnFilters).length === 0) {
-			return data;
+	let columnFilters = $state<Record<string, string>>(initialFilters());
+	let debounceTimeouts = $state<Record<string, ReturnType<typeof setTimeout>>>({});
+
+	function handleColumnFilterChange(columnKey: string, value: string) {
+		// Clear existing timeout for this column
+		if (debounceTimeouts[columnKey]) {
+			clearTimeout(debounceTimeouts[columnKey]);
 		}
 
-		return data.filter(item => {
-			return Object.entries(columnFilters).every(([key, filterValue]) => {
-				if (!filterValue) return true;
+		// Update local state immediately
+		columnFilters[columnKey] = value;
 
-				const column = columns.find(col => col.key === key);
-				if (!column) return true;
+		// Debounce the URL update
+		debounceTimeouts[columnKey] = setTimeout(() => {
+			updateUrlWithFilters();
+		}, 400);
+	}
 
-				let cellValue: any;
-				if (column.render) {
-					cellValue = column.render(item);
-				} else {
-					cellValue = item[column.key as keyof T];
-				}
+	function updateUrlWithFilters() {
+		const url = new URL(window.location.href);
 
-				// Convert to string and check if it includes the filter value (case-insensitive)
-				const cellString = String(cellValue || '').toLowerCase();
-				const filterString = filterValue.toLowerCase();
-				return cellString.includes(filterString);
-			});
+		// Remove all existing column filter params
+		const paramsToRemove: string[] = [];
+		url.searchParams.forEach((value, key) => {
+			if (key.startsWith('col_')) {
+				paramsToRemove.push(key);
+			}
 		});
-	});
+		paramsToRemove.forEach(key => url.searchParams.delete(key));
+
+		// Add active column filters
+		Object.entries(columnFilters).forEach(([key, value]) => {
+			if (value && value.trim()) {
+				url.searchParams.set(`col_${key}`, value.trim());
+			}
+		});
+
+		// Reset to first page
+		url.searchParams.set('page', '1');
+
+		goto(url.toString(), {
+			keepFocus: true,
+			noScroll: true,
+			replaceState: true
+		});
+	}
+
+	// Note: No client-side filtering - all filtering is server-side now
+	const filteredData = $derived(() => data);
 
 	function handleSort(field: string) {
 		if (onSort) {
@@ -81,12 +119,9 @@
 		return item[column.key as keyof T];
 	}
 
-	function clearFilter(key: string) {
-		columnFilters[key] = '';
-	}
-
 	function clearAllFilters() {
 		columnFilters = {};
+		updateUrlWithFilters();
 	}
 
 	const hasActiveFilters = $derived(Object.values(columnFilters).some(v => v));
@@ -151,13 +186,14 @@
 								<div class="relative">
 									<input
 										type="text"
-										bind:value={columnFilters[column.key as string]}
+										value={columnFilters[column.key as string] || ''}
+										oninput={(e) => handleColumnFilterChange(column.key as string, (e.target as HTMLInputElement).value)}
 										placeholder="Filter..."
 										class="w-full h-8 px-2 pr-6 text-xs border border-input bg-background rounded focus:outline-none focus:ring-2 focus:ring-ring"
 									/>
 									{#if columnFilters[column.key as string]}
 										<button
-											onclick={() => clearFilter(column.key as string)}
+											onclick={() => handleColumnFilterChange(column.key as string, '')}
 											class="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 											title="Clear filter"
 										>

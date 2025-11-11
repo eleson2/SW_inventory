@@ -32,6 +32,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		filterBuilder: (url) => {
 			const filters: Record<string, any> = {};
 
+			// Dropdown filters
 			const status = url.searchParams.get('status');
 			if (status === 'active') {
 				filters.active = true;
@@ -42,6 +43,29 @@ export const load: PageServerLoad = async ({ url }) => {
 			const vendorId = url.searchParams.get('vendor');
 			if (vendorId) {
 				filters.vendor_id = vendorId;
+			}
+
+			// Column filters
+			const nameFilter = url.searchParams.get('col_name');
+			if (nameFilter) {
+				filters.name = { contains: nameFilter, mode: 'insensitive' };
+			}
+
+			const vendorFilter = url.searchParams.get('col_vendor');
+			if (vendorFilter) {
+				filters.vendors = { name: { contains: vendorFilter, mode: 'insensitive' } };
+			}
+
+			const activeFilter = url.searchParams.get('col_active');
+			if (activeFilter) {
+				// Convert "active"/"inactive" text to boolean
+				const isActive = activeFilter.toLowerCase().includes('active');
+				const isInactive = activeFilter.toLowerCase().includes('inactive');
+				if (isActive && !isInactive) {
+					filters.active = true;
+				} else if (isInactive && !isActive) {
+					filters.active = false;
+				}
 			}
 
 			return filters;
