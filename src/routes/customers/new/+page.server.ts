@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { customerSchema } from '$schemas';
-import { db, createAuditLog } from '$lib/server/db';
+import { db, createAuditLog, checkUniqueConstraint } from '$lib/server/db';
 import { fail, redirect } from '@sveltejs/kit';
 import { serverValidate } from '$lib/utils/superforms';
 
@@ -36,16 +36,13 @@ export const actions: Actions = {
 			return fail(400, { form });
 		}
 
-		// Check for unique code
-		const existing = await db.customers.findUnique({
-			where: { code: form.data.code }
-		});
-
-		if (existing) {
+		// Check for unique code using helper
+		const uniqueCheck = await checkUniqueConstraint(db.customers, 'code', form.data.code);
+		if (uniqueCheck.exists) {
 			return fail(400, {
 				form: {
 					...form,
-					errors: { ...form.errors, code: { _errors: ['A customer with this code already exists.'] } }
+					errors: { ...form.errors, code: { _errors: [uniqueCheck.error!] } }
 				}
 			});
 		}

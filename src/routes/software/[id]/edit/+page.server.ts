@@ -2,7 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '$lib/server/db';
 import { softwareWithVersionsSchema } from '$schemas/software';
 import { error, fail, redirect } from '@sveltejs/kit';
-import type { z } from 'zod';
+import { serverValidate } from '$lib/utils/superforms';
 
 /**
  * Load software with all versions for master-detail editing
@@ -33,7 +33,18 @@ export const load: PageServerLoad = async ({ params }) => {
 		select: { id: true, name: true, code: true }
 	});
 
+	// Initialize Superforms with software data
+	const form = await serverValidate(
+		{
+			...software,
+			description: software.description || '',
+			versions: software.versions
+		},
+		softwareWithVersionsSchema
+	);
+
 	return {
+		form,
 		software,
 		vendors
 	};
@@ -47,47 +58,20 @@ export const actions: Actions = {
 	 * Update software (master) with version management (detail)
 	 * Uses Prisma transaction to ensure atomicity
 	 */
-	default: async ({ request, params }) => {
-		const formData = await request.formData();
+	default: async (event) => {
+		// Use Superforms to validate form data
+		const form = await serverValidate(event, softwareWithVersionsSchema);
 
-		// Extract master data
-		const masterData = {
-			name: formData.get('name'),
-			vendor_id: formData.get('vendor_id'),
-			description: formData.get('description') || '',
-			active: formData.get('active') === 'on',
-			current_version_id: formData.get('current_version_id') || null,
-			versions: [] as any[]
-		};
-
-		// Extract version detail data (versions are sent as JSON)
-		const versionsJson = formData.get('versions');
-		if (versionsJson && typeof versionsJson === 'string') {
-			try {
-				masterData.versions = JSON.parse(versionsJson);
-			} catch (e) {
-				return fail(400, {
-					message: 'Invalid version data format'
-				});
-			}
+		if (!form.valid) {
+			return fail(400, { form });
 		}
 
-		// Validate entire master-detail structure
-		const result = softwareWithVersionsSchema.safeParse(masterData);
-		if (!result.success) {
-			const errors = result.error.flatten().fieldErrors;
-			return fail(400, {
-				errors: errors as Record<string, string[]>,
-				message: 'Validation failed. Please check the form.'
-			});
-		}
-
-		const validated = result.data;
+		const validated = form.data;
 
 		try {
 			// Fetch old software for audit
 			const oldSoftware = await db.software.findUnique({
-				where: { id: params.id },
+				where: { id: event.params.id },
 				include: { versions: true }
 			});
 
@@ -133,7 +117,7 @@ export const actions: Actions = {
 						// Create new version
 						const newVersion = await tx.software_versions.create({
 							data: {
-								software_id: params.id,
+								software_id: event.params.id,
 								version: version.version,
 								ptf_level: version.ptf_level || null,
 								release_date: version.release_date,
@@ -153,7 +137,7 @@ export const actions: Actions = {
 
 				// Update master software record
 				const updatedSoftware = await tx.software.update({
-					where: { id: params.id },
+					where: { id: event.params.id },
 					data: {
 						name: validated.name,
 						vendor_id: validated.vendor_id,
@@ -173,7 +157,7 @@ export const actions: Actions = {
 			});
 
 			// Create audit log
-			await createAuditLog('software', params.id, 'update', {
+			await createAuditLog('software', event.params.id, 'update', {
 				old: oldSoftware,
 				new: updated.software,
 				version_changes: updated.versionChanges
@@ -187,8 +171,10 @@ export const actions: Actions = {
 			if (err && typeof err === 'object' && 'code' in err) {
 				if (err.code === 'P2002') {
 					return fail(400, {
-						message: 'A version with this combination already exists',
-						errors: {} as Record<string, string[]>
+						form: {
+							...form,
+							errors: { ...form.errors, versions: { _errors: ['A version with this combination already exists'] } }
+						}
 					});
 				}
 			}
@@ -198,10 +184,7 @@ export const actions: Actions = {
 				throw err;
 			}
 
-			return fail(500, {
-				message: 'Failed to update software. Please try again.',
-				errors: {} as Record<string, string[]>
-			});
+			return fail(500, { form });
 		}
 	}
 };

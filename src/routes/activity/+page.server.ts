@@ -1,10 +1,9 @@
-import { db } from '$lib/server/db';
+import { db, getPaginated } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const page = parseInt(url.searchParams.get('page') || '1');
 	const limit = 50;
-	const offset = (page - 1) * limit;
 
 	// Filter parameters
 	const entityType = url.searchParams.get('entity_type') || undefined;
@@ -22,16 +21,14 @@ export const load: PageServerLoad = async ({ url }) => {
 		where.action = action;
 	}
 
-	// Fetch audit log entries
-	const [logs, total] = await Promise.all([
-		db.audit_log.findMany({
-			where,
-			orderBy: { timestamp: 'desc' },
-			take: limit,
-			skip: offset
-		}),
-		db.audit_log.count({ where })
-	]);
+	// Fetch audit log entries using pagination helper
+	const paginatedData = await getPaginated(
+		db.audit_log,
+		page,
+		limit,
+		where,
+		{ timestamp: 'desc' }
+	);
 
 	// Get unique entity types and actions for filters
 	const [entityTypes, actions] = await Promise.all([
@@ -48,12 +45,12 @@ export const load: PageServerLoad = async ({ url }) => {
 	]);
 
 	return {
-		logs,
+		logs: paginatedData.items,
 		pagination: {
-			total,
-			page,
-			limit,
-			totalPages: Math.ceil(total / limit)
+			total: paginatedData.total,
+			page: paginatedData.page,
+			limit: paginatedData.pageSize,
+			totalPages: paginatedData.totalPages
 		},
 		filters: {
 			entityTypes: entityTypes.map(e => e.entity_type),

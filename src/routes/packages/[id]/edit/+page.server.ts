@@ -1,7 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
-import { error, redirect } from '@sveltejs/kit';
+import { error, redirect, fail } from '@sveltejs/kit';
 import { db, createAuditLog } from '$lib/server/db';
 import { packageUpdateSchema } from '$lib/schemas/package';
+import { serverValidate } from '$lib/utils/superforms';
 
 /**
  * Load package with items, plus all software and their versions for dropdowns
@@ -45,7 +46,18 @@ export const load: PageServerLoad = async ({ params }) => {
 		orderBy: { name: 'asc' }
 	});
 
+	// Initialize Superforms with package data
+	const form = await serverValidate(
+		{
+			...pkg,
+			description: pkg.description || '',
+			items: pkg.package_items
+		},
+		packageUpdateSchema
+	);
+
 	return {
+		form,
 		package: pkg,
 		allSoftware
 	};
@@ -55,71 +67,50 @@ export const load: PageServerLoad = async ({ params }) => {
  * Update package with items atomically using transaction
  */
 export const actions: Actions = {
-	default: async ({ request, params }) => {
-		const formData = await request.formData();
+	default: async (event) => {
+		// Use Superforms to validate form data
+		const form = await serverValidate(event, packageUpdateSchema);
 
-		// Parse the form data
-		const rawData = {
-			name: formData.get('name')?.toString(),
-			code: formData.get('code')?.toString().toUpperCase(),
-			version: formData.get('version')?.toString(),
-			description: formData.get('description')?.toString() || '',
-			release_date: formData.get('release_date')?.toString(),
-			active: formData.get('active') === 'true',
-			items: JSON.parse(formData.get('items')?.toString() || '[]')
-		};
-
-		// Validate with Zod schema
-		const validated = packageUpdateSchema.safeParse({
-			name: rawData.name,
-			code: rawData.code,
-			version: rawData.version,
-			description: rawData.description,
-			release_date: new Date(rawData.release_date || ''),
-			active: rawData.active,
-			items: rawData.items
-		});
-
-		if (!validated.success) {
-			return {
-				success: false,
-				errors: validated.error.flatten().fieldErrors,
-				message: 'Validation failed'
-			};
+		if (!form.valid) {
+			return fail(400, { form });
 		}
 
-		// Check for unique code+version combination
+		const validated = form.data;
+
+		// Check for unique code+version combination (composite constraint)
 		const existing = await db.packages.findFirst({
 			where: {
-				code: validated.data.code,
-				version: validated.data.version,
-				id: { not: params.id }
+				code: validated.code,
+				version: validated.version,
+				id: { not: event.params.id }
 			}
 		});
 
 		if (existing) {
-			return {
-				success: false,
-				errors: { code: { _errors: ['A package with this code and version already exists.'] } },
-				message: 'Validation failed'
-			};
+			return fail(400, {
+				form: {
+					...form,
+					errors: { ...form.errors, code: { _errors: ['A package with this code and version already exists.'] } }
+				}
+			});
 		}
 
 		// Validate unique order_index values
-		const orderIndices = validated.data.items?.map(item => item.order_index) || [];
+		const orderIndices = validated.items?.map(item => item.order_index) || [];
 		const uniqueOrderIndices = new Set(orderIndices);
 		if (orderIndices.length !== uniqueOrderIndices.size) {
-			return {
-				success: false,
-				errors: { items: { _errors: ['Order indices must be unique'] } },
-				message: 'Validation failed'
-			};
+			return fail(400, {
+				form: {
+					...form,
+					errors: { ...form.errors, items: { _errors: ['Order indices must be unique'] } }
+				}
+			});
 		}
 
 		try {
 			// Get existing package items to track changes
 			const existingPackage = await db.packages.findUnique({
-				where: { id: params.id },
+				where: { id: event.params.id },
 				include: { package_items: true }
 			});
 
@@ -127,21 +118,21 @@ export const actions: Actions = {
 			await db.$transaction(async (tx) => {
 				// Update package master data
 				await tx.packages.update({
-					where: { id: params.id },
+					where: { id: event.params.id },
 					data: {
-						name: validated.data.name,
-						code: validated.data.code,
-						version: validated.data.version,
-						description: validated.data.description || null,
-						release_date: validated.data.release_date,
-						active: validated.data.active
+						name: validated.name,
+						code: validated.code,
+						version: validated.version,
+						description: validated.description || null,
+						release_date: validated.release_date,
+						active: validated.active
 					}
 				});
 
 				// Handle package items if provided
-				if (validated.data.items && validated.data.items.length > 0) {
+				if (validated.items && validated.items.length > 0) {
 					const existingItemIds = existingPackage?.package_items.map(item => item.id) || [];
-					const incomingItemIds = validated.data.items
+					const incomingItemIds = validated.items
 						.filter(item => item.id)
 						.map(item => item.id) as string[];
 
@@ -151,17 +142,17 @@ export const actions: Actions = {
 						await tx.package_items.deleteMany({
 							where: {
 								id: { in: itemsToDelete },
-								package_id: params.id
+								package_id: event.params.id
 							}
 						});
 					}
 
 					// Upsert all items (create new, update existing)
-					for (const item of validated.data.items) {
+					for (const item of validated.items) {
 						if (item._action === 'delete') continue;
 
 						const itemData = {
-							package_id: params.id,
+							package_id: event.params.id,
 							software_id: item.software_id,
 							software_version_id: item.software_version_id,
 							required: item.required,
@@ -186,13 +177,13 @@ export const actions: Actions = {
 				// Create audit log
 				await createAuditLog(
 					'package',
-					params.id,
+					event.params.id,
 					'update',
 					{
 						before: existingPackage,
 						after: {
-							...validated.data,
-							items_count: validated.data.items?.length || 0
+							...validated,
+							items_count: validated.items?.length || 0
 						}
 					}
 				);
@@ -205,10 +196,7 @@ export const actions: Actions = {
 			}
 
 			console.error('Error updating package:', err);
-			return {
-				success: false,
-				message: 'Failed to update package. Please try again.'
-			};
+			return fail(500, { form });
 		}
 	}
 };

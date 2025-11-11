@@ -4,6 +4,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { serverValidate } from '$lib/utils/superforms';
 import { compareVersions } from '$lib/utils/version-parser';
+import { Prisma } from '@prisma/client';
 
 // Schema for deployment form
 const deploymentSchema = z.object({
@@ -233,40 +234,47 @@ export const actions: Actions = {
 			console.log('[DEPLOY] Operations to create:', creates.length);
 			console.log('[DEPLOY] Operations to update:', updates.length);
 
-			// Step 5: Execute ALL database operations in a SINGLE transaction
+			// Step 5: Execute ALL database operations in a SINGLE transaction with Serializable isolation
 			console.time('Database Transaction');
-			await db.$transaction(async (tx) => {
-				// Batch create new installations
-				if (creates.length > 0) {
-					console.log('[DEPLOY] Creating', creates.length, 'new installations');
-					await tx.lpar_software.createMany({
-						data: creates,
-						skipDuplicates: true
-					});
-				}
-
-				// Batch update existing installations
-				if (updates.length > 0) {
-					console.log('[DEPLOY] Updating', updates.length, 'existing installations');
-					await Promise.all(
-						updates.map(update =>
-							tx.lpar_software.update(update)
-						)
-					);
-				}
-
-				// Batch update LPAR package assignments
-				console.log('[DEPLOY] Updating LPAR package assignments');
-				await tx.lpars.updateMany({
-					where: {
-						id: { in: lparIds }
-					},
-					data: {
-						current_package_id: params.id,
-						updated_at: new Date()
+			await db.$transaction(
+				async (tx) => {
+					// Batch create new installations
+					if (creates.length > 0) {
+						console.log('[DEPLOY] Creating', creates.length, 'new installations');
+						await tx.lpar_software.createMany({
+							data: creates,
+							skipDuplicates: true
+						});
 					}
-				});
-			});
+
+					// Batch update existing installations
+					if (updates.length > 0) {
+						console.log('[DEPLOY] Updating', updates.length, 'existing installations');
+						await Promise.all(
+							updates.map(update =>
+								tx.lpar_software.update(update)
+							)
+						);
+					}
+
+					// Batch update LPAR package assignments
+					console.log('[DEPLOY] Updating LPAR package assignments');
+					await tx.lpars.updateMany({
+						where: {
+							id: { in: lparIds }
+						},
+						data: {
+							current_package_id: params.id,
+							updated_at: new Date()
+						}
+					});
+				},
+				{
+					isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+					maxWait: 5000,   // 5 seconds max wait for transaction to start
+					timeout: 10000   // 10 seconds max transaction duration
+				}
+			);
 			console.timeEnd('Database Transaction');
 
 			console.timeEnd('Total Deployment');

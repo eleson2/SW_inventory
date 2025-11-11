@@ -1,7 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
-import { db, createAuditLog } from '$lib/server/db';
+import { db, createAuditLog, checkUniqueConstraint } from '$lib/server/db';
 import { fail, redirect, error } from '@sveltejs/kit';
 import { lparWithSoftwareSchema } from '$lib/schemas/lpar';
+import { serverValidate } from '$lib/utils/superforms';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const [lpar, customers, packages, allSoftware] = await Promise.all([
@@ -53,7 +54,19 @@ export const load: PageServerLoad = async ({ params }) => {
 		throw error(404, 'LPAR not found');
 	}
 
+	// Initialize Superforms with LPAR data
+	const form = await serverValidate(
+		{
+			...lpar,
+			description: lpar.description || '',
+			current_package_id: lpar.current_package_id || '',
+			software_installations: lpar.lpar_software
+		},
+		lparWithSoftwareSchema
+	);
+
 	return {
+		form,
 		lpar,
 		customers,
 		packages,
@@ -62,47 +75,31 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, params }) => {
-		const formData = await request.formData();
+	default: async (event) => {
+		// Use Superforms to validate form data
+		const form = await serverValidate(event, lparWithSoftwareSchema);
 
-		const rawData = {
-			name: formData.get('name'),
-			code: formData.get('code')?.toString().toUpperCase(),
-			customer_id: formData.get('customer_id'),
-			description: formData.get('description') || '',
-			current_package_id: formData.get('current_package_id') || '',
-			active: formData.get('active') === 'on',
-			software_installations: JSON.parse(formData.get('software_installations')?.toString() || '[]')
-		};
+		if (!form.valid) {
+			return fail(400, { form });
+		}
 
-		// Validate
-		const validated = lparWithSoftwareSchema.safeParse(rawData);
-		if (!validated.success) {
+		// Check unique code using helper
+		const uniqueCheck = await checkUniqueConstraint(db.lpars, 'code', form.data.code, event.params.id);
+		if (uniqueCheck.exists) {
 			return fail(400, {
-				errors: validated.error.flatten().fieldErrors,
-				message: 'Validation failed'
+				form: {
+					...form,
+					errors: { ...form.errors, code: { _errors: [uniqueCheck.error!] } }
+				}
 			});
 		}
 
-		// Check unique code
-		const existing = await db.lpars.findFirst({
-			where: {
-				code: validated.data.code,
-				id: { not: params.id }
-			}
-		});
-
-		if (existing) {
-			return fail(400, {
-				errors: { code: ['An LPAR with this code already exists.'] },
-				message: 'Validation failed'
-			});
-		}
+		const validated = form.data;
 
 		try {
 			// Get existing LPAR for audit
 			const existingLpar = await db.lpars.findUnique({
-				where: { id: params.id },
+				where: { id: event.params.id },
 				include: { lpar_software: true }
 			});
 
@@ -110,7 +107,7 @@ export const actions: Actions = {
 			await db.$transaction(async (tx) => {
 				// Update LPAR master data
 				await tx.lpars.update({
-					where: { id: params.id },
+					where: { id: event.params.id },
 					data: {
 						name: validated.data.name,
 						code: validated.data.code,
@@ -134,7 +131,7 @@ export const actions: Actions = {
 						await tx.lpar_software.deleteMany({
 							where: {
 								id: { in: installsToDelete },
-								lpar_id: params.id
+								lpar_id: event.params.id
 							}
 						});
 					}
@@ -154,7 +151,7 @@ export const actions: Actions = {
 						}
 
 						const installData = {
-							lpar_id: params.id,
+							lpar_id: event.params.id,
 							software_id: installation.software_id,
 							current_version: version.version,
 							current_ptf_level: version.ptf_level,
@@ -180,13 +177,13 @@ export const actions: Actions = {
 				// Create audit log
 				await createAuditLog(
 					'lpar',
-					params.id,
+					event.params.id,
 					'update',
 					{
 						before: existingLpar,
 						after: {
-							...validated.data,
-							installations_count: validated.data.software_installations?.length || 0
+							...validated,
+							installations_count: validated.software_installations?.length || 0
 						}
 					}
 				);
@@ -199,9 +196,7 @@ export const actions: Actions = {
 			}
 
 			console.error('Error updating LPAR:', err);
-			return fail(500, {
-				message: 'Failed to update LPAR. Please try again.'
-			});
+			return fail(500, { form });
 		}
 	}
 };

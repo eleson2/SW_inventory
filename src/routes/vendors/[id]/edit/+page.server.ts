@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { vendorUpdateSchema } from '$schemas';
-import { db, createAuditLog } from '$lib/server/db';
+import { db, createAuditLog, checkUniqueConstraint } from '$lib/server/db';
 import { error, fail } from '@sveltejs/kit';
 import { serverValidate } from '$lib/utils/superforms';
 
@@ -27,19 +27,13 @@ export const actions: Actions = {
 			return fail(400, { form });
 		}
 
-		// Check for unique code
-		const existing = await db.vendors.findFirst({
-			where: {
-				code: form.data.code,
-				id: { not: event.params.id }
-			}
-		});
-
-		if (existing) {
+		// Check for unique code using helper
+		const uniqueCheck = await checkUniqueConstraint(db.vendors, 'code', form.data.code, event.params.id);
+		if (uniqueCheck.exists) {
 			return fail(400, {
 				form: {
 					...form,
-					errors: { ...form.errors, code: { _errors: ['A vendor with this code already exists.'] } }
+					errors: { ...form.errors, code: { _errors: [uniqueCheck.error!] } }
 				}
 			});
 		}
