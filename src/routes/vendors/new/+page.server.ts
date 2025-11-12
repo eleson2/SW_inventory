@@ -1,8 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
 import { vendorSchema } from '$schemas';
-import { db, createAuditLog, checkUniqueConstraint } from '$lib/server/db';
-import { fail, redirect } from '@sveltejs/kit';
+import { db } from '$lib/server/db';
 import { serverValidate } from '$lib/utils/superforms';
+import { createFormAction } from '$lib/server/form-actions';
 
 // Load all vendors for clone dropdown
 export const load: PageServerLoad = async () => {
@@ -32,45 +32,17 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-	default: async (event) => {
-	// Use Superforms to validate form data
-	const form = await serverValidate(event, vendorSchema);
-
-		if (!form.valid) {
-			return fail(400, { form });
-		}
-
-		// Check for unique code using helper
-		const uniqueCheck = await checkUniqueConstraint(db.vendors, 'code', form.data.code);
-		if (uniqueCheck.exists) {
-			return fail(400, {
-				form: {
-					...form,
-					errors: { ...form.errors, code: { _errors: [uniqueCheck.error!] } }
-				}
-			});
-		}
-
-		try {
-			// Create vendor
-			const vendor = await db.vendors.create({
-				data: {
-					name: form.data.name,
-					code: form.data.code,
-					website: form.data.website || null,
-					contact_email: form.data.contact_email || null,
-					active: form.data.active
-				}
-			});
-
-			// Create audit log
-			await createAuditLog('vendor', vendor.id, 'create', vendor);
-
-			// Redirect to vendor detail page
-			redirect(303, `/vendors/${vendor.id}`);
-		} catch (error) {
-			console.error('Error creating vendor:', error);
-			return fail(500, { form });
-		}
-	}
+	default: createFormAction({
+		schema: vendorSchema,
+		model: db.vendors,
+		entityType: 'vendor',
+		redirectPath: (id) => `/vendors/${id}`,
+		transform: (data) => ({
+			name: data.name,
+			code: data.code,
+			website: data.website || null,
+			contact_email: data.contact_email || null,
+			active: data.active
+		})
+	})
 };

@@ -11,6 +11,7 @@
 	import PageHeader from '$components/common/PageHeader.svelte';
 	import { formatDate } from '$utils/date-format';
 	import { useTableNavigation } from '$lib/utils/table-navigation.svelte';
+	import { STATUS_FILTER } from '$lib/constants/filters';
 
 	let { data }: { data: PageData } = $props();
 
@@ -67,16 +68,7 @@
 		<div class="mb-6">
 			<InstantSearch
 				placeholder="Search customers by name or code..."
-				filters={[
-					{
-						name: 'status',
-						label: 'Status',
-						options: [
-							{ value: 'active', label: 'Active' },
-							{ value: 'inactive', label: 'Inactive' }
-						]
-					}
-				]}
+				filters={[STATUS_FILTER]}
 				resultCount={'items' in data.customers ? {
 					current: data.customers.items.length,
 					total: data.customers.total

@@ -11,6 +11,7 @@
 	import PageHeader from '$components/common/PageHeader.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import { useTableNavigation } from '$lib/utils/table-navigation.svelte';
+	import { STATUS_FILTER } from '$lib/constants/filters';
 
 	let { data }: { data: PageData } = $props();
 
@@ -88,14 +89,7 @@
 						label: 'Customer',
 						options: customerFilterOptions
 					},
-					{
-						name: 'status',
-						label: 'Status',
-						options: [
-							{ value: 'active', label: 'Active' },
-							{ value: 'inactive', label: 'Inactive' }
-						]
-					}
+					STATUS_FILTER
 				]}
 				resultCount={'items' in data.lpars ? {
 					current: data.lpars.items.length,

@@ -10,6 +10,7 @@
 	import StatusBadge from '$components/common/StatusBadge.svelte';
 	import PageHeader from '$components/common/PageHeader.svelte';
 	import { useTableNavigation } from '$lib/utils/table-navigation.svelte';
+	import { STATUS_FILTER } from '$lib/constants/filters';
 
 	let { data }: { data: PageData } = $props();
 
@@ -61,16 +62,7 @@
 		<div class="mb-6">
 			<InstantSearch
 				placeholder="Search vendors by name or code..."
-				filters={[
-					{
-						name: 'status',
-						label: 'Status',
-						options: [
-							{ value: 'active', label: 'Active' },
-							{ value: 'inactive', label: 'Inactive' }
-						]
-					}
-				]}
+				filters={[STATUS_FILTER]}
 				resultCount={'items' in data.vendors ? {
 					current: data.vendors.items.length,
 					total: data.vendors.total
