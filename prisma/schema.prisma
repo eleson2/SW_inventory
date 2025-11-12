@@ -97,7 +97,6 @@ model package_items {
   package_id          String             @db.Uuid
   software_id         String             @db.Uuid
   software_version_id String             @db.Uuid
-  required            Boolean            @default(true)
   order_index         Int
   created_at          DateTime           @default(now())
   packages            packages           @relation(fields: [package_id], references: [id], onDelete: Cascade)

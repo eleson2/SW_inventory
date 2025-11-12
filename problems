@@ -1,107 +1,781 @@
 [{
-	"resource": "/d:/proj/SW_inventory/SW_inventory/src/lib/prisma.ts",
-	"owner": "typescript",
-	"code": "2304",
-	"severity": 8,
-	"message": "Cannot find name 'global'.",
-	"source": "ts",
-	"startLineNumber": 10,
-	"startColumn": 2,
-	"endLineNumber": 10,
-	"endColumn": 8,
-	"origin": "extHost2"
-},{
-	"resource": "/d:/proj/SW_inventory/SW_inventory/src/lib/prisma.ts",
-	"owner": "typescript",
-	"code": "2580",
-	"severity": 8,
-	"message": "Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.",
-	"source": "ts",
-	"startLineNumber": 16,
-	"startColumn": 5,
-	"endLineNumber": 16,
-	"endColumn": 12,
-	"origin": "extHost2"
-},{
-	"resource": "/d:/proj/SW_inventory/SW_inventory/src/lib/prisma.ts",
-	"owner": "typescript",
-	"code": "2304",
-	"severity": 8,
-	"message": "Cannot find name 'global'.",
-	"source": "ts",
-	"startLineNumber": 17,
-	"startColumn": 2,
-	"endLineNumber": 17,
-	"endColumn": 8,
-	"origin": "extHost2"
-},{
-	"resource": "/d:/proj/SW_inventory/SW_inventory/src/routes/packages/[id]/deploy/+page.server.ts",
-	"owner": "typescript",
-	"code": "2769",
-	"severity": 8,
-	"message": "No overload matches this call.\n  Overload 1 of 2, '(adapter: ValidationAdapter<Record<string, unknown>, Record<string, unknown>>, options?: Partial<{ errors: boolean; id: string; preprocessed: string[]; defaults: Record<string, unknown>; jsonSchema: JSONSchema7; strict: boolean; allowFiles: boolean; transport: Transport; }> | undefined): Promise<...>', gave the following error.\n    Argument of type 'RequestEvent' is not assignable to parameter of type 'ValidationAdapter<Record<string, unknown>, Record<string, unknown>>'.\n      Type 'RequestEvent<RouteParams, \"/packages/[id]/deploy\">' is missing the following properties from type 'ClientValidationAdapter<Record<string, unknown>, Record<string, unknown>>': superFormValidationLibrary, validate\n  Overload 2 of 2, '(data: SuperValidateData<Record<string, unknown>>, adapter: ValidationAdapter<Record<string, unknown>, Record<string, unknown>>, options?: Partial<...> | undefined): Promise<...>', gave the following error.\n    Argument of type 'ZodObject<{ lparIds: ZodArray<ZodString, \"many\">; }, \"strip\", ZodTypeAny, { lparIds: string[]; }, { lparIds: string[]; }>' is not assignable to parameter of type 'ValidationAdapter<Record<string, unknown>, Record<string, unknown>>'.\n      Type 'ZodObject<{ lparIds: ZodArray<ZodString, \"many\">; }, \"strip\", ZodTypeAny, { lparIds: string[]; }, { lparIds: string[]; }>' is missing the following properties from type 'ClientValidationAdapter<Record<string, unknown>, Record<string, unknown>>': superFormValidationLibrary, validate",
-	"source": "ts",
-	"startLineNumber": 16,
-	"startColumn": 21,
-	"endLineNumber": 16,
-	"endColumn": 34,
-	"origin": "extHost2"
-},{
-	"resource": "/d:/proj/SW_inventory/SW_inventory/src/routes/packages/[id]/deploy/+page.server.ts",
-	"owner": "typescript",
-	"code": "2551",
-	"severity": 8,
-	"message": "Property 'lpar' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'lpars'?",
-	"source": "ts",
-	"startLineNumber": 23,
-	"startColumn": 28,
-	"endLineNumber": 23,
-	"endColumn": 32,
-	"relatedInformation": [
-		{
-			"startLineNumber": 218,
-			"startColumn": 7,
-			"endLineNumber": 218,
-			"endColumn": 12,
-			"message": "'lpars' is declared here.",
-			"resource": "/d:/proj/SW_inventory/SW_inventory/node_modules/.prisma/client/index.d.ts"
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
 		}
-	],
-	"origin": "extHost2"
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 149,
+	"startColumn": 26,
+	"endLineNumber": 149,
+	"endColumn": 27,
+	"origin": "extHost1"
 },{
-	"resource": "/d:/proj/SW_inventory/SW_inventory/src/routes/packages/[id]/deploy/+page.server.ts",
-	"owner": "typescript",
-	"code": "2322",
-	"severity": 8,
-	"message": "Type '(event: RequestEvent) => Promise<ActionFailure<{ form: SuperValidated<Record<string, unknown>, any, Record<string, unknown>>; }>>' is not assignable to type 'Action<{ id?: string | undefined; }, void | Record<string, any>, \"/packages/[id]/deploy\" | \"/\" | \"/activity\" | \"/api\" | \"/api/clone\" | \"/api/import\" | \"/customers\" | \"/customers/new\" | ... 22 more ... | null>'.\n  Types of parameters 'event' and 'event' are incompatible.\n    Type 'RequestEvent<{ id?: string | undefined; }, \"/packages/[id]/deploy\" | \"/\" | \"/activity\" | \"/api\" | \"/api/clone\" | \"/api/import\" | \"/customers\" | \"/customers/new\" | \"/customers/[id]\" | \"/customers/[id]/edit\" | ... 20 more ... | null>' is not assignable to type 'RequestEvent'.\n      Type '{ id?: string | undefined; }' is not assignable to type 'RouteParams'.\n        Types of property 'id' are incompatible.\n          Type 'string | undefined' is not assignable to type 'string'.\n            Type 'undefined' is not assignable to type 'string'.",
-	"source": "ts",
-	"startLineNumber": 39,
-	"startColumn": 2,
-	"endLineNumber": 39,
-	"endColumn": 9,
-	"origin": "extHost2"
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 156,
+	"startColumn": 26,
+	"endLineNumber": 156,
+	"endColumn": 27,
+	"origin": "extHost1"
 },{
-	"resource": "/d:/proj/SW_inventory/SW_inventory/src/routes/packages/[id]/deploy/+page.server.ts",
-	"owner": "typescript",
-	"code": "2769",
-	"severity": 8,
-	"message": "No overload matches this call.\n  Overload 1 of 2, '(adapter: ValidationAdapter<Record<string, unknown>, Record<string, unknown>>, options?: Partial<{ errors: boolean; id: string; preprocessed: string[]; defaults: Record<string, unknown>; jsonSchema: JSONSchema7; strict: boolean; allowFiles: boolean; transport: Transport; }> | undefined): Promise<...>', gave the following error.\n    Argument of type 'RequestEvent' is not assignable to parameter of type 'ValidationAdapter<Record<string, unknown>, Record<string, unknown>>'.\n      Type 'RequestEvent<RouteParams, \"/packages/[id]/deploy\">' is missing the following properties from type 'ClientValidationAdapter<Record<string, unknown>, Record<string, unknown>>': superFormValidationLibrary, validate\n  Overload 2 of 2, '(data: SuperValidateData<Record<string, unknown>>, adapter: ValidationAdapter<Record<string, unknown>, Record<string, unknown>>, options?: Partial<...> | undefined): Promise<...>', gave the following error.\n    Argument of type 'ZodObject<{ lparIds: ZodArray<ZodString, \"many\">; }, \"strip\", ZodTypeAny, { lparIds: string[]; }, { lparIds: string[]; }>' is not assignable to parameter of type 'ValidationAdapter<Record<string, unknown>, Record<string, unknown>>'.\n      Type 'ZodObject<{ lparIds: ZodArray<ZodString, \"many\">; }, \"strip\", ZodTypeAny, { lparIds: string[]; }, { lparIds: string[]; }>' is missing the following properties from type 'ClientValidationAdapter<Record<string, unknown>, Record<string, unknown>>': superFormValidationLibrary, validate",
-	"source": "ts",
-	"startLineNumber": 43,
-	"startColumn": 22,
-	"endLineNumber": 43,
-	"endColumn": 35,
-	"origin": "extHost2"
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 163,
+	"startColumn": 26,
+	"endLineNumber": 163,
+	"endColumn": 27,
+	"origin": "extHost1"
 },{
-	"resource": "/d:/proj/SW_inventory/SW_inventory/src/routes/packages/[id]/deploy/+page.server.ts",
-	"owner": "typescript",
-	"code": "2339",
-	"severity": 8,
-	"message": "Property 'deployment' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.",
-	"source": "ts",
-	"startLineNumber": 58,
-	"startColumn": 18,
-	"endLineNumber": 58,
-	"endColumn": 28,
-	"origin": "extHost2"
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 170,
+	"startColumn": 26,
+	"endLineNumber": 170,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 177,
+	"startColumn": 26,
+	"endLineNumber": 177,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 191,
+	"startColumn": 26,
+	"endLineNumber": 191,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 198,
+	"startColumn": 26,
+	"endLineNumber": 198,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 212,
+	"startColumn": 26,
+	"endLineNumber": 212,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 219,
+	"startColumn": 26,
+	"endLineNumber": 219,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 226,
+	"startColumn": 26,
+	"endLineNumber": 226,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 233,
+	"startColumn": 26,
+	"endLineNumber": 233,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 247,
+	"startColumn": 26,
+	"endLineNumber": 247,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 254,
+	"startColumn": 26,
+	"endLineNumber": 254,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 261,
+	"startColumn": 26,
+	"endLineNumber": 261,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 268,
+	"startColumn": 26,
+	"endLineNumber": 268,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 275,
+	"startColumn": 26,
+	"endLineNumber": 275,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 289,
+	"startColumn": 26,
+	"endLineNumber": 289,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 296,
+	"startColumn": 26,
+	"endLineNumber": 296,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 303,
+	"startColumn": 26,
+	"endLineNumber": 303,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 310,
+	"startColumn": 26,
+	"endLineNumber": 310,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 324,
+	"startColumn": 26,
+	"endLineNumber": 324,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 331,
+	"startColumn": 26,
+	"endLineNumber": 331,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 338,
+	"startColumn": 26,
+	"endLineNumber": 338,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 345,
+	"startColumn": 26,
+	"endLineNumber": 345,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 352,
+	"startColumn": 26,
+	"endLineNumber": 352,
+	"endColumn": 27,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 367,
+	"startColumn": 26,
+	"endLineNumber": 367,
+	"endColumn": 29,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 368,
+	"startColumn": 30,
+	"endLineNumber": 368,
+	"endColumn": 31,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 376,
+	"startColumn": 26,
+	"endLineNumber": 376,
+	"endColumn": 29,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 377,
+	"startColumn": 30,
+	"endLineNumber": 377,
+	"endColumn": 31,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 385,
+	"startColumn": 26,
+	"endLineNumber": 385,
+	"endColumn": 29,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 386,
+	"startColumn": 30,
+	"endLineNumber": 386,
+	"endColumn": 31,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 394,
+	"startColumn": 26,
+	"endLineNumber": 394,
+	"endColumn": 29,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 395,
+	"startColumn": 30,
+	"endLineNumber": 395,
+	"endColumn": 31,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 403,
+	"startColumn": 26,
+	"endLineNumber": 403,
+	"endColumn": 29,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 404,
+	"startColumn": 30,
+	"endLineNumber": 404,
+	"endColumn": 31,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 418,
+	"startColumn": 14,
+	"endLineNumber": 418,
+	"endColumn": 16,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 421,
+	"startColumn": 14,
+	"endLineNumber": 421,
+	"endColumn": 16,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 424,
+	"startColumn": 14,
+	"endLineNumber": 424,
+	"endColumn": 16,
+	"origin": "extHost1"
+},{
+	"resource": "/d:/proj/SW_inventory/SW_inventory/icon-showcase.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "no-inline-styles",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-no-inline-styles/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 4,
+	"message": "CSS inline styles should not be used, move styles to an external CSS file",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 427,
+	"startColumn": 14,
+	"endLineNumber": 427,
+	"endColumn": 16,
+	"origin": "extHost1"
 }]

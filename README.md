@@ -2,6 +2,16 @@
 
 A comprehensive SvelteKit application for managing mainframe software inventory in a multi-tenant environment.
 
+## 📚 Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+- **[📘 Project Documentation](./docs/project/README.md)** - System overview, architecture, and design
+- **[👨‍💻 Developer Guide](./docs/developer/README.md)** - Development setup, workflow, and best practices
+- **[👤 User Guide](./docs/user-guide/README.md)** - Complete user manual with tutorials
+
+[**→ View All Documentation**](./docs/README.md)
+
 ## Features
 
 - **Customer Management**: Track customer information in multi-tenant environment

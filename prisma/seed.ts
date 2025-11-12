@@ -205,21 +205,18 @@ async function main() {
 					{
 						software_id: cics.id,
 						software_version_id: cicsV5R6M0.id,
-						required: true,
 						order_index: 1,
 						created_at: new Date()
 					},
 					{
 						software_id: db2.id,
 						software_version_id: db2V13R1M0.id,
-						required: true,
 						order_index: 2,
 						created_at: new Date()
 					},
 					{
 						software_id: endevor.id,
 						software_version_id: endevorV18R2M0.id,
-						required: false,
 						order_index: 3,
 						created_at: new Date()
 					}
@@ -242,14 +239,12 @@ async function main() {
 					{
 						software_id: cics.id,
 						software_version_id: cicsV5R5M0.id,
-						required: true,
 						order_index: 1,
 						created_at: new Date()
 					},
 					{
 						software_id: db2.id,
 						software_version_id: db2V12R1M0.id,
-						required: true,
 						order_index: 2,
 						created_at: new Date()
 					}

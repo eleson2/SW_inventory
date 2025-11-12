@@ -44,9 +44,7 @@ export function validateLparPackageCompliance(
 		);
 
 		if (!installed) {
-			if (packageItem.required) {
-				missingSoftware.push(packageItem);
-			}
+			missingSoftware.push(packageItem);
 		} else {
 			// Check if version is compatible - compare installed version with package requirement
 			// Package items reference software_version via software_version_id

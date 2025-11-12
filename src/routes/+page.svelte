@@ -94,7 +94,9 @@
 											<a href="/software/{version.software.id}" class="hover:underline font-medium">
 												{version.software.name} {version.version}
 											</a>
-											<span class="text-amber-600"> - ends {formatDate(version.end_of_support)}</span>
+											{#if version.end_of_support}
+												<span class="text-amber-600"> - ends {formatDate(version.end_of_support)}</span>
+											{/if}
 										</li>
 									{/each}
 								</ul>

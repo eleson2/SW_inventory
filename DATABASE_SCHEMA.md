@@ -126,9 +126,7 @@ CREATE TABLE package_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   package_id UUID NOT NULL REFERENCES packages(id) ON DELETE CASCADE,
   software_id UUID NOT NULL REFERENCES software(id) ON DELETE RESTRICT,
-  version VARCHAR(50) NOT NULL,
-  ptf_level VARCHAR(50),
-  required BOOLEAN NOT NULL DEFAULT true,
+  software_version_id UUID NOT NULL REFERENCES software_versions(id) ON DELETE RESTRICT,
   order_index INTEGER NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -318,17 +316,16 @@ model Package {
 }
 
 model PackageItem {
-  id         String   @id @default(uuid())
-  packageId  String   @map("package_id")
-  softwareId String   @map("software_id")
-  version    String   @db.VarChar(50)
-  ptfLevel   String?  @map("ptf_level") @db.VarChar(50)
-  required   Boolean  @default(true)
-  orderIndex Int      @map("order_index")
-  createdAt  DateTime @default(now()) @map("created_at")
+  id                String          @id @default(uuid())
+  packageId         String          @map("package_id")
+  softwareId        String          @map("software_id")
+  softwareVersionId String          @map("software_version_id")
+  orderIndex        Int             @map("order_index")
+  createdAt         DateTime        @default(now()) @map("created_at")
 
-  package  Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  software Software @relation(fields: [softwareId], references: [id], onDelete: Restrict)
+  package         Package         @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  software        Software        @relation(fields: [softwareId], references: [id], onDelete: Restrict)
+  softwareVersion SoftwareVersion @relation(fields: [softwareVersionId], references: [id], onDelete: Restrict)
 
   @@unique([packageId, softwareId])
   @@index([packageId])
@@ -434,15 +431,15 @@ SELECT
     json_build_object(
       'software_id', pi.software_id,
       'software_name', s.name,
-      'version', pi.version,
-      'ptf_level', pi.ptf_level,
-      'required', pi.required,
+      'version', sv.version,
+      'ptf_level', sv.ptf_level,
       'order', pi.order_index
     ) ORDER BY pi.order_index
   ) as items
 FROM packages p
 LEFT JOIN package_items pi ON p.id = pi.package_id
 LEFT JOIN software s ON pi.software_id = s.id
+LEFT JOIN software_versions sv ON pi.software_version_id = sv.id
 WHERE p.id = $1
 GROUP BY p.id;
 ```

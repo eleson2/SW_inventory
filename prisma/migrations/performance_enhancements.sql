@@ -14,7 +14,7 @@ CREATE INDEX IF NOT EXISTS idx_lpar_software_composite
   ON lpar_software(lpar_id, software_id, rolled_back);
 
 CREATE INDEX IF NOT EXISTS idx_package_items_software_version
-  ON package_items(software_id, version, ptf_level);
+  ON package_items(software_id, software_version_id);
 
 -- GIN index for JSONB columns (fast JSON queries)
 CREATE INDEX IF NOT EXISTS idx_software_version_history_gin
@@ -52,7 +52,7 @@ DECLARE
   total_items INTEGER;
   compatible_items INTEGER;
 BEGIN
-  -- Count total required items in package
+  -- Count total items in package
   SELECT COUNT(*)
   INTO total_items
   FROM package_items
@@ -194,18 +194,14 @@ BEGIN
     INSERT INTO package_items (
       package_id,
       software_id,
-      version,
-      ptf_level,
-      required,
+      software_version_id,
       order_index,
       created_at
     )
     VALUES (
       new_package_id,
       item_record.software_id,
-      item_record.version,
-      item_record.ptf_level,
-      item_record.required,
+      item_record.software_version_id,
       item_record.order_index,
       NOW()
     );

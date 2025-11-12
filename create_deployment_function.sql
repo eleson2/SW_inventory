@@ -9,8 +9,7 @@ RETURNS TABLE (
     current_ptf_level VARCHAR(50),
     new_version VARCHAR(50),
     new_ptf_level VARCHAR(50),
-    change_type VARCHAR(20),
-    required BOOLEAN
+    change_type VARCHAR(20)
 ) AS $$
 BEGIN
     RETURN QUERY
@@ -20,8 +19,7 @@ BEGIN
             pi.software_id,
             s.name AS software_name,
             sv.version AS pkg_version,
-            sv.ptf_level AS pkg_ptf_level,
-            pi.required
+            sv.ptf_level AS pkg_ptf_level
         FROM package_items pi
         INNER JOIN software s ON pi.software_id = s.id
         INNER JOIN software_versions sv ON pi.software_version_id = sv.id
@@ -50,8 +48,7 @@ BEGIN
                  COALESCE(cs.current_ptf_level, '') != COALESCE(ps.pkg_ptf_level, '')
             THEN 'UPGRADE'::VARCHAR(20)
             ELSE 'NO_CHANGE'::VARCHAR(20)
-        END,
-        ps.required
+        END
     FROM package_software ps
     FULL OUTER JOIN current_software cs ON ps.software_id = cs.software_id
     WHERE ps.software_id IS NOT NULL OR cs.software_id IS NOT NULL

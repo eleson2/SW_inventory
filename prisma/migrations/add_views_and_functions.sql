@@ -34,7 +34,7 @@ COMMENT ON VIEW software_with_current_version IS 'Denormalized view combining so
 
 -- ----------------------------------------------------------------------------
 -- VIEW: lpar_package_compliance
--- Purpose: Check if LPARs have all required software from their assigned package
+-- Purpose: Check if LPARs have all software from their assigned package
 -- Use Case: Compliance reporting, identifying out-of-sync LPARs
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE VIEW lpar_package_compliance AS
@@ -53,7 +53,6 @@ WITH lpar_expected AS (
         s.name AS software_name,
         sv.version AS expected_version,
         sv.ptf_level AS expected_ptf_level,
-        pi.required,
         pi.order_index
     FROM lpars l
     INNER JOIN customers c ON l.customer_id = c.id
@@ -87,15 +86,13 @@ SELECT
     le.software_name,
     le.expected_version,
     le.expected_ptf_level,
-    le.required,
     la.current_version AS installed_version,
     la.current_ptf_level AS installed_ptf_level,
     la.rolled_back,
     la.installed_date,
     -- Compliance flags
     CASE
-        WHEN la.software_id IS NULL AND le.required = true THEN 'MISSING_REQUIRED'
-        WHEN la.software_id IS NULL AND le.required = false THEN 'MISSING_OPTIONAL'
+        WHEN la.software_id IS NULL THEN 'MISSING'
         WHEN la.current_version != le.expected_version THEN 'VERSION_MISMATCH'
         WHEN la.current_ptf_level != le.expected_ptf_level THEN 'PTF_MISMATCH'
         WHEN la.rolled_back = true THEN 'ROLLED_BACK'
@@ -103,7 +100,7 @@ SELECT
     END AS compliance_status,
     -- Priority for sorting
     CASE
-        WHEN la.software_id IS NULL AND le.required = true THEN 1
+        WHEN la.software_id IS NULL THEN 1
         WHEN la.rolled_back = true THEN 2
         WHEN la.current_version != le.expected_version THEN 3
         WHEN la.current_ptf_level != le.expected_ptf_level THEN 4
@@ -350,8 +347,7 @@ RETURNS TABLE (
     current_ptf_level VARCHAR(50),
     new_version VARCHAR(50),
     new_ptf_level VARCHAR(50),
-    change_type VARCHAR(20),
-    required BOOLEAN
+    change_type VARCHAR(20)
 ) AS $$
 BEGIN
     RETURN QUERY
@@ -361,8 +357,7 @@ BEGIN
             pi.software_id,
             s.name AS software_name,
             sv.version AS pkg_version,
-            sv.ptf_level AS pkg_ptf_level,
-            pi.required
+            sv.ptf_level AS pkg_ptf_level
         FROM package_items pi
         INNER JOIN software s ON pi.software_id = s.id
         INNER JOIN software_versions sv ON pi.software_version_id = sv.id
@@ -391,8 +386,7 @@ BEGIN
                  COALESCE(cs.current_ptf_level, '') != COALESCE(ps.pkg_ptf_level, '')
             THEN 'UPGRADE'::VARCHAR(20)
             ELSE 'NO_CHANGE'::VARCHAR(20)
-        END,
-        ps.required
+        END
     FROM package_software ps
     FULL OUTER JOIN current_software cs ON ps.software_id = cs.software_id
     WHERE ps.software_id IS NOT NULL OR cs.software_id IS NOT NULL

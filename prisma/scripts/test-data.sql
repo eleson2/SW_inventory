@@ -285,58 +285,53 @@ END $$;
 -- ============================================================================
 
 -- Package 2025 Q1 Items
-INSERT INTO package_items (id, package_id, software_id, software_version_id, required, order_index, created_at)
+INSERT INTO package_items (id, package_id, software_id, software_version_id, order_index, created_at)
 SELECT
     gen_random_uuid(),
     package_2025q1_id,
     cics_id,
     cics_v5r6m0_id,
-    true,
     1,
     NOW()
 FROM temp_ids;
 
-INSERT INTO package_items (id, package_id, software_id, software_version_id, required, order_index, created_at)
+INSERT INTO package_items (id, package_id, software_id, software_version_id, order_index, created_at)
 SELECT
     gen_random_uuid(),
     package_2025q1_id,
     db2_id,
     db2_v13r1m0_id,
-    true,
     2,
     NOW()
 FROM temp_ids;
 
-INSERT INTO package_items (id, package_id, software_id, software_version_id, required, order_index, created_at)
+INSERT INTO package_items (id, package_id, software_id, software_version_id, order_index, created_at)
 SELECT
     gen_random_uuid(),
     package_2025q1_id,
     endevor_id,
     endevor_v18r2m0_id,
-    false,
     3,
     NOW()
 FROM temp_ids;
 
 -- Package 2024 Q4 Items
-INSERT INTO package_items (id, package_id, software_id, software_version_id, required, order_index, created_at)
+INSERT INTO package_items (id, package_id, software_id, software_version_id, order_index, created_at)
 SELECT
     gen_random_uuid(),
     package_2024q4_id,
     cics_id,
     cics_v5r5m0_id,
-    true,
     1,
     NOW()
 FROM temp_ids;
 
-INSERT INTO package_items (id, package_id, software_id, software_version_id, required, order_index, created_at)
+INSERT INTO package_items (id, package_id, software_id, software_version_id, order_index, created_at)
 SELECT
     gen_random_uuid(),
     package_2024q4_id,
     db2_id,
     db2_v12r1m0_id,
-    true,
     2,
     NOW()
 FROM temp_ids;

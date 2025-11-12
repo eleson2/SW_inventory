@@ -143,7 +143,6 @@ ${source.description || ''}`.trim(),
 					package_id: newPackage.id,
 					software_id: item.software_id,
 					software_version_id: item.software_version_id,
-					required: item.required,
 					order_index: item.order_index
 				}
 			});

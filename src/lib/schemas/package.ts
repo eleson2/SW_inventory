@@ -9,7 +9,6 @@ export const packageItemSchema = z.object({
 	id: z.string().uuid().optional(), // Optional for new items
 	software_id: z.string().uuid('Invalid software ID'),
 	software_version_id: z.string().uuid('Invalid version ID'),
-	required: z.boolean().default(true), // Whether this item is required
 	order_index: z.number().int().min(0, 'Order index must be non-negative'), // Installation order
 	_action: z.enum(['keep', 'delete']).optional() // Track item state for deletion
 });

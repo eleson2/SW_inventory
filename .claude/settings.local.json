@@ -119,7 +119,18 @@
       "Bash(for route in \"activity\" \"vendors/new\" \"customers/new\" \"software/new\" \"lpars/new\" \"packages/new\")",
       "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -f \"D:\\proj\\SW_inventory\\SW_inventory\\prisma\\scripts\\import-ibm-products.sql\")",
       "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"SELECT COUNT(*) as count FROM software WHERE vendor_id IN (SELECT id FROM vendors WHERE code=''IBM'');\" -t)",
-      "Bash(del test-db.mjs check-and-import.mjs)"
+      "Bash(del test-db.mjs check-and-import.mjs)",
+      "Bash(Select-Object -First 100)",
+      "Bash(export NODE_OPTIONS=\"--max-old-space-size=8192\")",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -f prisma/migrations/remove_required_field.sql)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"ALTER TABLE package_items DROP COLUMN IF EXISTS required;\" -t)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"DROP MATERIALIZED VIEW IF EXISTS lpar_dashboard CASCADE; DROP VIEW IF EXISTS lpar_package_compliance CASCADE; ALTER TABLE package_items DROP COLUMN IF EXISTS required;\" -t)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -c \"DROP MATERIALIZED VIEW IF EXISTS lpar_dashboard CASCADE;\")",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -d sw_inventory -f remove_required_simple.sql)",
+      "Bash(cmd /c run-migration.bat:*)",
+      "Bash(set PGPASSWORD=your_password:*)",
+      "Bash(del migrate-remove-required.mjs verify-migration.mjs run-migration.bat)",
+      "Bash(cmd /c del migrate-remove-required.mjs verify-migration.mjs run-migration.bat 2)"
     ],
     "deny": [],
     "ask": []

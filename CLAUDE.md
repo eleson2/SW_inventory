@@ -143,7 +143,6 @@ $schemas      → src/lib/schemas
 Coordinated software releases containing multiple products tested together:
 - Include ALL software the service provider manages
 - Each item has specific version and PTF level
-- Items marked as `required` or optional
 - `order_index` determines installation order
 
 ### LPARs (Logical Partitions)

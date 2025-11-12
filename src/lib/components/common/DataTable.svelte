@@ -41,22 +41,22 @@
 	} = $props();
 
 	// Column filters state - initialized from URL
-	const initialFilters = $derived(() => {
+	function getInitialFilters() {
 		const filters: Record<string, string> = {};
 		if (typeof window !== 'undefined') {
 			const urlParams = new URLSearchParams(window.location.search);
 			columns.forEach(col => {
-				const filterParam = `col_${col.key}`;
+				const filterParam = `col_${String(col.key)}`;
 				const value = urlParams.get(filterParam);
 				if (value) {
-					filters[col.key as string] = value;
+					filters[String(col.key)] = value;
 				}
 			});
 		}
 		return filters;
-	});
+	}
 
-	let columnFilters = $state<Record<string, string>>(initialFilters());
+	let columnFilters = $state<Record<string, string>>(getInitialFilters());
 	let debounceTimeouts = $state<Record<string, ReturnType<typeof setTimeout>>>({});
 
 	function handleColumnFilterChange(columnKey: string, value: string) {
