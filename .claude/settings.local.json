@@ -130,7 +130,20 @@
       "Bash(cmd /c run-migration.bat:*)",
       "Bash(set PGPASSWORD=your_password:*)",
       "Bash(del migrate-remove-required.mjs verify-migration.mjs run-migration.bat)",
-      "Bash(cmd /c del migrate-remove-required.mjs verify-migration.mjs run-migration.bat 2)"
+      "Bash(cmd /c del migrate-remove-required.mjs verify-migration.mjs run-migration.bat 2)",
+      "Bash(wc:*)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -c \"DROP DATABASE IF EXISTS sw_inventory_test;\" -t)",
+      "Bash(\"I:\\Program Files\\PostgreSQL\\18\\bin\\psql\" -U postgres -c \"CREATE DATABASE sw_inventory_test;\" -t)",
+      "Bash(npm run test:unit:*)",
+      "Bash(npx playwright install:*)",
+      "Bash(del srclibutilsformatters.test.ts 2)",
+      "Bash(set:*)",
+      "Bash($env:DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/sw_inventory_test?schema=public\")",
+      "Bash(Select-Object -Last 30)",
+      "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=yes DATABASE_URL=postgresql://postgres:postgres@localhost:5432/sw_inventory_test?schema=public npx prisma db push:*)",
+      "Bash(npm run test:integration:*)",
+      "Bash(TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/sw_inventory_test?schema=public:*)",
+      "Bash(npx vitest:*)"
     ],
     "deny": [],
     "ask": []
