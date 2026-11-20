@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail, redirect, isRedirect } from '@sveltejs/kit';
 import { softwareWithVersionsSchema } from '#lib/schemas/software.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
 
@@ -161,6 +161,8 @@ export const actions: Actions = {
 			// Otherwise redirect to software list
 			redirect(303, '/software');
 		} catch (error) {
+			if (isRedirect(error)) throw error;
+
 			console.error('Error creating software:', error);
 			return fail(500, { form });
 		}

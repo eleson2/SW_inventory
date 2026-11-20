@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { lparSchema } from '#lib/schemas/index.ts';
 import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail, redirect, isRedirect } from '@sveltejs/kit';
 import { serverValidate } from '#lib/utils/superforms.ts';
 
 // Load customers, packages, and all LPARs for dropdowns
@@ -123,6 +123,8 @@ export const actions: Actions = {
 			// Otherwise redirect to lpars list
 			redirect(303, '/lpars');
 		} catch (error) {
+			if (isRedirect(error)) throw error;
+
 			console.error('Error creating LPAR:', error);
 			return fail(500, { form });
 		}

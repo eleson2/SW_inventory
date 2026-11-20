@@ -43,8 +43,8 @@ test.describe('Vendor Management', () => {
 		await page.goto('/vendors');
 
 		// Click edit button on first vendor (assumes there's at least one)
-		await page.click('a[href*="/vendors/"][href$="/edit"]').first();
-		await expect(page.url()).toContain('/edit');
+		await page.locator('a[href*="/vendors/"][href$="/edit"]').first().click();
+		await expect(page).toHaveURL(/\/edit/);
 
 		// Update the website
 		await page.fill('input[name="website"]', 'https://updated.example.com');
@@ -101,7 +101,7 @@ test.describe('Vendor Management', () => {
 		await page.goto('/vendors');
 
 		// Click on a vendor to view details
-		await page.click('tbody tr a').first();
+		await page.locator('tbody tr a').first().click();
 
 		// Click edit
 		await page.click('text=Edit');

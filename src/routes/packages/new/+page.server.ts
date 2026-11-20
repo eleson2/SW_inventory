@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail, redirect, isRedirect } from '@sveltejs/kit';
 import { packageWithItemsSchema } from '#lib/schemas/package.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
 
@@ -122,7 +122,6 @@ export const actions: Actions = {
 								package_id: pkg.id,
 								software_id: item.software_id,
 								software_version_id: item.software_version_id,
-								required: item.required,
 								order_index: item.order_index
 							}
 						});
@@ -146,6 +145,8 @@ export const actions: Actions = {
 			// Redirect to packages list
 			redirect(303, '/packages');
 		} catch (err) {
+			if (isRedirect(err)) throw err;
+
 			console.error('Error creating package:', err);
 			return fail(500, { form });
 		}

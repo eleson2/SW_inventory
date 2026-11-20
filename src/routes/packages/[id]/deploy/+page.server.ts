@@ -61,23 +61,66 @@ export const load: PageServerLoad = async ({ params }) => {
 					name: true,
 					version: true
 				}
+			},
+			lpar_software: {
+				select: { software_id: true, current_version: true, current_ptf_level: true }
 			}
 		},
 		orderBy: { name: 'asc' }
 	});
 
+	// Compare each LPAR's installed software with the package contents
+	const lparsWithStatus = lpars.map(({ lpar_software, ...lpar }) => {
+		const installed = new Map(lpar_software.map((ls) => [ls.software_id, ls]));
+		let changesNeeded = 0;
+		let newInstalls = 0;
+		for (const item of pkg.package_items) {
+			const current = installed.get(item.software_id);
+			if (!current) {
+				newInstalls++;
+			} else if (
+				current.current_version !== item.software_version.version ||
+				(current.current_ptf_level || null) !== (item.software_version.ptf_level || null)
+			) {
+				changesNeeded++;
+			}
+		}
+		return {
+			...lpar,
+			changesNeeded,
+			newInstalls,
+			isCompliant: changesNeeded === 0 && newInstalls === 0
+		};
+	});
+
 	return {
 		form,
 		package: pkg,
-		lpars
+		lpars: lparsWithStatus
 	};
 };
+
+const lparIdsSchema = z.array(z.string().uuid()).min(1);
+
+/** Parse the JSON-encoded lpar_ids field; returns null when missing or invalid */
+function parseLparIds(formData: FormData): string[] | null {
+	try {
+		const parsed = lparIdsSchema.safeParse(JSON.parse(String(formData.get('lpar_ids') ?? '')));
+		return parsed.success ? parsed.data : null;
+	} catch {
+		return null;
+	}
+}
+
+type DeployResult = { lparId: string; lparName?: string; status: 'success' | 'error'; error?: string };
 
 export const actions: Actions = {
 	// Preview deployment impact for selected LPARs
 	preview: async ({ params, request }) => {
-		const formData = await request.formData();
-		const lparIds = JSON.parse(formData.get('lpar_ids') as string) as string[];
+		const lparIds = parseLparIds(await request.formData());
+		if (!lparIds) {
+			return fail(400, { success: false, message: 'Select at least one valid LPAR', previews: [] });
+		}
 
 		// Use database function to check impact for each LPAR
 		const previews = await Promise.all(
@@ -91,7 +134,6 @@ export const actions: Actions = {
 						new_version: string;
 						new_ptf_level: string | null;
 						change_type: string;
-						required: boolean;
 					}>>`
 						SELECT * FROM check_package_deployment_impact(
 							${lparId}::uuid,
@@ -153,8 +195,19 @@ export const actions: Actions = {
 
 	// Optimized deployment using Prisma batch operations
 	deploy: async ({ params, request }) => {
-		const formData = await request.formData();
-		const lparIds = JSON.parse(formData.get('lpar_ids') as string) as string[];
+		const lparIds = parseLparIds(await request.formData());
+		if (!lparIds) {
+			return fail(400, {
+				success: false,
+				message: 'Select at least one valid LPAR',
+				results: [] as DeployResult[]
+			});
+		}
+		const lparNames = new Map(
+			(await db.lpars.findMany({ where: { id: { in: lparIds } }, select: { id: true, name: true } })).map(
+				(l) => [l.id, l.name]
+			)
+		);
 
 		console.log('[DEPLOY] Starting deployment for package:', params.id);
 		console.log('[DEPLOY] Target LPARs:', lparIds);
@@ -283,15 +336,21 @@ export const actions: Actions = {
 			return {
 				success: true,
 				message: `Successfully deployed package to ${lparIds.length} LPAR(s)`,
-				results: lparIds.map(id => ({ lparId: id, status: 'success' }))
+				results: lparIds.map(
+					(id): DeployResult => ({ lparId: id, lparName: lparNames.get(id), status: 'success' })
+				)
 			};
 		} catch (error) {
 			console.error('[DEPLOY] Deployment error:', error);
 			console.timeEnd('Total Deployment');
+			const message = error instanceof Error ? error.message : 'Deployment failed';
 			return fail(500, {
 				success: false,
-				message: error instanceof Error ? error.message : 'Deployment failed',
-				results: []
+				message: 'Deployment failed; no LPARs were changed',
+				// The deployment runs in a single transaction, so every LPAR failed together
+				results: lparIds.map(
+					(id): DeployResult => ({ lparId: id, lparName: lparNames.get(id), status: 'error', error: message })
+				)
 			});
 		}
 	}

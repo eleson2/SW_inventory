@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
-	import { enhance } from '$app/forms';
+	import { deserialize, enhance } from '$app/forms';
 	import Card from '#lib/components/ui/Card.svelte';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Badge from '#lib/components/ui/Badge.svelte';
@@ -77,18 +77,11 @@
 				})
 			});
 
-			const result = await response.json();
+			// Action responses are devalue-encoded; deserialize() decodes them
+			const result = deserialize(await response.text());
 
-			// SvelteKit wraps form action responses
-			if (result.type === 'success' && result.data) {
-				// Extract data - handle both direct object and devalue-serialized array
-				const data = Array.isArray(result.data) ? result.data[0] : result.data;
-
-				if (data?.success && data?.previews) {
-					previewData = data.previews;
-				} else {
-					previewData = null;
-				}
+			if (result.type === 'success' && result.data?.success && result.data.previews) {
+				previewData = result.data.previews;
 			} else {
 				previewData = null;
 			}
@@ -409,7 +402,7 @@
 							<span class={result.status === 'success' ? 'text-green-600' : 'text-destructive'}>
 								{result.status === 'success' ? '✓' : '✗'}
 							</span>
-							<span>LPAR: {result.lparId}</span>
+							<span>LPAR: {result.lparName ?? result.lparId}</span>
 							{#if result.error}
 								<span class="text-destructive">- {result.error}</span>
 							{/if}

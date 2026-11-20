@@ -44,7 +44,6 @@
 			id: item.id,
 			software_id: item.software_id,
 			software_version_id: item.software_version_id,
-			required: item.required,
 			order_index: item.order_index
 		}))
 	);
@@ -83,7 +82,7 @@
 					bind:value={formData.name}
 					required
 					placeholder="Enter package name"
-					error={form?.errors?.name?.[0]}
+					error={form?.form?.errors?.name?.[0]}
 				/>
 
 				<div class="grid grid-cols-2 gap-4">
@@ -95,7 +94,7 @@
 						required
 						placeholder="PKG-CODE"
 						helperText="Uppercase alphanumeric with dashes/underscores"
-						error={form?.errors?.code?.[0]}
+						error={form?.form?.errors?.code?.[0]}
 					/>
 
 					<FormField
@@ -105,7 +104,7 @@
 						bind:value={formData.version}
 						required
 						placeholder="e.g., 2025.1.0"
-						error={form?.errors?.version?.[0]}
+						error={form?.form?.errors?.version?.[0]}
 					/>
 				</div>
 
@@ -116,7 +115,7 @@
 					type="date"
 					bind:value={formData.release_date}
 					required
-					error={form?.errors?.release_date?.[0]}
+					error={form?.form?.errors?.release_date?.[0]}
 				/>
 
 				<FormTextarea
@@ -141,14 +140,13 @@
 			<PackageItemsManager
 				bind:items={packageItems}
 				allSoftware={data.allSoftware}
-				errors={form?.errors}
 			/>
 		</Card>
 
 		<!-- Form Actions -->
 		<Card class="p-6">
 			<div class="space-y-4">
-				<FormErrorMessage message={form?.message} />
+				<FormErrorMessage message={(form as { message?: string } | null)?.message} />
 				<FormButtons loading={submitting} />
 			</div>
 		</Card>

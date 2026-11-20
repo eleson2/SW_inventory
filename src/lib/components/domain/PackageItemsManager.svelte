@@ -46,7 +46,8 @@
 	function addItem() {
 		items.push({
 			software_id: '',
-			software_version_id: ''
+			software_version_id: '',
+			order_index: items.length
 		});
 		editingIndex = items.length - 1;
 	}

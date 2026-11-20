@@ -7,12 +7,12 @@ test.describe('Package Deployment Flow', () => {
 		await expect(page.locator('h1')).toContainText('Packages');
 
 		// 2. Click on a package to deploy
-		await page.click('tbody tr a').first();
-		await expect(page.url()).toContain('/packages/');
+		await page.locator('tbody tr a').first().click();
+		await expect(page).toHaveURL(/\/packages\//);
 
 		// 3. Click Deploy button
-		await page.click('text=Deploy Package').or(page.click('button:has-text("Deploy")'));
-		await expect(page.url()).toContain('/deploy');
+		await page.locator('text=Deploy Package').or(page.locator('button:has-text("Deploy")')).first().click();
+		await expect(page).toHaveURL(/\/deploy/);
 
 		// 4. Should see package details
 		await expect(page.locator('h1').or(page.locator('h2'))).toContainText('Deploy');
@@ -50,7 +50,7 @@ test.describe('Package Deployment Flow', () => {
 		await page.goto('/packages');
 
 		// Click on first package
-		await page.click('tbody tr a').first();
+		await page.locator('tbody tr a').first().click();
 
 		// Go to deploy
 		await page.click('text=Deploy');
@@ -74,7 +74,7 @@ test.describe('Package Deployment Flow', () => {
 		await page.goto('/packages');
 
 		// Navigate to deploy page
-		await page.click('tbody tr a').first();
+		await page.locator('tbody tr a').first().click();
 		await page.click('text=Deploy');
 
 		// Try to confirm without selecting any LPARs
@@ -91,12 +91,12 @@ test.describe('Package Deployment Flow', () => {
 		await page.goto('/packages');
 
 		// Navigate to deploy
-		await page.click('tbody tr a').first();
+		await page.locator('tbody tr a').first().click();
 		const packageUrl = page.url();
 		await page.click('text=Deploy');
 
 		// Click cancel
-		await page.click('text=Cancel').or(page.click('button:has-text("Cancel")'));
+		await page.locator('text=Cancel').or(page.locator('button:has-text("Cancel")')).first().click();
 
 		// Should return to package detail
 		await expect(page).toHaveURL(packageUrl);
@@ -109,8 +109,8 @@ test.describe('Software Rollback', () => {
 		await page.goto('/lpars');
 
 		// Click on an LPAR that has software installed
-		await page.click('tbody tr a').first();
-		await expect(page.url()).toContain('/lpars/');
+		await page.locator('tbody tr a').first().click();
+		await expect(page).toHaveURL(/\/lpars\//);
 
 		// Find a software item with rollback capability
 		const rollbackButton = page.locator('button:has-text("Rollback")');
@@ -177,7 +177,7 @@ test.describe('Regression: Critical Paths', () => {
 		await page.waitForTimeout(500);
 
 		// Click on a vendor
-		await page.click('tbody tr a').first();
+		await page.locator('tbody tr a').first().click();
 
 		// Go back
 		await page.goBack();

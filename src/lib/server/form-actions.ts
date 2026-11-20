@@ -5,7 +5,7 @@
 
 import type { RequestEvent } from '@sveltejs/kit';
 import type { z } from 'zod';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail, redirect, isRedirect } from '@sveltejs/kit';
 import { serverValidate } from '#lib/utils/superforms.ts';
 import { checkUniqueConstraint, createAuditLog } from '#lib/server/db.ts';
 
@@ -119,6 +119,8 @@ export function createFormAction<T extends z.ZodObject>(
 			// Redirect to specified path
 			redirect(303, config.redirectPath(record.id));
 		} catch (error) {
+			if (isRedirect(error)) throw error;
+
 			console.error(`Error creating ${config.entityType}:`, error);
 			return fail(500, { form });
 		}
@@ -232,6 +234,8 @@ export function createUpdateFormAction<T extends z.ZodObject>(
 			// Redirect to specified path
 			redirect(303, config.redirectPath(record.id));
 		} catch (error) {
+			if (isRedirect(error)) throw error;
+
 			console.error(`Error updating ${config.entityType}:`, error);
 			return fail(500, { form });
 		}

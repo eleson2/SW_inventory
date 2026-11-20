@@ -3,6 +3,7 @@ import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
 import { fail, redirect, error } from '@sveltejs/kit';
 import { lparWithSoftwareSchema } from '#lib/schemas/lpar.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
+import { validateMasterDetailForm } from '#lib/server/master-detail-form.ts';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const [lpar, customers, packages, allSoftware] = await Promise.all([
@@ -66,7 +67,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			software_installations: lpar.lpar_software.map(ls => ({
 				id: ls.id,
 				software_id: ls.software_id,
-				software_version_id: ls.software_id, // This should map to a version ID
+				software_version_id: findVersionId(allSoftware, ls.software_id, ls.current_version, ls.current_ptf_level),
 				installed_date: ls.installed_date,
 				_action: 'keep' as const
 			}))
@@ -83,129 +84,131 @@ export const load: PageServerLoad = async ({ params }) => {
 	};
 };
 
+type SoftwareWithVersions = { id: string; versions: { id: string; version: string; ptf_level: string | null }[] };
+
+/** lpar_software stores version/PTF strings; map them back to a software_versions id */
+function findVersionId(
+	allSoftware: SoftwareWithVersions[],
+	softwareId: string,
+	version: string,
+	ptfLevel: string | null
+): string {
+	const software = allSoftware.find((s) => s.id === softwareId);
+	const match = software?.versions.find(
+		(v) => v.version === version && (v.ptf_level || null) === (ptfLevel || null)
+	);
+	return match?.id ?? '';
+}
+
 export const actions: Actions = {
-	default: async (event) => {
-		// Use Superforms to validate form data
-		const form = await serverValidate(event, lparWithSoftwareSchema);
+	default: async ({ request, params }) => {
+		const form = await validateMasterDetailForm(request, lparWithSoftwareSchema, ['software_installations']);
 
 		if (!form.valid) {
 			return fail(400, { form });
 		}
 
 		// Check unique code using helper
-		const uniqueCheck = await checkUniqueConstraint(db.lpars, 'code', form.data.code, event.params.id);
+		const uniqueCheck = await checkUniqueConstraint(db.lpars, 'code', form.data.code, params.id);
 		if (uniqueCheck.exists) {
 			return fail(400, {
 				form: {
 					...form,
-					errors: { ...form.errors, code: { _errors: [uniqueCheck.error!] } }
+					errors: { ...form.errors, code: [uniqueCheck.error!] }
 				}
 			});
 		}
 
 		const validated = form.data;
 
-		try {
-			// Get existing LPAR for audit
-			const existingLpar = await db.lpars.findUnique({
-				where: { id: event.params.id },
-				include: { lpar_software: true }
-			});
+		const existingLpar = await db.lpars.findUnique({
+			where: { id: params.id },
+			include: { lpar_software: true }
+		});
+		if (!existingLpar) {
+			throw error(404, 'LPAR not found');
+		}
 
-			// Use transaction for atomicity
+		try {
 			await db.$transaction(async (tx) => {
 				// Update LPAR master data
 				await tx.lpars.update({
-					where: { id: event.params.id },
+					where: { id: params.id },
 					data: {
-						name: validated.data.name,
-						code: validated.data.code,
-						customer_id: validated.data.customer_id,
-						description: validated.data.description || null,
-						current_package_id: validated.data.current_package_id || null,
-						active: validated.data.active
+						name: validated.name,
+						code: validated.code,
+						customer_id: validated.customer_id,
+						description: validated.description || null,
+						current_package_id: validated.current_package_id || null,
+						active: validated.active
 					}
 				});
 
-				// Handle software installations
-				if (validated.data.software_installations) {
-					const existingInstallIds = existingLpar?.lpar_software.map(ls => ls.id) || [];
-					const incomingInstallIds = validated.data.software_installations
-						.filter(inst => inst.id)
-						.map(inst => inst.id) as string[];
+				const kept = validated.software_installations.filter((inst) => inst._action !== 'delete');
+				const keptIds = kept.filter((inst) => inst.id).map((inst) => inst.id as string);
 
-					// Delete removed installations
-					const installsToDelete = existingInstallIds.filter(id => !incomingInstallIds.includes(id));
-					if (installsToDelete.length > 0) {
-						await tx.lpar_software.deleteMany({
-							where: {
-								id: { in: installsToDelete },
-								lpar_id: event.params.id
-							}
-						});
-					}
-
-					// Upsert installations
-					for (const installation of validated.data.software_installations) {
-						if (installation._action === 'delete') continue;
-
-						// Get version details to store denormalized data
-						const version = await tx.software_versions.findUnique({
-							where: { id: installation.software_version_id },
-							select: { version: true, ptf_level: true }
-						});
-
-						if (!version) {
-							throw new Error(`Invalid version ID: ${installation.software_version_id}`);
-						}
-
-						const installData = {
-							lpar_id: event.params.id,
-							software_id: installation.software_id,
-							current_version: version.version,
-							current_ptf_level: version.ptf_level,
-							installed_date: installation.installed_date,
-							rolled_back: false
-						};
-
-						if (installation.id) {
-							// Update existing
-							await tx.lpar_software.update({
-								where: { id: installation.id },
-								data: installData
-							});
-						} else {
-							// Create new
-							await tx.lpar_software.create({
-								data: installData
-							});
-						}
-					}
+				// Delete installations that were removed or marked for deletion
+				const installsToDelete = existingLpar.lpar_software
+					.map((ls) => ls.id)
+					.filter((id) => !keptIds.includes(id));
+				if (installsToDelete.length > 0) {
+					await tx.lpar_software.deleteMany({
+						where: { id: { in: installsToDelete }, lpar_id: params.id }
+					});
 				}
 
-				// Create audit log
-				await createAuditLog(
-					'lpar',
-					event.params.id,
-					'update',
-					{
-						before: existingLpar,
-						after: {
-							...validated,
-							installations_count: validated.software_installations?.length || 0
-						}
+				for (const installation of kept) {
+					const version = await tx.software_versions.findFirst({
+						where: { id: installation.software_version_id, software_id: installation.software_id },
+						select: { version: true, ptf_level: true }
+					});
+					if (!version) {
+						throw new Error(`Invalid version ID: ${installation.software_version_id}`);
 					}
-				);
+
+					const existing = installation.id
+						? existingLpar.lpar_software.find((ls) => ls.id === installation.id)
+						: undefined;
+					const versionChanged =
+						existing &&
+						(existing.current_version !== version.version ||
+							(existing.current_ptf_level || null) !== (version.ptf_level || null));
+
+					const installData = {
+						lpar_id: params.id,
+						software_id: installation.software_id,
+						current_version: version.version,
+						current_ptf_level: version.ptf_level,
+						installed_date: installation.installed_date,
+						// Keep version history and rollback state unless the version actually changed
+						...(versionChanged
+							? {
+									previous_version: existing.current_version,
+									previous_ptf_level: existing.current_ptf_level,
+									rolled_back: false,
+									rolled_back_at: null,
+									rollback_reason: null
+								}
+							: {})
+					};
+
+					if (existing) {
+						await tx.lpar_software.update({ where: { id: existing.id }, data: installData });
+					} else {
+						await tx.lpar_software.create({ data: installData });
+					}
+				}
 			});
 
-			throw redirect(303, '/lpars');
+			await createAuditLog('lpar', params.id, 'update', {
+				before: existingLpar,
+				after: { ...validated, installations_count: validated.software_installations.length }
+			});
 		} catch (err) {
-			if (err instanceof Error && err.message.includes('redirect')) {
-				throw err;
-			}
-
 			console.error('Error updating LPAR:', err);
-			return fail(500, { form });
+			return fail(500, { form, message: 'Failed to update LPAR' });
 		}
+
+		redirect(303, '/lpars');
 	}
 };

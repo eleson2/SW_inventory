@@ -1,8 +1,9 @@
 import type { PageServerLoad, Actions } from './$types';
-import { error, redirect, fail } from '@sveltejs/kit';
+import { error, redirect, fail, isRedirect } from '@sveltejs/kit';
 import { db, createAuditLog } from '#lib/server/db.ts';
 import { packageUpdateSchema } from '#lib/schemas/package.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
+import { validateMasterDetailForm } from '#lib/server/master-detail-form.ts';
 
 /**
  * Load package with items, plus all software and their versions for dropdowns
@@ -59,7 +60,6 @@ export const load: PageServerLoad = async ({ params }) => {
 				id: item.id,
 				software_id: item.software_id,
 				software_version_id: item.software_version_id,
-				required: item.required,
 				order_index: item.order_index,
 				_action: 'keep' as const
 			}))
@@ -80,7 +80,7 @@ export const load: PageServerLoad = async ({ params }) => {
 export const actions: Actions = {
 	default: async (event) => {
 		// Use Superforms to validate form data
-		const form = await serverValidate(event, packageUpdateSchema);
+		const form = await validateMasterDetailForm(event.request, packageUpdateSchema, ['items']);
 
 		if (!form.valid) {
 			return fail(400, { form });
@@ -101,7 +101,7 @@ export const actions: Actions = {
 			return fail(400, {
 				form: {
 					...form,
-					errors: { ...form.errors, code: { _errors: ['A package with this code and version already exists.'] } }
+					errors: { ...form.errors, code: ['A package with this code and version already exists.'] }
 				}
 			});
 		}
@@ -110,12 +110,7 @@ export const actions: Actions = {
 		const orderIndices = validated.items?.map(item => item.order_index) || [];
 		const uniqueOrderIndices = new Set(orderIndices);
 		if (orderIndices.length !== uniqueOrderIndices.size) {
-			return fail(400, {
-				form: {
-					...form,
-					errors: { ...form.errors, items: { _errors: ['Order indices must be unique'] } }
-				}
-			});
+			return fail(400, { form, message: 'Order indices must be unique' });
 		}
 
 		try {
@@ -166,7 +161,6 @@ export const actions: Actions = {
 							package_id: event.params.id,
 							software_id: item.software_id,
 							software_version_id: item.software_version_id,
-							required: item.required,
 							order_index: item.order_index
 						};
 
@@ -202,12 +196,12 @@ export const actions: Actions = {
 
 			throw redirect(303, '/packages');
 		} catch (err) {
-			if (err instanceof Error && err.message.includes('redirect')) {
+			if (isRedirect(err)) {
 				throw err;
 			}
 
 			console.error('Error updating package:', err);
-			return fail(500, { form });
+			return fail(500, { form, message: 'Failed to update package' });
 		}
 	}
 };

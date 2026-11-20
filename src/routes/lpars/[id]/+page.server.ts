@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { calculateCompatibilityScore } from '#lib/services/package-service.ts';
 import { db } from '#lib/server/db.ts';
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect, isRedirect } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ params }) => {
 	// Fetch LPAR from database with all relations
@@ -100,7 +100,7 @@ export const actions: Actions = {
 
 			throw redirect(303, '/lpars');
 		} catch (err) {
-			if (err instanceof Response) throw err;
+			if (isRedirect(err)) throw err;
 
 			console.error('Error deleting LPAR:', err);
 			return fail(500, { error: 'Failed to delete LPAR' });

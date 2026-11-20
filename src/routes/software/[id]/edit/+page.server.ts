@@ -1,8 +1,9 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '#lib/server/db.ts';
 import { softwareWithVersionsSchema } from '#lib/schemas/software.ts';
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect, isRedirect } from '@sveltejs/kit';
 import { serverValidate } from '#lib/utils/superforms.ts';
+import { validateMasterDetailForm } from '#lib/server/master-detail-form.ts';
 
 /**
  * Load software with all versions for master-detail editing
@@ -71,7 +72,7 @@ export const actions: Actions = {
 	 */
 	default: async (event) => {
 		// Use Superforms to validate form data
-		const form = await serverValidate(event, softwareWithVersionsSchema);
+		const form = await validateMasterDetailForm(event.request, softwareWithVersionsSchema, ['versions']);
 
 		if (!form.valid) {
 			return fail(400, { form });
@@ -176,26 +177,18 @@ export const actions: Actions = {
 
 			throw redirect(303, '/software');
 		} catch (err) {
+			if (isRedirect(err)) throw err;
+
 			console.error('Software update error:', err);
 
 			// Handle Prisma unique constraint violations
 			if (err && typeof err === 'object' && 'code' in err) {
 				if (err.code === 'P2002') {
-					return fail(400, {
-						form: {
-							...form,
-							errors: { ...form.errors, versions: { _errors: ['A version with this combination already exists'] } }
-						}
-					});
+					return fail(400, { form, message: 'A version with this combination already exists' });
 				}
 			}
 
-			// Re-throw redirects
-			if (err && typeof err === 'object' && 'status' in err && err.status === 303) {
-				throw err;
-			}
-
-			return fail(500, { form });
+			return fail(500, { form, message: 'Failed to update software' });
 		}
 	}
 };

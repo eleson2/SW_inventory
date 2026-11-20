@@ -2,7 +2,7 @@
  * Generic CRUD route factory utilities
  * Eliminates duplicate code in route handlers
  */
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect, isRedirect } from '@sveltejs/kit';
 import type { z } from 'zod';
 import { db, createAuditLog } from './db';
 
@@ -145,6 +145,8 @@ export function createCreateAction<TSchema extends z.ZodType>(
 			const path = redirectPath.replace('{id}', entity.id);
 			throw redirect(303, path);
 		} catch (err) {
+			if (isRedirect(err)) throw err;
+
 			if (err instanceof Error && 'issues' in err) {
 				// Zod validation error
 				const zodError = err as z.ZodError;
@@ -265,6 +267,8 @@ export function createUpdateAction<TSchema extends z.ZodType>(
 			const path = redirectPath.replace('{id}', entity.id);
 			throw redirect(303, path);
 		} catch (err) {
+			if (isRedirect(err)) throw err;
+
 			if (err instanceof Error && 'issues' in err) {
 				// Zod validation error
 				const zodError = err as z.ZodError;

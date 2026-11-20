@@ -74,7 +74,6 @@
 				packageItems = source.package_items.map((item, index) => ({
 					software_id: item.software_id,
 					software_version_id: item.software_version_id,
-					required: item.required,
 					order_index: index
 				}));
 				$form.items = packageItems;

@@ -26,7 +26,7 @@
 
 	// Helper to safely access errors
 	const errors = $derived(
-		form && 'errors' in form ? form.errors as Record<string, string[]> : undefined
+		form?.form?.errors as Record<string, string[]> | undefined
 	);
 
 	// Master form data (LPAR)
@@ -160,7 +160,7 @@
 					bind:checked={formData.active}
 				/>
 
-				<FormErrorMessage message={form?.message} />
+				<FormErrorMessage message={(form as { message?: string } | null)?.message} />
 			</div>
 		</Card>
 

@@ -4,6 +4,7 @@
  * Common pattern for forms that manage a main entity (master) with related entities (detail)
  * Examples: Software with Versions, LPAR with Software Installations, Package with Items
  */
+import { applyAction, deserialize } from '$app/forms';
 
 interface MasterDetailFormOptions {
 	/**
@@ -43,17 +44,18 @@ export function useMasterDetailForm(options: MasterDetailFormOptions) {
 		try {
 			const response = await fetch(form.action, {
 				method: 'POST',
-				body: formData
+				body: formData,
+				headers: { accept: 'application/json', 'x-sveltekit-action': 'true' }
 			});
 
-			if (response.redirected) {
-				window.location.href = response.url;
-			} else if (response.ok && options.onSuccess) {
+			// Kit answers with a serialized ActionResult (redirect/success/failure/error).
+			// applyAction follows redirects and updates the page's `form` prop on failure,
+			// so validation errors show without losing the user's unsaved edits.
+			const result = deserialize(await response.text());
+			if (result.type === 'success' && options.onSuccess) {
 				options.onSuccess(response);
-			} else {
-				// Server returned error - reload to show validation errors
-				window.location.reload();
 			}
+			await applyAction(result);
 		} catch (error) {
 			console.error('Form submission error:', error);
 			if (options.onError) {
