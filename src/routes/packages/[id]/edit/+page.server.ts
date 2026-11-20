@@ -102,10 +102,12 @@ export const actions: Actions = {
 			return fail(400, { form: { ...form, errors: { ...form.errors, code: [msg] } }, message: msg });
 		}
 
+		// Items marked for deletion still carry their id; only the rest are kept
+		const keptItems = validated.items?.filter((item) => item._action !== 'delete');
+
 		// Validate unique order_index values
-		const orderIndices = validated.items?.map(item => item.order_index) || [];
-		const uniqueOrderIndices = new Set(orderIndices);
-		if (orderIndices.length !== uniqueOrderIndices.size) {
+		const orderIndices = keptItems?.map((item) => item.order_index) ?? [];
+		if (orderIndices.length !== new Set(orderIndices).size) {
 			return fail(400, { form, message: 'Order indices must be unique' });
 		}
 
@@ -132,14 +134,13 @@ export const actions: Actions = {
 				});
 
 				// Handle package items if provided
-				if (validated.items && validated.items.length > 0) {
-					const existingItemIds = existingPackage?.package_items.map(item => item.id) || [];
-					const incomingItemIds = validated.items
-						.filter(item => item.id)
-						.map(item => item.id) as string[];
+				if (keptItems) {
+					const keptIds = new Set(keptItems.flatMap((item) => (item.id ? [item.id] : [])));
 
-					// Delete items that are not in the incoming list
-					const itemsToDelete = existingItemIds.filter(id => !incomingItemIds.includes(id));
+					// Delete items that were removed or marked for deletion
+					const itemsToDelete = (existingPackage?.package_items ?? [])
+						.map((item) => item.id)
+						.filter((id) => !keptIds.has(id));
 					if (itemsToDelete.length > 0) {
 						await tx.package_items.deleteMany({
 							where: {
@@ -149,10 +150,8 @@ export const actions: Actions = {
 						});
 					}
 
-					// Upsert all items (create new, update existing)
-					for (const item of validated.items) {
-						if (item._action === 'delete') continue;
-
+					// Upsert kept items (create new, update existing)
+					for (const item of keptItems) {
 						const itemData = {
 							package_id: event.params.id,
 							software_id: item.software_id,
