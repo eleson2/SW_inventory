@@ -1,5 +1,7 @@
 <script lang="ts">
-	import type { PageData, ActionData } from './$types';
+	import type { PageData } from './$types';
+	import { softwareWithVersionsSchema } from '#lib/schemas/software.ts';
+	import { typedSuperForm } from '#lib/utils/superforms.ts';
 	import Card from '#lib/components/ui/Card.svelte';
 	import FormField from '#lib/components/common/FormField.svelte';
 	import FormCheckbox from '#lib/components/common/FormCheckbox.svelte';
@@ -8,12 +10,12 @@
 	import FormButtons from '#lib/components/common/FormButtons.svelte';
 	import FormErrorMessage from '#lib/components/common/FormErrorMessage.svelte';
 	import FormTextarea from '#lib/components/common/FormTextarea.svelte';
-	import { useMasterDetailForm } from '#lib/utils/useMasterDetailForm.svelte.ts';
+	import FormValidationSummary from '#lib/components/common/FormValidationSummary.svelte';
 	import Breadcrumb from '#lib/components/common/Breadcrumb.svelte';
 	import PageHeader from '#lib/components/common/PageHeader.svelte';
 	import TransactionId from '#lib/components/common/TransactionId.svelte';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { data }: { data: PageData } = $props();
 
 	const breadcrumbItems = [
 		{ label: 'Home', href: '/' },
@@ -23,50 +25,16 @@
 		{ label: 'Edit' }
 	];
 
-	// Helper to safely access errors
-	const errors = $derived(
-		form?.form?.errors as Record<string, string[]> | undefined
-	);
+	const { form, errors, enhance, submitting, delayed, posted, constraints, message } =
+		typedSuperForm(data.form, softwareWithVersionsSchema, {
+			dataType: 'json',
+			resetForm: false
+		});
 
-	// Master form data (software)
-	let formData = $state({
-		name: data.software.name,
-		vendor_id: data.software.vendor_id,
-		description: data.software.description || '',
-		active: data.software.active
-	});
-
-	// Detail form data (versions)
-	let versions = $state(
-		data.software.versions.map((v) => ({
-			id: v.id,
-			version: v.version,
-			ptf_level: v.ptf_level || '',
-			release_date: v.release_date,
-			end_of_support: v.end_of_support,
-			release_notes: v.release_notes || '',
-			is_current: v.is_current,
-			_action: undefined as 'create' | 'update' | 'delete' | undefined
-		}))
-	);
-
-	// Handle version changes from VersionManager
-	function handleVersionsChange(updatedVersions: any[]) {
-		versions = updatedVersions;
-	}
-
-	// Use master-detail form utility
-	const masterDetail = useMasterDetailForm({
-		onBuildFormData: (formData) => {
-			// Add versions as JSON
-			formData.set('versions', JSON.stringify(versions));
-
-			// Find current version ID
-			const currentVersion = versions.find((v) => v.is_current && v._action !== 'delete');
-			if (currentVersion?.id) {
-				formData.set('current_version_id', currentVersion.id);
-			}
-		}
+	// Detail rows (versions), synced into $form for submission
+	let versions = $state<any[]>($form.versions);
+	$effect(() => {
+		$form.versions = versions;
 	});
 </script>
 
@@ -83,7 +51,9 @@
 		description="Update software product information and manage versions"
 	/>
 
-	<form method="POST" class="space-y-6" use:masterDetail.enhance>
+	<form method="POST" class="space-y-6" use:enhance>
+		<FormValidationSummary errors={$errors} submitted={$posted} />
+
 		<!-- Master Entity: Software Information -->
 		<Card class="p-6">
 			<h2 class="text-xl font-semibold mb-4">Software Details</h2>
@@ -92,48 +62,50 @@
 					label="Software Name"
 					id="name"
 					name="name"
-					bind:value={formData.name}
-					required
+					bind:value={$form.name}
 					placeholder="Enter software name"
-					error={errors?.name?.[0]}
+					error={$errors.name?.[0]}
+					constraints={$constraints.name}
 				/>
 
 				<FormSelect
 					label="Vendor"
 					id="vendor_id"
 					name="vendor_id"
-					bind:value={formData.vendor_id}
+					bind:value={$form.vendor_id}
 					options={data.vendors}
 					valueField="id"
 					displayField="name"
 					secondaryField="code"
 					required
-					error={errors?.vendor_id?.[0]}
+					error={$errors.vendor_id?.[0]}
 				/>
 
 				<FormTextarea
 					label="Description"
 					id="description"
 					name="description"
-					bind:value={formData.description}
+					bind:value={$form.description as any}
 					placeholder="Enter software description (optional)"
+					constraints={$constraints.description}
 				/>
 
 				<FormCheckbox
 					label="Active"
 					id="active"
 					name="active"
-					bind:checked={formData.active}
+					bind:checked={$form.active}
+					constraints={$constraints.active}
 				/>
 			</div>
 		</Card>
 
 		<!-- Detail Entity: Version Management -->
-		<VersionManager bind:versions onVersionsChange={handleVersionsChange} errors={errors} />
+		<VersionManager bind:versions onVersionsChange={(updated) => (versions = updated)} errors={$errors as any} />
 
 		<!-- Form Actions -->
-		<FormErrorMessage message={form?.message} />
+		<FormErrorMessage message={$message} />
 
-		<FormButtons loading={masterDetail.submitting} />
+		<FormButtons loading={$submitting || $delayed} />
 	</form>
 </div>

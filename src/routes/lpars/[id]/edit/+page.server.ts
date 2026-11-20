@@ -3,7 +3,7 @@ import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
 import { fail, redirect, error } from '@sveltejs/kit';
 import { lparWithSoftwareSchema } from '#lib/schemas/lpar.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
-import { validateMasterDetailForm } from '#lib/server/master-detail-form.ts';
+import { message, setError } from 'sveltekit-superforms';
 import { findVersionId, sameVersion } from '#lib/utils/version-parser.ts';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -88,10 +88,11 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, params }) => {
-		const form = await validateMasterDetailForm(request, lparWithSoftwareSchema);
+	default: async (event) => {
+		const { params } = event;
+		const form = await serverValidate(event, lparWithSoftwareSchema);
 		if (!form.valid) {
-			return fail(400, { form, message: 'Please correct the errors below' });
+			return fail(400, { form });
 		}
 
 		const validated = form.data;
@@ -110,15 +111,12 @@ export const actions: Actions = {
 			throw error(404, 'LPAR not found');
 		}
 		if (uniqueCheck.exists) {
-			return fail(400, {
-				form: { ...form, errors: { ...form.errors, code: [uniqueCheck.error!] } },
-				message: uniqueCheck.error!
-			});
+			return setError(form, 'code', uniqueCheck.error!);
 		}
 
 		const versionById = new Map(versions.map((v) => [v.id, v]));
 		if (kept.some((inst) => versionById.get(inst.software_version_id)?.software_id !== inst.software_id)) {
-			return fail(400, { form, message: 'One or more installations reference an invalid version' });
+			return message(form, 'One or more installations reference an invalid version', { status: 400 });
 		}
 
 		const existingById = new Map(existingLpar.lpar_software.map((ls) => [ls.id, ls]));
@@ -185,7 +183,7 @@ export const actions: Actions = {
 			});
 		} catch (err) {
 			console.error('Error updating LPAR:', err);
-			return fail(500, { form, message: 'Failed to update LPAR' });
+			return message(form, 'Failed to update LPAR', { status: 500 });
 		}
 
 		redirect(303, '/lpars');

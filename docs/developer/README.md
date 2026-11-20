@@ -190,17 +190,23 @@ const { form, errors, enhance, submitting } = typedSuperForm(
 
 #### 4. Master-Detail Forms
 
-For complex forms with parent-child relationships (e.g., package with items):
+For complex forms with parent-child relationships (e.g., package with items), post the
+whole form as JSON with Superforms. Keep the detail rows in local state and sync them into `$form`:
 
 ```typescript
-import { useMasterDetailForm } from '#lib/utils/useMasterDetailForm.svelte.ts';
+const { form, errors, enhance, message } = typedSuperForm(data.form, packageUpdateSchema, {
+  dataType: 'json',
+  resetForm: false
+});
 
-const { handleSubmit, submitting } = useMasterDetailForm({
-  onBuildFormData: (formData) => {
-    formData.set('items', JSON.stringify(items));
-  }
+let items = $state($form.items ?? []);
+$effect(() => {
+  $form.items = items;
 });
 ```
+
+The action validates with `serverValidate(event, schema)` and reports problems with
+Superforms' `setError(form, 'field', msg)` or `message(form, msg, { status })`.
 
 ### Component Patterns
 

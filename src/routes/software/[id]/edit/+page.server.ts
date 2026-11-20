@@ -3,7 +3,7 @@ import { db, createAuditLog } from '#lib/server/db.ts';
 import { softwareWithVersionsSchema } from '#lib/schemas/software.ts';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { serverValidate } from '#lib/utils/superforms.ts';
-import { validateMasterDetailForm } from '#lib/server/master-detail-form.ts';
+import { message, setError } from 'sveltekit-superforms';
 
 /**
  * Load software with all versions for master-detail editing
@@ -72,10 +72,10 @@ export const actions: Actions = {
 	 */
 	default: async (event) => {
 		// Use Superforms to validate form data
-		const form = await validateMasterDetailForm(event.request, softwareWithVersionsSchema);
+		const form = await serverValidate(event, softwareWithVersionsSchema);
 
 		if (!form.valid) {
-			return fail(400, { form, message: 'Please correct the errors below' });
+			return fail(400, { form });
 		}
 
 		const validated = form.data;
@@ -96,8 +96,8 @@ export const actions: Actions = {
 					deleted: [] as string[]
 				};
 
-				// Track which version should be current
-				let currentVersionId = validated.current_version_id;
+				// The kept version flagged is_current becomes current; otherwise leave it unchanged
+				let currentVersionId: string | undefined;
 
 				for (const version of validated.versions) {
 					if (version._action === 'delete' && version.id) {
@@ -180,11 +180,11 @@ export const actions: Actions = {
 			// Handle Prisma unique constraint violations
 			if (err && typeof err === 'object' && 'code' in err) {
 				if (err.code === 'P2002') {
-					return fail(400, { form, message: 'A version with this combination already exists' });
+					return message(form, 'A version with this combination already exists', { status: 400 });
 				}
 			}
 
-			return fail(500, { form, message: 'Failed to update software' });
+			return message(form, 'Failed to update software', { status: 500 });
 		}
 
 		redirect(303, '/software');

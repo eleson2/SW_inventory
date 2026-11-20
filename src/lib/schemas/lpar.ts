@@ -33,7 +33,7 @@ export const lparSchema = z.object({
 		.regex(CODE_PATTERN, CODE_ERROR_MESSAGE),
 	customer_id: z.string().uuid('Invalid customer'),
 	description: z.string().max(FIELD_LENGTHS.description.max).optional(),
-	current_package_id: z.string().uuid('Invalid package').optional(),
+	current_package_id: z.string().uuid('Invalid package').optional().or(z.literal('')), // '' = no package
 	active: z.boolean().default(true)
 });
 

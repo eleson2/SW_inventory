@@ -1,6 +1,8 @@
 <script lang="ts">
-	import type { PageData, ActionData } from './$types';
+	import type { PageData } from './$types';
 	import type { PackageItem } from '#lib/schemas/package.ts';
+	import { packageUpdateSchema } from '#lib/schemas/package.ts';
+	import { typedSuperForm } from '#lib/utils/superforms.ts';
 	import Card from '#lib/components/ui/Card.svelte';
 	import FormField from '#lib/components/common/FormField.svelte';
 	import FormCheckbox from '#lib/components/common/FormCheckbox.svelte';
@@ -8,12 +10,12 @@
 	import FormButtons from '#lib/components/common/FormButtons.svelte';
 	import FormErrorMessage from '#lib/components/common/FormErrorMessage.svelte';
 	import FormTextarea from '#lib/components/common/FormTextarea.svelte';
-	import { useMasterDetailForm } from '#lib/utils/useMasterDetailForm.svelte.ts';
+	import FormValidationSummary from '#lib/components/common/FormValidationSummary.svelte';
 	import Breadcrumb from '#lib/components/common/Breadcrumb.svelte';
 	import PageHeader from '#lib/components/common/PageHeader.svelte';
 	import TransactionId from '#lib/components/common/TransactionId.svelte';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { data }: { data: PageData } = $props();
 
 	const breadcrumbItems = [
 		{ label: 'Home', href: '/' },
@@ -22,38 +24,20 @@
 		{ label: 'Edit' }
 	];
 
-	// Format date for input field (YYYY-MM-DD)
-	const formatDateForInput = (date: Date) => {
-		const d = new Date(date);
-		return d.toISOString().split('T')[0];
-	};
+	const { form, errors, enhance, submitting, delayed, posted, constraints, message } =
+		typedSuperForm(data.form, packageUpdateSchema, {
+			dataType: 'json',
+			resetForm: false
+		});
 
-	// Master entity data
-	let formData = $state({
-		name: data.package.name,
-		code: data.package.code,
-		version: data.package.version,
-		description: data.package.description || '',
-		release_date: formatDateForInput(data.package.release_date),
-		active: data.package.active
-	});
+	// The date input works on YYYY-MM-DD strings; the schema coerces it back to a Date
+	const toDateInput = (value: unknown) =>
+		value instanceof Date ? value.toISOString().split('T')[0] : String(value ?? '');
 
-	// Detail entity data - transform from database format to form format
-	let packageItems = $state<PackageItem[]>(
-		data.package.package_items.map((item) => ({
-			id: item.id,
-			software_id: item.software_id,
-			software_version_id: item.software_version_id,
-			order_index: item.order_index
-		}))
-	);
-
-	// Use master-detail form utility
-	const masterDetail = useMasterDetailForm({
-		onBuildFormData: (formData) => {
-			// Add items as JSON
-			formData.set('items', JSON.stringify(packageItems));
-		}
+	// Detail rows (package items), synced into $form for submission
+	let packageItems = $state<PackageItem[]>($form.items ?? []);
+	$effect(() => {
+		$form.items = packageItems;
 	});
 </script>
 
@@ -70,7 +54,9 @@
 		description="Update package information and manage included software items"
 	/>
 
-	<form method="POST" class="space-y-6" use:masterDetail.enhance>
+	<form method="POST" class="space-y-6" use:enhance>
+		<FormValidationSummary errors={$errors} submitted={$posted} />
+
 		<!-- Master Entity: Package Information -->
 		<Card class="p-6">
 			<h2 class="text-xl font-semibold mb-4">Package Information</h2>
@@ -79,10 +65,10 @@
 					label="Package Name"
 					id="name"
 					name="name"
-					bind:value={formData.name}
-					required
+					bind:value={$form.name}
 					placeholder="Enter package name"
-					error={form?.form?.errors?.name?.[0]}
+					error={$errors.name?.[0]}
+					constraints={$constraints.name}
 				/>
 
 				<div class="grid grid-cols-2 gap-4">
@@ -90,21 +76,21 @@
 						label="Package Code"
 						id="code"
 						name="code"
-						bind:value={formData.code}
-						required
+						bind:value={$form.code}
 						placeholder="PKG-CODE"
 						helperText="Uppercase alphanumeric with dashes/underscores"
-						error={form?.form?.errors?.code?.[0]}
+						error={$errors.code?.[0]}
+						constraints={$constraints.code}
 					/>
 
 					<FormField
 						label="Version"
 						id="version"
 						name="version"
-						bind:value={formData.version}
-						required
+						bind:value={$form.version}
 						placeholder="e.g., 2025.1.0"
-						error={form?.form?.errors?.version?.[0]}
+						error={$errors.version?.[0]}
+						constraints={$constraints.version}
 					/>
 				</div>
 
@@ -113,24 +99,26 @@
 					id="release_date"
 					name="release_date"
 					type="date"
-					bind:value={formData.release_date}
+					bind:value={() => toDateInput($form.release_date), (v) => ($form.release_date = v as any)}
 					required
-					error={form?.form?.errors?.release_date?.[0]}
+					error={$errors.release_date?.[0]}
 				/>
 
 				<FormTextarea
 					label="Description"
 					id="description"
 					name="description"
-					bind:value={formData.description}
+					bind:value={$form.description as any}
 					placeholder="Enter package description (optional)"
+					constraints={$constraints.description}
 				/>
 
 				<FormCheckbox
 					label="Active"
 					id="active"
 					name="active"
-					bind:checked={formData.active}
+					bind:checked={() => $form.active ?? true, (v) => ($form.active = v)}
+					constraints={$constraints.active}
 				/>
 			</div>
 		</Card>
@@ -146,8 +134,8 @@
 		<!-- Form Actions -->
 		<Card class="p-6">
 			<div class="space-y-4">
-				<FormErrorMessage message={form?.message} />
-				<FormButtons loading={masterDetail.submitting} />
+				<FormErrorMessage message={$message} />
+				<FormButtons loading={$submitting || $delayed} />
 			</div>
 		</Card>
 	</form>

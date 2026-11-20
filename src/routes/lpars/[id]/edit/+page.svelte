@@ -1,6 +1,8 @@
 <script lang="ts">
-	import type { PageData, ActionData } from './$types';
+	import type { PageData } from './$types';
 	import type { LparSoftwareInstallation } from '#lib/schemas/lpar.ts';
+	import { lparWithSoftwareSchema } from '#lib/schemas/lpar.ts';
+	import { typedSuperForm } from '#lib/utils/superforms.ts';
 	import Card from '#lib/components/ui/Card.svelte';
 	import Label from '#lib/components/ui/Label.svelte';
 	import FormField from '#lib/components/common/FormField.svelte';
@@ -9,13 +11,12 @@
 	import LparSoftwareManager from '#lib/components/domain/LparSoftwareManager.svelte';
 	import FormErrorMessage from '#lib/components/common/FormErrorMessage.svelte';
 	import FormTextarea from '#lib/components/common/FormTextarea.svelte';
-	import { useMasterDetailForm } from '#lib/utils/useMasterDetailForm.svelte.ts';
-	import { findVersionId } from '#lib/utils/version-parser.ts';
+	import FormValidationSummary from '#lib/components/common/FormValidationSummary.svelte';
 	import Breadcrumb from '#lib/components/common/Breadcrumb.svelte';
 	import PageHeader from '#lib/components/common/PageHeader.svelte';
 	import TransactionId from '#lib/components/common/TransactionId.svelte';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { data }: { data: PageData } = $props();
 
 	const breadcrumbItems = [
 		{ label: 'Home', href: '/' },
@@ -25,39 +26,16 @@
 		{ label: 'Edit' }
 	];
 
-	// Helper to safely access errors
-	const errors = $derived(
-		form?.form?.errors as Record<string, string[]> | undefined
-	);
+	const { form, errors, enhance, submitting, delayed, posted, constraints, message } =
+		typedSuperForm(data.form, lparWithSoftwareSchema, {
+			dataType: 'json',
+			resetForm: false
+		});
 
-	// Master form data (LPAR)
-	let formData = $state({
-		name: data.lpar.name,
-		code: data.lpar.code,
-		customer_id: data.lpar.customer_id,
-		description: data.lpar.description || '',
-		current_package_id: data.lpar.current_package_id || '',
-		active: data.lpar.active
-	});
-
-	// Detail form data (software installations); lpar_software stores version strings, so map back to ids
-	const softwareById = $derived(new Map(data.allSoftware.map((s) => [s.id, s])));
-	let softwareInstallations = $state<LparSoftwareInstallation[]>(
-		data.lpar.lpar_software.map((ls) => ({
-			id: ls.id,
-			software_id: ls.software_id,
-			software_version_id: findVersionId(softwareById, ls),
-			installed_date: ls.installed_date,
-			_action: undefined
-		}))
-	);
-
-	// Use master-detail form utility
-	const masterDetail = useMasterDetailForm({
-		onBuildFormData: (formData) => {
-			// Add installations as JSON
-			formData.set('software_installations', JSON.stringify(softwareInstallations));
-		}
+	// Detail rows (software installations), synced into $form for submission
+	let softwareInstallations = $state<LparSoftwareInstallation[]>($form.software_installations);
+	$effect(() => {
+		$form.software_installations = softwareInstallations;
 	});
 </script>
 
@@ -74,7 +52,9 @@
 		description="Update LPAR information and manage software installations"
 	/>
 
-	<form method="POST" class="space-y-6" use:masterDetail.enhance>
+	<form method="POST" class="space-y-6" use:enhance>
+		<FormValidationSummary errors={$errors} submitted={$posted} />
+
 		<!-- LPAR Information Card -->
 		<Card class="p-6">
 			<h2 class="text-xl font-semibold mb-4">LPAR Details</h2>
@@ -83,21 +63,21 @@
 					label="LPAR Name"
 					id="name"
 					name="name"
-					bind:value={formData.name}
-					required
+					bind:value={$form.name}
 					placeholder="Enter LPAR name"
-					error={errors?.name?.[0]}
+					error={$errors.name?.[0]}
+					constraints={$constraints.name}
 				/>
 
 				<FormField
 					label="LPAR Code"
 					id="code"
 					name="code"
-					bind:value={formData.code}
-					required
+					bind:value={$form.code}
 					placeholder="LPAR-CODE"
 					helperText="Uppercase alphanumeric with dashes/underscores"
-					error={errors?.code?.[0]}
+					error={$errors.code?.[0]}
+					constraints={$constraints.code}
 				/>
 
 				<div class="space-y-2">
@@ -105,7 +85,7 @@
 					<select
 						id="customer_id"
 						name="customer_id"
-						bind:value={formData.customer_id}
+						bind:value={$form.customer_id}
 						required
 						class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 					>
@@ -113,8 +93,8 @@
 							<option value={customer.id}>{customer.name} ({customer.code})</option>
 						{/each}
 					</select>
-					{#if errors?.customer_id?.[0]}
-						<p class="text-sm text-destructive">{errors.customer_id[0]}</p>
+					{#if $errors.customer_id?.[0]}
+						<p class="text-sm text-destructive">{$errors.customer_id[0]}</p>
 					{/if}
 				</div>
 
@@ -123,7 +103,7 @@
 					<select
 						id="current_package_id"
 						name="current_package_id"
-						bind:value={formData.current_package_id}
+						bind:value={$form.current_package_id}
 						class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 					>
 						<option value="">None</option>
@@ -132,8 +112,8 @@
 						{/each}
 					</select>
 					<p class="text-sm text-muted-foreground">Optional - can be changed later</p>
-					{#if errors?.current_package_id?.[0]}
-						<p class="text-sm text-destructive">{errors.current_package_id[0]}</p>
+					{#if $errors.current_package_id?.[0]}
+						<p class="text-sm text-destructive">{$errors.current_package_id[0]}</p>
 					{/if}
 				</div>
 
@@ -141,18 +121,20 @@
 					label="Description"
 					id="description"
 					name="description"
-					bind:value={formData.description}
+					bind:value={$form.description as any}
 					placeholder="Enter LPAR description (optional)"
+					constraints={$constraints.description}
 				/>
 
 				<FormCheckbox
 					label="Active"
 					id="active"
 					name="active"
-					bind:checked={formData.active}
+					bind:checked={$form.active}
+					constraints={$constraints.active}
 				/>
 
-				<FormErrorMessage message={form?.message} />
+				<FormErrorMessage message={$message} />
 			</div>
 		</Card>
 
@@ -162,13 +144,13 @@
 				bind:installations={softwareInstallations}
 				allSoftware={data.allSoftware}
 				assignedPackage={data.lpar.packages}
-				errors={errors}
+				errors={$errors as any}
 			/>
 		</Card>
 
 		<!-- Submit Buttons -->
 		<Card class="p-6">
-			<FormButtons loading={masterDetail.submitting} />
+			<FormButtons loading={$submitting || $delayed} />
 		</Card>
 	</form>
 </div>

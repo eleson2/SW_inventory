@@ -3,7 +3,7 @@ import { error, redirect, fail } from '@sveltejs/kit';
 import { db, createAuditLog } from '#lib/server/db.ts';
 import { packageUpdateSchema } from '#lib/schemas/package.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
-import { validateMasterDetailForm } from '#lib/server/master-detail-form.ts';
+import { message, setError } from 'sveltekit-superforms';
 
 /**
  * Load package with items, plus all software and their versions for dropdowns
@@ -80,10 +80,10 @@ export const load: PageServerLoad = async ({ params }) => {
 export const actions: Actions = {
 	default: async (event) => {
 		// Use Superforms to validate form data
-		const form = await validateMasterDetailForm(event.request, packageUpdateSchema);
+		const form = await serverValidate(event, packageUpdateSchema);
 
 		if (!form.valid) {
-			return fail(400, { form, message: 'Please correct the errors below' });
+			return fail(400, { form });
 		}
 
 		const validated = form.data;
@@ -98,8 +98,7 @@ export const actions: Actions = {
 		});
 
 		if (existing) {
-			const msg = 'A package with this code and version already exists.';
-			return fail(400, { form: { ...form, errors: { ...form.errors, code: [msg] } }, message: msg });
+			return setError(form, 'code', 'A package with this code and version already exists.');
 		}
 
 		// Items marked for deletion still carry their id; only the rest are kept
@@ -108,7 +107,7 @@ export const actions: Actions = {
 		// Validate unique order_index values
 		const orderIndices = keptItems?.map((item) => item.order_index) ?? [];
 		if (orderIndices.length !== new Set(orderIndices).size) {
-			return fail(400, { form, message: 'Order indices must be unique' });
+			return message(form, 'Order indices must be unique', { status: 400 });
 		}
 
 		try {
@@ -190,7 +189,7 @@ export const actions: Actions = {
 			});
 		} catch (err) {
 			console.error('Error updating package:', err);
-			return fail(500, { form, message: 'Failed to update package' });
+			return message(form, 'Failed to update package', { status: 500 });
 		}
 
 		redirect(303, '/packages');
