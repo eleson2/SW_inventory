@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import Badge from '$components/ui/Badge.svelte';
@@ -61,7 +61,7 @@
 
 	// Handle filter changes
 	function updateFilter(key: string, value: string) {
-		const params = new URLSearchParams($page.url.searchParams);
+		const params = new URLSearchParams(page.url.searchParams);
 		if (value) {
 			params.set(key, value);
 		} else {
@@ -200,7 +200,7 @@
 						currentPage={data.pagination.page}
 						totalPages={data.pagination.totalPages}
 						onPageChange={(newPage) => {
-							const params = new URLSearchParams($page.url.searchParams);
+							const params = new URLSearchParams(page.url.searchParams);
 							params.set('page', newPage.toString());
 							goto(`?${params.toString()}`);
 						}}

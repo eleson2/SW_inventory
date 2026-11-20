@@ -13,7 +13,7 @@
 -->
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import Button from '$components/ui/Button.svelte';
 	import { cn } from '$utils/cn';
 
@@ -38,7 +38,7 @@
 	} = $props();
 
 	// Initialize from URL on mount
-	const initialUrlParams = $page.url.searchParams;
+	const initialUrlParams = page.url.searchParams;
 	let searchValue = $state(initialUrlParams.get(searchParam) || '');
 	let filterValues = $state<Record<string, string>>(
 		filters.reduce((acc, filter) => {

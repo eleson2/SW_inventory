@@ -7,7 +7,7 @@
 	import type { SortOptions } from '$types';
 	import type { Snippet } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
 	type Column<T> = {
 		key: keyof T | string;

@@ -3,7 +3,7 @@
  * Implements singleton pattern for development to prevent too many connections
  */
 import { PrismaClient } from '@prisma/client';
-import { dev } from '$app/environment';
+import { dev } from '$app/env';
 
 // PrismaClient is attached to the `globalThis` object in development to prevent
 // exhausting your database connection limit during hot reload in development

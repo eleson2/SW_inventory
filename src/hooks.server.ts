@@ -1,4 +1,4 @@
-import type { Handle } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit/hooks';
 import { db } from '$lib/server/db';
 
 export const handle: Handle = async ({ event, resolve }) => {

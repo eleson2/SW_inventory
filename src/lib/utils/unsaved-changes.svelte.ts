@@ -34,7 +34,10 @@ export function useUnsavedChanges() {
 	});
 
 	// Handle SvelteKit navigation
-	beforeNavigate(({ cancel, to }) => {
+	beforeNavigate(({ cancel, to, shallow, type }) => {
+		// Kit 3: shallow-routing goto() now fires navigation hooks; don't prompt for those
+		if (shallow && type === 'goto') return;
+
 		if (hasChanges && !isSubmitting && to) {
 			const confirmed = confirm(
 				'You have unsaved changes. Are you sure you want to leave this page? All unsaved changes will be lost.'

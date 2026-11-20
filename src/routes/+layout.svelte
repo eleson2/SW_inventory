@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../app.css';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import Toast from '$lib/components/ui/Toast.svelte';
 	import KeyboardShortcutsHelp from '$lib/components/common/KeyboardShortcutsHelp.svelte';
 	import { useKeyboardShortcuts } from '$lib/utils/keyboard-shortcuts.svelte';
@@ -18,7 +18,7 @@
 
 	// Helper to check if current route matches nav item
 	function isActive(path: string): boolean {
-		return $page.url.pathname === path || $page.url.pathname.startsWith(`${path}/`);
+		return page.url.pathname === path || page.url.pathname.startsWith(`${path}/`);
 	}
 
 	// Close mobile menu when clicking a link

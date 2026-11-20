@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import Button from '$components/ui/Button.svelte';
 	import Card from '$components/ui/Card.svelte';
 	import Badge from '$components/ui/Badge.svelte';
