@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { typedSuperForm } from '$lib/utils/superforms';
-	import { customerSchema } from '$lib/schemas/customer';
+	import { typedSuperForm } from '#lib/utils/superforms.ts';
+	import { customerSchema } from '#lib/schemas/customer.ts';
 	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';

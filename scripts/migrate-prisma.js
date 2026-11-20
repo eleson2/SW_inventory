@@ -10,7 +10,7 @@
  *  - when a file contains "new PrismaClient" it:
  *    - removes the "import { PrismaClient } from '@prisma/client';" line
  *    - removes the "const prisma = new PrismaClient(...)" declaration (single-line or simple multi-line)
- *    - ensures "import { prisma } from '$lib/prisma';" is present at top
+ *    - ensures "import { prisma } from '#lib/prisma';" is present at top
  *
  * NOTE: review changes before committing. The script is conservative but may need manual fixes
  * for files that also import Prisma types from '@prisma/client'.
@@ -63,17 +63,17 @@ function processFile(file) {
 
 	// If file still references `PrismaClient` type imports (e.g. import type { Prisma } from ...),
 	// we avoid altering those lines. The script only removed the direct import line above.
-	// Ensure import { prisma } from '$lib/prisma'; exists
+	// Ensure import { prisma } from '#lib/prisma'; exists
 	if (!/from\s+['"]\$lib\/prisma['"]/.test(content)) {
 		// try to insert after the last import statement at top
 		const importMatches = [...content.matchAll(/^[ \t]*import .*?;[ \t]*$/gm)];
 		if (importMatches.length > 0) {
 			const last = importMatches[importMatches.length - 1];
 			const insertPos = last.index + last[0].length;
-			content = content.slice(0, insertPos) + '\nimport { prisma } from \'$lib/prisma\';\n' + content.slice(insertPos);
+			content = content.slice(0, insertPos) + '\nimport { prisma } from \'#lib/prisma\';\n' + content.slice(insertPos);
 		} else {
 			// no imports — prepend
-			content = 'import { prisma } from \'$lib/prisma\';\n' + content;
+			content = 'import { prisma } from \'#lib/prisma\';\n' + content;
 		}
 	}
 

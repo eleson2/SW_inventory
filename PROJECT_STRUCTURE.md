@@ -100,7 +100,7 @@ Business domain-specific components:
 - Version comparison logic for versions and PTF levels
 - Compatibility checking for package requirements
 
-### Package Service (`$lib/services/package-service.ts`)
+### Package Service (`#lib/services/package-service.ts`)
 - Calculate customer-specific package subsets
 - Validate LPAR package compliance
 - Generate deployment plans for package upgrades

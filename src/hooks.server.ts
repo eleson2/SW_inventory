@@ -1,5 +1,5 @@
 import type { Handle } from '@sveltejs/kit/hooks';
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db.ts';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	// make prisma available on event.locals.prisma for all server routes

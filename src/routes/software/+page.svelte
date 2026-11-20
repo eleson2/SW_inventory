@@ -10,8 +10,8 @@
 	import StatusBadge from '$components/common/StatusBadge.svelte';
 	import PageHeader from '$components/common/PageHeader.svelte';
 	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
-	import { useTableNavigation } from '$lib/utils/table-navigation.svelte';
-	import { STATUS_FILTER } from '$lib/constants/filters';
+	import { useTableNavigation } from '#lib/utils/table-navigation.svelte.ts';
+	import { STATUS_FILTER } from '#lib/constants/filters.ts';
 
 	let { data }: { data: PageData } = $props();
 

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import '../app.css';
 	import { page } from '$app/state';
-	import Toast from '$lib/components/ui/Toast.svelte';
-	import KeyboardShortcutsHelp from '$lib/components/common/KeyboardShortcutsHelp.svelte';
-	import { useKeyboardShortcuts } from '$lib/utils/keyboard-shortcuts.svelte';
+	import Toast from '#lib/components/ui/Toast.svelte';
+	import KeyboardShortcutsHelp from '#lib/components/common/KeyboardShortcutsHelp.svelte';
+	import { useKeyboardShortcuts } from '#lib/utils/keyboard-shortcuts.svelte.ts';
 
 	let { children } = $props();
 

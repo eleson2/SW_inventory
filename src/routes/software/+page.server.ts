@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
-import { db } from '$lib/server/db';
-import { createPageLoader } from '$lib/server/page-loader';
+import { db } from '#lib/server/db.ts';
+import { createPageLoader } from '#lib/server/page-loader.ts';
 
 export const load: PageServerLoad = async ({ url }) => {
 	// Get all vendors for filter dropdown

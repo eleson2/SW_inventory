@@ -1,8 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
 import { customerSchema } from '$schemas';
-import { db } from '$lib/server/db';
-import { serverValidate } from '$lib/utils/superforms';
-import { createFormAction } from '$lib/server/form-actions';
+import { db } from '#lib/server/db.ts';
+import { serverValidate } from '#lib/utils/superforms.ts';
+import { createFormAction } from '#lib/server/form-actions.ts';
 
 // Load all customers for clone dropdown
 export const load: PageServerLoad = async () => {

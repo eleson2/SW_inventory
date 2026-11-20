@@ -1,8 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
-import { db, createAuditLog, checkUniqueConstraint } from '$lib/server/db';
+import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
 import { fail, redirect } from '@sveltejs/kit';
-import { packageWithItemsSchema } from '$lib/schemas/package';
-import { serverValidate } from '$lib/utils/superforms';
+import { packageWithItemsSchema } from '#lib/schemas/package.ts';
+import { serverValidate } from '#lib/utils/superforms.ts';
 
 // Load all packages for clone dropdown and all software for PackageItemsManager
 export const load: PageServerLoad = async () => {

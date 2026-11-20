@@ -54,7 +54,7 @@ const exactMatch = isVersionCompatible(installed, required, true);
 ### Get Customer Package Subset
 
 ```typescript
-import { getCustomerPackageSubset } from '$lib/services/package-service';
+import { getCustomerPackageSubset } from '#lib/services/package-service.ts';
 
 const fullPackage = {
   id: '1',
@@ -76,7 +76,7 @@ const subset = getCustomerPackageSubset(fullPackage, customerRequirements);
 ### Validate LPAR Package Compliance
 
 ```typescript
-import { validateLparPackageCompliance } from '$lib/services/package-service';
+import { validateLparPackageCompliance } from '#lib/services/package-service.ts';
 
 const lpar = {
   id: '1',
@@ -123,7 +123,7 @@ const validation = validateLparPackageCompliance(lpar, targetPackage);
 ### Generate Deployment Plan
 
 ```typescript
-import { generateDeploymentPlan } from '$lib/services/package-service';
+import { generateDeploymentPlan } from '#lib/services/package-service.ts';
 
 const deploymentPlan = generateDeploymentPlan(
   lpar,
@@ -146,7 +146,7 @@ console.log(`Need to remove: ${deploymentPlan.toRemove.length} items`);
 ### Calculate Compatibility Score
 
 ```typescript
-import { calculateCompatibilityScore } from '$lib/services/package-service';
+import { calculateCompatibilityScore } from '#lib/services/package-service.ts';
 
 const score = calculateCompatibilityScore(lpar, targetPackage);
 // Result: 0-100 percentage score indicating compatibility
@@ -156,7 +156,7 @@ console.log(`LPAR is ${score}% compatible with the target package`);
 ### Rollback Software
 
 ```typescript
-import { rollbackSoftware } from '$lib/services/package-service';
+import { rollbackSoftware } from '#lib/services/package-service.ts';
 
 const rolledBack = rollbackSoftware(lpar, 'sw1');
 

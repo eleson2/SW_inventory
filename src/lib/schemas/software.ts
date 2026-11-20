@@ -2,7 +2,7 @@
  * Software validation schemas
  */
 import { z } from 'zod';
-import { FIELD_LENGTHS } from '$lib/constants/validation';
+import { FIELD_LENGTHS } from '#lib/constants/validation.ts';
 
 export const softwareVersionSchema = z.object({
 	version: z.string().min(1, 'Version is required'),

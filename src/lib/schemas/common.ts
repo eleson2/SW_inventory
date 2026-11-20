@@ -2,7 +2,7 @@
  * Common validation schemas for queries, filters, and pagination
  */
 import { z } from 'zod';
-import { PAGINATION } from '$lib/constants/validation';
+import { PAGINATION } from '#lib/constants/validation.ts';
 
 export const paginationSchema = z.object({
 	page: z.coerce.number().int().min(1).default(PAGINATION.defaultPage),

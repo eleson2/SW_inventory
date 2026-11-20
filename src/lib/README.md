@@ -45,13 +45,13 @@ Use path aliases for cleaner imports:
 
 ```typescript
 // Constants
-import { CODE_PATTERN, FIELD_LENGTHS } from '$lib/constants/validation';
+import { CODE_PATTERN, FIELD_LENGTHS } from '#lib/constants/validation.ts';
 
 // Schemas
 import { customerSchema, vendorSchema } from '$schemas';
 
 // Server utilities
-import { db, createDetailLoader, createCreateAction } from '$lib/server';
+import { db, createDetailLoader, createCreateAction } from '#lib/server/index.ts';
 
 // Types
 import type { Customer, Package, SoftwareVersion } from '$types';
@@ -83,7 +83,7 @@ Each schema file exports:
 Generic factories for eliminating CRUD boilerplate:
 
 ```typescript
-import { createDetailLoader, createCreateAction, createUpdateAction } from '$lib/server';
+import { createDetailLoader, createCreateAction, createUpdateAction } from '#lib/server/index.ts';
 
 // Detail page
 export const load = createDetailLoader({
@@ -108,7 +108,7 @@ export const actions = {
 ### Database Helpers
 
 ```typescript
-import { db, getPaginated, softDelete, createAuditLog } from '$lib/server';
+import { db, getPaginated, softDelete, createAuditLog } from '#lib/server/index.ts';
 
 // Paginated query
 const result = await getPaginated(db.customers, page, pageSize, where, orderBy);
@@ -140,7 +140,7 @@ return json(formatErrorResponse(error), { status: 500 });
 Centralized validation patterns and constraints:
 
 ```typescript
-import { CODE_PATTERN, FIELD_LENGTHS, ENTITY_TYPES } from '$lib/constants';
+import { CODE_PATTERN, FIELD_LENGTHS, ENTITY_TYPES } from '#lib/constants/index.ts';
 
 // Use in schemas
 code: z.string().regex(CODE_PATTERN)
@@ -149,7 +149,7 @@ name: z.string().min(FIELD_LENGTHS.name.min).max(FIELD_LENGTHS.name.max)
 
 ## Best Practices
 
-1. **Use barrel exports** - Import from `$lib/server`, `$schemas`, `$utils` instead of individual files
+1. **Use barrel exports** - Import from `#lib/server`, `$schemas`, `$utils` instead of individual files
 2. **Keep schemas co-located** - Domain-specific validation stays with the domain
 3. **Centralize constants** - Don't hardcode validation patterns or magic numbers
 4. **Use error classes** - Throw typed errors instead of generic Error instances

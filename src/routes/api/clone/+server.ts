@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { cloneSoftware, clonePackage, cloneLpar, cloneCustomer, cloneVendor, getClonePreview } from '$lib/server/clone-utils';
+import { cloneSoftware, clonePackage, cloneLpar, cloneCustomer, cloneVendor, getClonePreview } from '#lib/server/clone-utils.ts';
 import { z } from 'zod';
 
 // Clone request schema

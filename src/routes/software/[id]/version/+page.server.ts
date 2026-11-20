@@ -1,6 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { db, createAuditLog } from '$lib/server/db';
+import { db, createAuditLog } from '#lib/server/db.ts';
 import { z } from 'zod';
 
 const versionSchema = z.object({

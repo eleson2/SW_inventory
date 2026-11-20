@@ -7,7 +7,7 @@
  * @example
  * ```svelte
  * <script lang="ts">
- *   import { useTableNavigation } from '$lib/utils/table-navigation.svelte';
+ *   import { useTableNavigation } from '#lib/utils/table-navigation.svelte.ts';
  *
  *   let { data } = $props();
  *   const { handleSort, handlePageChange } = useTableNavigation();

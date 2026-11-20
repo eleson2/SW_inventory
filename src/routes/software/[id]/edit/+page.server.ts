@@ -1,8 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
-import { db, createAuditLog } from '$lib/server/db';
+import { db, createAuditLog } from '#lib/server/db.ts';
 import { softwareWithVersionsSchema } from '$schemas/software';
 import { error, fail, redirect } from '@sveltejs/kit';
-import { serverValidate } from '$lib/utils/superforms';
+import { serverValidate } from '#lib/utils/superforms.ts';
 
 /**
  * Load software with all versions for master-detail editing

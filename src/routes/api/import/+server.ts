@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import XLSX from 'xlsx';
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db.ts';
 
 interface ImportResult {
   success: boolean;

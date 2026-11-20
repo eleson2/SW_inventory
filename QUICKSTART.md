@@ -324,7 +324,7 @@ import Button from '../lib/components/ui/Button.svelte';  // ❌ Don't use relat
 
 ## Quick Tips
 
-1. **Use path aliases** - Import from `$lib`, `$components`, `$types`, etc.
+1. **Use path aliases** - Import from `#lib`, `$components`, `$types`, etc.
 2. **Check types** - Run `npm run check` to catch type errors
 3. **Use the examples** - [USAGE_EXAMPLES.md](USAGE_EXAMPLES.md) has copy-paste code
 4. **Follow patterns** - Existing pages show the structure

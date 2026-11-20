@@ -158,7 +158,7 @@ SELECT * FROM global_search('acme', 10);
 
 #### Clone Software
 ```typescript
-import { cloneSoftware } from '$lib/server/clone-utils';
+import { cloneSoftware } from '#lib/server/clone-utils.ts';
 
 const cloned = await cloneSoftware(
   sourceId,
@@ -173,7 +173,7 @@ const cloned = await cloneSoftware(
 
 #### Clone Package
 ```typescript
-import { clonePackage } from '$lib/server/clone-utils';
+import { clonePackage } from '#lib/server/clone-utils.ts';
 
 const cloned = await clonePackage(
   sourceId,
@@ -190,7 +190,7 @@ const cloned = await clonePackage(
 
 #### Clone LPAR
 ```typescript
-import { cloneLpar } from '$lib/server/clone-utils';
+import { cloneLpar } from '#lib/server/clone-utils.ts';
 
 const cloned = await cloneLpar(
   sourceId,

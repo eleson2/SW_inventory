@@ -189,7 +189,7 @@ import { customerSchema } from '$schemas';
 import { formatDate } from '$utils/date-format';
 import Button from '$components/ui/Button.svelte';
 import DataTable from '$components/common/DataTable.svelte';
-import { calculateCompatibilityScore } from '$lib/services/package-service';
+import { calculateCompatibilityScore } from '#lib/services/package-service.ts';
 ```
 
 ## What's Ready to Use

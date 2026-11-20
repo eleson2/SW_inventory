@@ -1,8 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
 import { lparSchema } from '$schemas';
-import { db, createAuditLog, checkUniqueConstraint } from '$lib/server/db';
+import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
 import { fail, redirect } from '@sveltejs/kit';
-import { serverValidate } from '$lib/utils/superforms';
+import { serverValidate } from '#lib/utils/superforms.ts';
 
 // Load customers, packages, and all LPARs for dropdowns
 export const load: PageServerLoad = async ({ url }) => {

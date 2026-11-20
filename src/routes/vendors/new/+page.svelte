@@ -9,7 +9,7 @@
 	import PageHeader from '$components/common/PageHeader.svelte';
 	import FormValidationSummary from '$components/common/FormValidationSummary.svelte';
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
-	import { typedSuperForm } from '$lib/utils/superforms';
+	import { typedSuperForm } from '#lib/utils/superforms.ts';
 	import { vendorSchema } from '$schemas';
 	import TransactionId from '$components/common/TransactionId.svelte';
 

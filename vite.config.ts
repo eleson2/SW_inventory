@@ -9,7 +9,6 @@ export default defineConfig({
 			preprocess: vitePreprocess(),
 			adapter: adapter(),
 			alias: {
-				$lib: './src/lib',
 				$components: './src/lib/components',
 				$types: './src/lib/types',
 				$utils: './src/lib/utils',

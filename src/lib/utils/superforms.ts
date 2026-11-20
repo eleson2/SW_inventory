@@ -1,7 +1,7 @@
 import { superForm, superValidate } from 'sveltekit-superforms';
 import { zod as zod4 } from 'sveltekit-superforms/adapters/zod4';
 import type { ZodObject } from 'zod';
-import type { SuperForm } from '$lib/types/superforms';
+import type { SuperForm } from '#lib/types/superforms.ts';
 
 /**
  * Server-side helper to validate form data with proper typing.

@@ -129,8 +129,8 @@ For listing pages with pagination, sorting, and filtering:
 
 ```typescript
 // src/routes/vendors/+page.server.ts
-import { createPageLoader } from '$lib/server/page-loader';
-import { createStatusFilter } from '$lib/server/filter-builders';
+import { createPageLoader } from '#lib/server/page-loader.ts';
+import { createStatusFilter } from '#lib/server/filter-builders.ts';
 
 export const load: PageServerLoad = async ({ url }) => {
   return createPageLoader({
@@ -147,7 +147,7 @@ For create/update operations:
 
 ```typescript
 // src/routes/vendors/new/+page.server.ts
-import { createFormAction } from '$lib/server/form-actions';
+import { createFormAction } from '#lib/server/form-actions.ts';
 
 export const actions: Actions = {
   default: createFormAction({
@@ -170,8 +170,8 @@ export const actions: Actions = {
 
 ```typescript
 // In +page.svelte
-import { typedSuperForm } from '$lib/utils/superforms';
-import { vendorSchema } from '$lib/schemas/vendor';
+import { typedSuperForm } from '#lib/utils/superforms.ts';
+import { vendorSchema } from '#lib/schemas/vendor.ts';
 
 const { form, errors, enhance, submitting } = typedSuperForm(
   data.form,
@@ -193,7 +193,7 @@ const { form, errors, enhance, submitting } = typedSuperForm(
 For complex forms with parent-child relationships (e.g., package with items):
 
 ```typescript
-import { useMasterDetailForm } from '$lib/utils/useMasterDetailForm.svelte';
+import { useMasterDetailForm } from '#lib/utils/useMasterDetailForm.svelte.ts';
 
 const { handleSubmit, submitting } = useMasterDetailForm({
   onBuildFormData: (formData) => {
@@ -264,7 +264,7 @@ npx prisma generate
 ```typescript
 // src/lib/schemas/my-entity.ts
 import { z } from 'zod';
-import { CODE_PATTERN, CODE_ERROR_MESSAGE, FIELD_LENGTHS } from '$lib/constants/validation';
+import { CODE_PATTERN, CODE_ERROR_MESSAGE, FIELD_LENGTHS } from '#lib/constants/validation.ts';
 
 const baseFields = {
   name: z.string().min(2).max(255),
@@ -555,7 +555,7 @@ console.log('Debug:', data);  // Shows in browser console
 2. **Follow Svelte 5 patterns** (runes, snippets)
 3. **Extract reusable logic** into utilities
 4. **Keep components small** and focused
-5. **Use path aliases** (`$lib`, `$components`, etc.)
+5. **Use path aliases** (`#lib`, `$components`, etc.)
 
 ### Performance
 

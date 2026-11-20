@@ -1,8 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
-import { db, createAuditLog, checkUniqueConstraint } from '$lib/server/db';
+import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
 import { fail, redirect, error } from '@sveltejs/kit';
-import { lparWithSoftwareSchema } from '$lib/schemas/lpar';
-import { serverValidate } from '$lib/utils/superforms';
+import { lparWithSoftwareSchema } from '#lib/schemas/lpar.ts';
+import { serverValidate } from '#lib/utils/superforms.ts';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const [lpar, customers, packages, allSoftware] = await Promise.all([

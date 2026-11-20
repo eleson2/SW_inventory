@@ -1,8 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
 import { customerUpdateSchema } from '$schemas';
-import { db, createAuditLog, checkUniqueConstraint } from '$lib/server/db';
+import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
 import { error, fail } from '@sveltejs/kit';
-import { serverValidate } from '$lib/utils/superforms';
+import { serverValidate } from '#lib/utils/superforms.ts';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const customer = await db.customers.findUnique({

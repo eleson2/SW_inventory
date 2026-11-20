@@ -1,8 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
-import { db, createAuditLog, checkUniqueConstraint } from '$lib/server/db';
+import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
 import { fail, redirect } from '@sveltejs/kit';
-import { softwareWithVersionsSchema } from '$lib/schemas/software';
-import { serverValidate } from '$lib/utils/superforms';
+import { softwareWithVersionsSchema } from '#lib/schemas/software.ts';
+import { serverValidate } from '#lib/utils/superforms.ts';
 
 // Load vendors and all software for dropdown
 export const load: PageServerLoad = async ({ url }) => {

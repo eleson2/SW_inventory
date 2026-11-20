@@ -1,9 +1,9 @@
 import type { PageServerLoad, Actions } from './$types';
-import { db, createAuditLog } from '$lib/server/db';
+import { db, createAuditLog } from '#lib/server/db.ts';
 import { fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
-import { serverValidate } from '$lib/utils/superforms';
-import { compareVersions } from '$lib/utils/version-parser';
+import { serverValidate } from '#lib/utils/superforms.ts';
+import { compareVersions } from '#lib/utils/version-parser.ts';
 import { Prisma } from '@prisma/client';
 
 // Schema for deployment form

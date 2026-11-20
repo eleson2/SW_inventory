@@ -33,7 +33,7 @@ import type {
 import type {
 	softwareWithVersionsSchema,
 	packageWithItemsSchema
-} from '$lib/schemas';
+} from '#lib/schemas/index.ts';
 
 /**
  * Properly typed SuperValidated form data for Zod object schemas.

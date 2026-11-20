@@ -11,7 +11,7 @@
 	- Visual state tracking (new/existing/deleted)
 -->
 <script lang="ts">
-	import type { LparSoftwareInstallation } from '$lib/schemas/lpar';
+	import type { LparSoftwareInstallation } from '#lib/schemas/lpar.ts';
 	import Button from '$components/ui/Button.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import Label from '$components/ui/Label.svelte';

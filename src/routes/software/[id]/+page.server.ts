@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
-import { db, createAuditLog } from '$lib/server/db';
-import { createDetailLoader } from '$lib/server/route-factory';
+import { db, createAuditLog } from '#lib/server/db.ts';
+import { createDetailLoader } from '#lib/server/route-factory.ts';
 import { redirect, fail } from '@sveltejs/kit';
 
 export const load: PageServerLoad = createDetailLoader({

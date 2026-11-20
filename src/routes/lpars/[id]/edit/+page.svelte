@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
-	import type { LparSoftwareInstallation } from '$lib/schemas/lpar';
+	import type { LparSoftwareInstallation } from '#lib/schemas/lpar.ts';
 	import Card from '$components/ui/Card.svelte';
 	import Label from '$components/ui/Label.svelte';
 	import FormField from '$components/common/FormField.svelte';
@@ -9,7 +9,7 @@
 	import LparSoftwareManager from '$components/domain/LparSoftwareManager.svelte';
 	import FormErrorMessage from '$components/common/FormErrorMessage.svelte';
 	import FormTextarea from '$components/common/FormTextarea.svelte';
-	import { useMasterDetailForm } from '$lib/utils/useMasterDetailForm.svelte';
+	import { useMasterDetailForm } from '#lib/utils/useMasterDetailForm.svelte.ts';
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
 	import PageHeader from '$components/common/PageHeader.svelte';
 	import TransactionId from '$components/common/TransactionId.svelte';

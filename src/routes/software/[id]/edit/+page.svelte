@@ -8,7 +8,7 @@
 	import FormButtons from '$components/common/FormButtons.svelte';
 	import FormErrorMessage from '$components/common/FormErrorMessage.svelte';
 	import FormTextarea from '$components/common/FormTextarea.svelte';
-	import { useMasterDetailForm } from '$lib/utils/useMasterDetailForm.svelte';
+	import { useMasterDetailForm } from '#lib/utils/useMasterDetailForm.svelte.ts';
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
 	import PageHeader from '$components/common/PageHeader.svelte';
 	import TransactionId from '$components/common/TransactionId.svelte';

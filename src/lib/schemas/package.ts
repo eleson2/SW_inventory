@@ -2,7 +2,7 @@
  * Package validation schemas
  */
 import { z } from 'zod';
-import { CODE_PATTERN, CODE_ERROR_MESSAGE, FIELD_LENGTHS } from '$lib/constants/validation';
+import { CODE_PATTERN, CODE_ERROR_MESSAGE, FIELD_LENGTHS } from '#lib/constants/validation.ts';
 
 // Schema for individual package items (detail entity)
 export const packageItemSchema = z.object({

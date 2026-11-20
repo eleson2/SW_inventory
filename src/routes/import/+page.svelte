@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Card, Badge } from '$lib/components/ui';
+	import { Button, Card, Badge } from '#lib/components/ui/index.ts';
 
 	let fileInput: HTMLInputElement;
 	let selectedFile: File | null = null;

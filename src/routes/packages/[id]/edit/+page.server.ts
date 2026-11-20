@@ -1,8 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
 import { error, redirect, fail } from '@sveltejs/kit';
-import { db, createAuditLog } from '$lib/server/db';
-import { packageUpdateSchema } from '$lib/schemas/package';
-import { serverValidate } from '$lib/utils/superforms';
+import { db, createAuditLog } from '#lib/server/db.ts';
+import { packageUpdateSchema } from '#lib/schemas/package.ts';
+import { serverValidate } from '#lib/utils/superforms.ts';
 
 /**
  * Load package with items, plus all software and their versions for dropdowns

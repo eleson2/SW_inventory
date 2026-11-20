@@ -311,7 +311,7 @@ Redirect to detail page (or return errors)
 
 ### Project Standards Maintained
 
-✅ Path aliases (`$lib`, `$components`, `$schemas`)
+✅ Path aliases (`#lib`, `$components`, `$schemas`)
 ✅ Prisma singleton pattern
 ✅ Soft delete conventions
 ✅ Audit logging with change tracking

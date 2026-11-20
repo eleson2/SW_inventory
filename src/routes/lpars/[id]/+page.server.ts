@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
-import { calculateCompatibilityScore } from '$lib/services/package-service';
-import { db } from '$lib/server/db';
+import { calculateCompatibilityScore } from '#lib/services/package-service.ts';
+import { db } from '#lib/server/db.ts';
 import { error, fail, redirect } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ params }) => {

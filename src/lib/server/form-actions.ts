@@ -6,8 +6,8 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import type { z } from 'zod';
 import { fail, redirect } from '@sveltejs/kit';
-import { serverValidate } from '$lib/utils/superforms';
-import { checkUniqueConstraint, createAuditLog } from '$lib/server/db';
+import { serverValidate } from '#lib/utils/superforms.ts';
+import { checkUniqueConstraint, createAuditLog } from '#lib/server/db.ts';
 
 /**
  * Configuration for generic create form action

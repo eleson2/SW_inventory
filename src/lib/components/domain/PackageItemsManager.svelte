@@ -9,7 +9,7 @@
 	- Visual state tracking (new/modified/deleted)
 -->
 <script lang="ts">
-	import type { PackageItem } from '$lib/schemas/package';
+	import type { PackageItem } from '#lib/schemas/package.ts';
 	import Button from '$components/ui/Button.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import Label from '$components/ui/Label.svelte';

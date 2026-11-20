@@ -90,7 +90,7 @@ Prisma singleton pattern with helper functions:
 
 **In +page.server.ts files**:
 ```typescript
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db.ts';
 // Use db.vendors, db.software, db.packages, db.lpars, etc.
 ```
 

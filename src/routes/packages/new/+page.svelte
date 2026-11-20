@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import type { PackageItem } from '$lib/schemas/package';
+	import type { PackageItem } from '#lib/schemas/package.ts';
 	import { goto } from '$app/navigation';
 	import Card from '$components/ui/Card.svelte';
 	import FormField from '$components/common/FormField.svelte';
@@ -9,12 +9,12 @@
 	import FormButtons from '$components/common/FormButtons.svelte';
 	import PackageItemsManager from '$components/domain/PackageItemsManager.svelte';
 	import FormTextarea from '$components/common/FormTextarea.svelte';
-	import { useUnsavedChanges } from '$lib/utils/unsaved-changes.svelte';
+	import { useUnsavedChanges } from '#lib/utils/unsaved-changes.svelte.ts';
 	import FormValidationSummary from '$components/common/FormValidationSummary.svelte';
 	import Breadcrumb from '$components/common/Breadcrumb.svelte';
 	import PageHeader from '$components/common/PageHeader.svelte';
-	import { typedSuperForm } from '$lib/utils/superforms';
-	import { packageWithItemsSchema } from '$lib/schemas/package';
+	import { typedSuperForm } from '#lib/utils/superforms.ts';
+	import { packageWithItemsSchema } from '#lib/schemas/package.ts';
 	import TransactionId from '$components/common/TransactionId.svelte';
 
 	let { data }: { data: PageData } = $props();

@@ -193,9 +193,9 @@ Instead of copying and modifying existing routes, use the factories:
 
 ```typescript
 // src/routes/entities/new/+page.server.ts
-import { createCreateAction } from '$lib/server';
+import { createCreateAction } from '#lib/server/index.ts';
 import { entitySchema } from '$schemas';
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db.ts';
 
 export const actions = {
   default: createCreateAction({
@@ -215,13 +215,13 @@ Update imports to use barrel exports:
 
 ```typescript
 // Old
-import { customerSchema } from '$lib/schemas/index';
-import { db } from '$lib/server/db';
-import { createAuditLog } from '$lib/server/db';
+import { customerSchema } from '#lib/schemas/index.ts';
+import { db } from '#lib/server/db.ts';
+import { createAuditLog } from '#lib/server/db.ts';
 
 // New
 import { customerSchema } from '$schemas';
-import { db, createAuditLog } from '$lib/server';
+import { db, createAuditLog } from '#lib/server/index.ts';
 ```
 
 ### For Validation
@@ -233,7 +233,7 @@ Use constants instead of hardcoding patterns:
 code: z.string().regex(/^[A-Z0-9_-]+$/, 'Code must be uppercase...')
 
 // New
-import { CODE_PATTERN, CODE_ERROR_MESSAGE } from '$lib/constants';
+import { CODE_PATTERN, CODE_ERROR_MESSAGE } from '#lib/constants/index.ts';
 code: z.string().regex(CODE_PATTERN, CODE_ERROR_MESSAGE)
 ```
 

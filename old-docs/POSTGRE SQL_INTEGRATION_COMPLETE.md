@@ -132,7 +132,7 @@ return { customers: { items: mockCustomers, ... } };
 
 ### After (Real Database)
 ```typescript
-import { db, getPaginated } from '$lib/server/db';
+import { db, getPaginated } from '#lib/server/db.ts';
 
 const customers = await getPaginated(
   db.customer,
