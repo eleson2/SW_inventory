@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { cn } from '$utils/cn';
+	import { cn } from '#lib/utils/cn.ts';
 
 	type Variant = 'default' | 'secondary' | 'destructive' | 'outline' | 'success';
 

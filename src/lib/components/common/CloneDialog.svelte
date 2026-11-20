@@ -1,8 +1,8 @@
 <script lang="ts">
-	import Button from '$components/ui/Button.svelte';
-	import Card from '$components/ui/Card.svelte';
-	import FormField from '$components/common/FormField.svelte';
-	import Label from '$components/ui/Label.svelte';
+	import Button from '#lib/components/ui/Button.svelte';
+	import Card from '#lib/components/ui/Card.svelte';
+	import FormField from '#lib/components/common/FormField.svelte';
+	import Label from '#lib/components/ui/Label.svelte';
 
 	let {
 		open = $bindable(false),

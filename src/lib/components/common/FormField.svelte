@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Label from '$components/ui/Label.svelte';
-	import Input from '$components/ui/Input.svelte';
+	import Label from '#lib/components/ui/Label.svelte';
+	import Input from '#lib/components/ui/Input.svelte';
 
 	let {
 		label,

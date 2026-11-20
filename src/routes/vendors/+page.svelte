@@ -1,14 +1,14 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import type { Vendor } from '$types';
+	import type { Vendor } from '#lib/types/index.ts';
 	import { goto } from '$app/navigation';
-	import Button from '$components/ui/Button.svelte';
-	import Card from '$components/ui/Card.svelte';
-	import DataTable from '$components/common/DataTable.svelte';
-	import Pagination from '$components/common/Pagination.svelte';
-	import InstantSearch from '$components/common/InstantSearch.svelte';
-	import StatusBadge from '$components/common/StatusBadge.svelte';
-	import PageHeader from '$components/common/PageHeader.svelte';
+	import Button from '#lib/components/ui/Button.svelte';
+	import Card from '#lib/components/ui/Card.svelte';
+	import DataTable from '#lib/components/common/DataTable.svelte';
+	import Pagination from '#lib/components/common/Pagination.svelte';
+	import InstantSearch from '#lib/components/common/InstantSearch.svelte';
+	import StatusBadge from '#lib/components/common/StatusBadge.svelte';
+	import PageHeader from '#lib/components/common/PageHeader.svelte';
 	import { useTableNavigation } from '#lib/utils/table-navigation.svelte.ts';
 	import { STATUS_FILTER } from '#lib/constants/filters.ts';
 

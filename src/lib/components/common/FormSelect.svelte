@@ -1,5 +1,5 @@
 <script lang="ts" generics="T extends Record<string, any>">
-	import Label from '$components/ui/Label.svelte';
+	import Label from '#lib/components/ui/Label.svelte';
 
 	interface Props {
 		label: string;

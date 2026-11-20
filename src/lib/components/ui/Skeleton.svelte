@@ -7,7 +7,7 @@
 	<Skeleton class="h-8 w-24 rounded-full" />
 -->
 <script lang="ts">
-	import { cn } from '$utils/cn';
+	import { cn } from '#lib/utils/cn.ts';
 
 	interface Props {
 		class?: string;

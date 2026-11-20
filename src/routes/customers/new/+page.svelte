@@ -3,16 +3,16 @@
 	import { typedSuperForm } from '#lib/utils/superforms.ts';
 	import { customerSchema } from '#lib/schemas/customer.ts';
 	import { goto } from '$app/navigation';
-	import Card from '$components/ui/Card.svelte';
-	import FormField from '$components/common/FormField.svelte';
-	import FormCheckbox from '$components/common/FormCheckbox.svelte';
-	import CloneModeToggle from '$components/common/CloneModeToggle.svelte';
-	import FormButtons from '$components/common/FormButtons.svelte';
-	import FormTextarea from '$components/common/FormTextarea.svelte';
-	import FormValidationSummary from '$components/common/FormValidationSummary.svelte';
-	import Breadcrumb from '$components/common/Breadcrumb.svelte';
-	import PageHeader from '$components/common/PageHeader.svelte';
-	import TransactionId from '$components/common/TransactionId.svelte';
+	import Card from '#lib/components/ui/Card.svelte';
+	import FormField from '#lib/components/common/FormField.svelte';
+	import FormCheckbox from '#lib/components/common/FormCheckbox.svelte';
+	import CloneModeToggle from '#lib/components/common/CloneModeToggle.svelte';
+	import FormButtons from '#lib/components/common/FormButtons.svelte';
+	import FormTextarea from '#lib/components/common/FormTextarea.svelte';
+	import FormValidationSummary from '#lib/components/common/FormValidationSummary.svelte';
+	import Breadcrumb from '#lib/components/common/Breadcrumb.svelte';
+	import PageHeader from '#lib/components/common/PageHeader.svelte';
+	import TransactionId from '#lib/components/common/TransactionId.svelte';
 
 	let { data }: { data: PageData } = $props();
 

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import Input from '$components/ui/Input.svelte';
-	import Button from '$components/ui/Button.svelte';
+	import Input from '#lib/components/ui/Input.svelte';
+	import Button from '#lib/components/ui/Button.svelte';
 	import { onMount } from 'svelte';
 
 	interface Filter {

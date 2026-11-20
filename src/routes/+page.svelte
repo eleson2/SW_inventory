@@ -1,11 +1,11 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
-	import Card from '$components/ui/Card.svelte';
-	import Button from '$components/ui/Button.svelte';
-	import Badge from '$components/ui/Badge.svelte';
-	import TermTooltip from '$components/common/TermTooltip.svelte';
-	import { formatDateTime, formatDate } from '$utils/date-format';
+	import Card from '#lib/components/ui/Card.svelte';
+	import Button from '#lib/components/ui/Button.svelte';
+	import Badge from '#lib/components/ui/Badge.svelte';
+	import TermTooltip from '#lib/components/common/TermTooltip.svelte';
+	import { formatDateTime, formatDate } from '#lib/utils/date-format.ts';
 	import { Users, Building2, Layers, Package, HardDrive } from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();

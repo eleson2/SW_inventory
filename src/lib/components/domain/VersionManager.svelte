@@ -4,11 +4,11 @@
 	 * Allows adding, editing, deleting, and marking versions as current
 	 */
 	import type { software_versions } from '@prisma/client';
-	import Button from '$components/ui/Button.svelte';
-	import Card from '$components/ui/Card.svelte';
-	import Label from '$components/ui/Label.svelte';
-	import Badge from '$components/ui/Badge.svelte';
-	import ConfirmationDialog from '$components/common/ConfirmationDialog.svelte';
+	import Button from '#lib/components/ui/Button.svelte';
+	import Card from '#lib/components/ui/Card.svelte';
+	import Label from '#lib/components/ui/Label.svelte';
+	import Badge from '#lib/components/ui/Badge.svelte';
+	import ConfirmationDialog from '#lib/components/common/ConfirmationDialog.svelte';
 
 	interface VersionRow extends Partial<software_versions> {
 		_action?: 'create' | 'update' | 'delete';

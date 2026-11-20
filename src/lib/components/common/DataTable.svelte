@@ -1,10 +1,10 @@
 <script lang="ts" generics="T">
-	import { cn } from '$utils/cn';
-	import Button from '$components/ui/Button.svelte';
-	import TableSkeleton from '$components/common/TableSkeleton.svelte';
-	import EmptyState from '$components/common/EmptyState.svelte';
+	import { cn } from '#lib/utils/cn.ts';
+	import Button from '#lib/components/ui/Button.svelte';
+	import TableSkeleton from '#lib/components/common/TableSkeleton.svelte';
+	import EmptyState from '#lib/components/common/EmptyState.svelte';
 	import { Search, X } from 'lucide-svelte';
-	import type { SortOptions } from '$types';
+	import type { SortOptions } from '#lib/types/index.ts';
 	import type { Snippet } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -97,9 +97,8 @@
 		url.searchParams.set('page', '1');
 
 		goto(url.toString(), {
-			keepFocus: true,
-			noScroll: true,
-			replaceState: true
+			reset: false,
+			replace: true
 		});
 	}
 

@@ -1,4 +1,3 @@
-import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import XLSX from 'xlsx';
 import { db } from '#lib/server/db.ts';
@@ -20,7 +19,7 @@ export const POST: RequestHandler = async ({ request }) => {
     const importType = formData.get('type') as string;
 
     if (!file) {
-      return json({ success: false, message: 'No file provided' }, { status: 400 });
+      return Response.json({ success: false, message: 'No file provided' }, { status: 400 });
     }
 
     // Read the file
@@ -45,13 +44,13 @@ export const POST: RequestHandler = async ({ request }) => {
         result = await importLpars(data);
         break;
       default:
-        return json({ success: false, message: 'Invalid import type' }, { status: 400 });
+        return Response.json({ success: false, message: 'Invalid import type' }, { status: 400 });
     }
 
-    return json(result);
+    return Response.json(result);
   } catch (error: any) {
     console.error('Import error:', error);
-    return json(
+    return Response.json(
       { success: false, message: error.message || 'Import failed' },
       { status: 500 }
     );

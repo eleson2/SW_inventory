@@ -1,9 +1,9 @@
 <script lang="ts">
-	import Card from '$components/ui/Card.svelte';
-	import Button from '$components/ui/Button.svelte';
-	import Badge from '$components/ui/Badge.svelte';
-	import VersionDisplay from '$components/domain/VersionDisplay.svelte';
-	import { formatDateTime } from '$utils/date-format';
+	import Card from '#lib/components/ui/Card.svelte';
+	import Button from '#lib/components/ui/Button.svelte';
+	import Badge from '#lib/components/ui/Badge.svelte';
+	import VersionDisplay from '#lib/components/domain/VersionDisplay.svelte';
+	import { formatDateTime } from '#lib/utils/date-format.ts';
 
 	type SoftwareVersion = {
 		id: string;

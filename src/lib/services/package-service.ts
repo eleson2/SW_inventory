@@ -1,8 +1,8 @@
 /**
  * Service for managing software packages and LPAR deployments
  */
-import type { Package, PackageItem, Lpar, LparSoftware, SoftwareVersion } from '$types';
-import { compareSoftwareVersions, isVersionCompatible } from '$utils/version-parser';
+import type { Package, PackageItem, Lpar, LparSoftware, SoftwareVersion } from '#lib/types/index.ts';
+import { compareSoftwareVersions, isVersionCompatible } from '#lib/utils/version-parser.ts';
 
 /**
  * Get the subset of package items relevant for a specific customer's LPAR

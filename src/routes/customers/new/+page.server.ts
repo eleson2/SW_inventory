@@ -1,5 +1,5 @@
 import type { PageServerLoad, Actions } from './$types';
-import { customerSchema } from '$schemas';
+import { customerSchema } from '#lib/schemas/index.ts';
 import { db } from '#lib/server/db.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
 import { createFormAction } from '#lib/server/form-actions.ts';

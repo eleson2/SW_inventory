@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { SoftwareVersion } from '$types';
-	import { formatSoftwareVersion } from '$utils/version-parser';
-	import Badge from '$components/ui/Badge.svelte';
-	import TermTooltip from '$components/common/TermTooltip.svelte';
+	import type { SoftwareVersion } from '#lib/types/index.ts';
+	import { formatSoftwareVersion } from '#lib/utils/version-parser.ts';
+	import Badge from '#lib/components/ui/Badge.svelte';
+	import TermTooltip from '#lib/components/common/TermTooltip.svelte';
 
 	let {
 		version,

@@ -1,7 +1,7 @@
 /**
  * Utilities for parsing and comparing software versions and PTF levels
  */
-import type { SoftwareVersion } from '$types';
+import type { SoftwareVersion } from '#lib/types/index.ts';
 
 /**
  * Parse vendor designation into version and PTF level

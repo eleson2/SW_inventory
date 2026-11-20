@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Card from '$components/ui/Card.svelte';
+	import Card from '#lib/components/ui/Card.svelte';
 
 	interface Props {
 		show: boolean;

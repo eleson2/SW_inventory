@@ -2,7 +2,7 @@
  * Generic page loader utilities for list pages
  * Consolidates duplicate pagination and sorting logic
  */
-import type { SortOptions } from '$types';
+import type { SortOptions } from '#lib/types/index.ts';
 import { db, getPaginated } from './db';
 
 export interface PageLoaderOptions<T = any> {

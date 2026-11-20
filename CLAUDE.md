@@ -127,15 +127,13 @@ Uses Superforms with Zod schemas from `src/lib/schemas/index.ts`:
 
 ### Path Aliases
 
-Configured in `svelte.config.js`:
+SvelteKit 3 uses Node subpath imports, declared in the `"imports"` field of `package.json`
+(there is no `svelte.config.js`; Kit config lives in the `sveltekit()` plugin in `vite.config.ts`):
 ```typescript
-$lib          → src/lib
-$components   → src/lib/components
-$types        → src/lib/types
-$utils        → src/lib/utils
-$stores       → src/lib/stores
-$schemas      → src/lib/schemas
+#lib/*        → src/lib/*      // e.g. '#lib/components/ui/Card.svelte', '#lib/server/db.ts'
 ```
+Imports must include the file extension (`.ts`, `.svelte`, `.svelte.ts`). The old
+`$lib`, `$components`, `$types`, `$utils`, `$stores`, `$schemas` aliases no longer exist.
 
 ## Mainframe Concepts
 

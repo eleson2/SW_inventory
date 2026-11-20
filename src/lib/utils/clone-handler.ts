@@ -2,7 +2,7 @@
  * Reusable clone handler utility for entity detail pages
  * Consolidates duplicate clone logic across all detail pages
  */
-import { toast } from '$stores/toast';
+import { toast } from '#lib/stores/toast.ts';
 
 export type EntityType = 'software' | 'package' | 'lpar' | 'customer' | 'vendor';
 

@@ -1,4 +1,3 @@
-import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { cloneSoftware, clonePackage, cloneLpar, cloneCustomer, cloneVendor, getClonePreview } from '#lib/server/clone-utils.ts';
 import { z } from 'zod';
@@ -20,47 +19,47 @@ export const POST: RequestHandler = async ({ request }) => {
 		switch (entityType) {
 			case 'software':
 				if (!data.name) {
-					return json({ error: 'Name is required' }, { status: 400 });
+					return Response.json({ error: 'Name is required' }, { status: 400 });
 				}
 				result = await cloneSoftware(sourceId, data.name, data.description);
 				break;
 
 			case 'package':
 				if (!data.name || !data.code || !data.version) {
-					return json({ error: 'Name, code, and version are required' }, { status: 400 });
+					return Response.json({ error: 'Name, code, and version are required' }, { status: 400 });
 				}
 				result = await clonePackage(sourceId, data.name, data.code, data.version);
 				break;
 
 			case 'lpar':
 				if (!data.name || !data.code) {
-					return json({ error: 'Name and code are required' }, { status: 400 });
+					return Response.json({ error: 'Name and code are required' }, { status: 400 });
 				}
 				result = await cloneLpar(sourceId, data.name, data.code, data.customer_id);
 				break;
 
 			case 'customer':
 				if (!data.name || !data.code) {
-					return json({ error: 'Name and code are required' }, { status: 400 });
+					return Response.json({ error: 'Name and code are required' }, { status: 400 });
 				}
 				result = await cloneCustomer(sourceId, data.name, data.code);
 				break;
 
 			case 'vendor':
 				if (!data.name || !data.code) {
-					return json({ error: 'Name and code are required' }, { status: 400 });
+					return Response.json({ error: 'Name and code are required' }, { status: 400 });
 				}
 				result = await cloneVendor(sourceId, data.name, data.code);
 				break;
 
 			default:
-				return json({ error: 'Invalid entity type' }, { status: 400 });
+				return Response.json({ error: 'Invalid entity type' }, { status: 400 });
 		}
 
-		return json({ success: true, data: result });
+		return Response.json({ success: true, data: result });
 	} catch (error) {
 		console.error('Clone error:', error);
-		return json(
+		return Response.json(
 			{
 				error: error instanceof Error ? error.message : 'Failed to clone entity'
 			},
@@ -75,15 +74,15 @@ export const GET: RequestHandler = async ({ url }) => {
 		const sourceId = url.searchParams.get('sourceId');
 
 		if (!entityType || !sourceId) {
-			return json({ error: 'Entity type and source ID are required' }, { status: 400 });
+			return Response.json({ error: 'Entity type and source ID are required' }, { status: 400 });
 		}
 
 		const preview = await getClonePreview(entityType, sourceId);
 
-		return json({ success: true, preview });
+		return Response.json({ success: true, preview });
 	} catch (error) {
 		console.error('Preview error:', error);
-		return json(
+		return Response.json(
 			{
 				error: error instanceof Error ? error.message : 'Failed to get preview'
 			},

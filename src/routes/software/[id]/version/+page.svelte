@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
-	import Button from '$components/ui/Button.svelte';
-	import Card from '$components/ui/Card.svelte';
-	import FormField from '$components/common/FormField.svelte';
-	import FormErrorMessage from '$components/common/FormErrorMessage.svelte';
-	import FormTextarea from '$components/common/FormTextarea.svelte';
+	import Button from '#lib/components/ui/Button.svelte';
+	import Card from '#lib/components/ui/Card.svelte';
+	import FormField from '#lib/components/common/FormField.svelte';
+	import FormErrorMessage from '#lib/components/common/FormErrorMessage.svelte';
+	import FormTextarea from '#lib/components/common/FormTextarea.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 

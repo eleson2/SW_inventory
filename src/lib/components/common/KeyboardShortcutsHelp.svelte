@@ -3,8 +3,8 @@
 	Help dialog showing available keyboard shortcuts
 -->
 <script lang="ts">
-	import Card from '$components/ui/Card.svelte';
-	import Button from '$components/ui/Button.svelte';
+	import Card from '#lib/components/ui/Card.svelte';
+	import Button from '#lib/components/ui/Button.svelte';
 	import { fade } from 'svelte/transition';
 
 	interface Props {

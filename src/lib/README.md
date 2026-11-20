@@ -48,16 +48,16 @@ Use path aliases for cleaner imports:
 import { CODE_PATTERN, FIELD_LENGTHS } from '#lib/constants/validation.ts';
 
 // Schemas
-import { customerSchema, vendorSchema } from '$schemas';
+import { customerSchema, vendorSchema } from '#lib/schemas/index.ts';
 
 // Server utilities
 import { db, createDetailLoader, createCreateAction } from '#lib/server/index.ts';
 
 // Types
-import type { Customer, Package, SoftwareVersion } from '$types';
+import type { Customer, Package, SoftwareVersion } from '#lib/types/index.ts';
 
 // Utils
-import { formatDate, compareVersions, AppError } from '$utils';
+import { formatDate, compareVersions, AppError } from '#lib/utils/index.ts';
 ```
 
 ## Schema Organization
@@ -125,7 +125,7 @@ await createAuditLog('customer', id, 'update', { old, new });
 Use custom error classes for consistent error handling:
 
 ```typescript
-import { NotFoundError, DuplicateError, formatErrorResponse } from '$utils';
+import { NotFoundError, DuplicateError, formatErrorResponse } from '#lib/utils/index.ts';
 
 // Throw typed errors
 if (!customer) throw new NotFoundError('Customer', id);

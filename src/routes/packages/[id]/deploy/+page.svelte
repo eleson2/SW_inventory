@@ -1,13 +1,13 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
 	import { enhance } from '$app/forms';
-	import Card from '$components/ui/Card.svelte';
-	import Button from '$components/ui/Button.svelte';
-	import Badge from '$components/ui/Badge.svelte';
-	import DualListbox from '$components/common/DualListbox.svelte';
-	import ConfirmationDialog from '$components/common/ConfirmationDialog.svelte';
-	import DeploymentProgress from '$components/common/DeploymentProgress.svelte';
-	import TransactionId from '$components/common/TransactionId.svelte';
+	import Card from '#lib/components/ui/Card.svelte';
+	import Button from '#lib/components/ui/Button.svelte';
+	import Badge from '#lib/components/ui/Badge.svelte';
+	import DualListbox from '#lib/components/common/DualListbox.svelte';
+	import ConfirmationDialog from '#lib/components/common/ConfirmationDialog.svelte';
+	import DeploymentProgress from '#lib/components/common/DeploymentProgress.svelte';
+	import TransactionId from '#lib/components/common/TransactionId.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 

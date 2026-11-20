@@ -12,10 +12,10 @@
 -->
 <script lang="ts">
 	import type { LparSoftwareInstallation } from '#lib/schemas/lpar.ts';
-	import Button from '$components/ui/Button.svelte';
-	import Badge from '$components/ui/Badge.svelte';
-	import Label from '$components/ui/Label.svelte';
-	import ConfirmationDialog from '$components/common/ConfirmationDialog.svelte';
+	import Button from '#lib/components/ui/Button.svelte';
+	import Badge from '#lib/components/ui/Badge.svelte';
+	import Label from '#lib/components/ui/Label.svelte';
+	import ConfirmationDialog from '#lib/components/common/ConfirmationDialog.svelte';
 
 	interface SoftwareWithVersions {
 		id: string;

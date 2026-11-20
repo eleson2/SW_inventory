@@ -1,5 +1,5 @@
 <script lang="ts" generics="T extends { id: string }">
-	import Button from '$components/ui/Button.svelte';
+	import Button from '#lib/components/ui/Button.svelte';
 
 	interface Props {
 		available: T[];

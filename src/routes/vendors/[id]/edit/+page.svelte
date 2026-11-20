@@ -3,14 +3,14 @@
 	import { typedSuperForm } from '#lib/utils/superforms.ts';
 	import { vendorUpdateSchema } from '#lib/schemas/vendor.ts';
 	import { goto } from '$app/navigation';
-	import Card from '$components/ui/Card.svelte';
-	import FormField from '$components/common/FormField.svelte';
-	import FormCheckbox from '$components/common/FormCheckbox.svelte';
-	import FormButtons from '$components/common/FormButtons.svelte';
-	import FormErrorMessage from '$components/common/FormErrorMessage.svelte';
-	import Breadcrumb from '$components/common/Breadcrumb.svelte';
-	import PageHeader from '$components/common/PageHeader.svelte';
-	import TransactionId from '$components/common/TransactionId.svelte';
+	import Card from '#lib/components/ui/Card.svelte';
+	import FormField from '#lib/components/common/FormField.svelte';
+	import FormCheckbox from '#lib/components/common/FormCheckbox.svelte';
+	import FormButtons from '#lib/components/common/FormButtons.svelte';
+	import FormErrorMessage from '#lib/components/common/FormErrorMessage.svelte';
+	import Breadcrumb from '#lib/components/common/Breadcrumb.svelte';
+	import PageHeader from '#lib/components/common/PageHeader.svelte';
+	import TransactionId from '#lib/components/common/TransactionId.svelte';
 
 	let { data }: { data: PageData } = $props();
 

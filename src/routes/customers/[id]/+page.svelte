@@ -1,14 +1,14 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
-	import Button from '$components/ui/Button.svelte';
-	import Card from '$components/ui/Card.svelte';
-	import Badge from '$components/ui/Badge.svelte';
-	import StatusBadge from '$components/common/StatusBadge.svelte';
-	import DeleteButton from '$components/common/DeleteButton.svelte';
-	import Breadcrumb from '$components/common/Breadcrumb.svelte';
-	import PageHeader from '$components/common/PageHeader.svelte';
-	import { formatDateTime } from '$utils/date-format';
+	import Button from '#lib/components/ui/Button.svelte';
+	import Card from '#lib/components/ui/Card.svelte';
+	import Badge from '#lib/components/ui/Badge.svelte';
+	import StatusBadge from '#lib/components/common/StatusBadge.svelte';
+	import DeleteButton from '#lib/components/common/DeleteButton.svelte';
+	import Breadcrumb from '#lib/components/common/Breadcrumb.svelte';
+	import PageHeader from '#lib/components/common/PageHeader.svelte';
+	import { formatDateTime } from '#lib/utils/date-format.ts';
 
 	let { data }: { data: PageData } = $props();
 	const { customer } = data;

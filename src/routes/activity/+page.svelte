@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
-	import Card from '$components/ui/Card.svelte';
-	import Badge from '$components/ui/Badge.svelte';
-	import Button from '$components/ui/Button.svelte';
-	import Pagination from '$components/common/Pagination.svelte';
+	import Card from '#lib/components/ui/Card.svelte';
+	import Badge from '#lib/components/ui/Badge.svelte';
+	import Button from '#lib/components/ui/Button.svelte';
+	import Pagination from '#lib/components/common/Pagination.svelte';
 	import { formatDistanceToNow } from 'date-fns';
 
 	let { data } = $props();
@@ -61,7 +61,7 @@
 
 	// Handle filter changes
 	function updateFilter(key: string, value: string) {
-		const params = new URLSearchParams(page.url.searchParams);
+		const params = new URLSearchParams(page.url.search);
 		if (value) {
 			params.set(key, value);
 		} else {
@@ -200,7 +200,7 @@
 						currentPage={data.pagination.page}
 						totalPages={data.pagination.totalPages}
 						onPageChange={(newPage) => {
-							const params = new URLSearchParams(page.url.searchParams);
+							const params = new URLSearchParams(page.url.search);
 							params.set('page', newPage.toString());
 							goto(`?${params.toString()}`);
 						}}

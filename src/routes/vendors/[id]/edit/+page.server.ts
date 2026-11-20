@@ -1,5 +1,5 @@
 import type { PageServerLoad, Actions } from './$types';
-import { vendorUpdateSchema } from '$schemas';
+import { vendorUpdateSchema } from '#lib/schemas/index.ts';
 import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
 import { error, fail } from '@sveltejs/kit';
 import { serverValidate } from '#lib/utils/superforms.ts';

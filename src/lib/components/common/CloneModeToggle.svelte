@@ -1,6 +1,6 @@
 <script lang="ts" generics="T extends { id: string }">
-	import Label from '$components/ui/Label.svelte';
-	import SearchableSelect from '$components/common/SearchableSelect.svelte';
+	import Label from '#lib/components/ui/Label.svelte';
+	import SearchableSelect from '#lib/components/common/SearchableSelect.svelte';
 
 	interface Props {
 		entityName: string;

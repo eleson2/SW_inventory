@@ -14,8 +14,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import Button from '$components/ui/Button.svelte';
-	import { cn } from '$utils/cn';
+	import Button from '#lib/components/ui/Button.svelte';
+	import { cn } from '#lib/utils/cn.ts';
 
 	interface Filter {
 		name: string;
@@ -93,9 +93,8 @@
 
 		// Navigate with options to preserve focus and avoid cluttering history
 		goto(url.toString(), {
-			keepFocus: true,
-			noScroll: true,
-			replaceState: true
+			reset: false,
+			replace: true
 		});
 	}
 
@@ -126,9 +125,8 @@
 		});
 		url.searchParams.set('page', '1');
 		goto(url.toString(), {
-			keepFocus: true,
-			noScroll: true,
-			replaceState: true
+			reset: false,
+			replace: true
 		});
 	}
 

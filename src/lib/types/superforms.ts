@@ -29,7 +29,7 @@ import type {
 	lparSchema,
 	softwareSchema,
 	packageSchema
-} from '$schemas';
+} from '#lib/schemas/index.ts';
 import type {
 	softwareWithVersionsSchema,
 	packageWithItemsSchema

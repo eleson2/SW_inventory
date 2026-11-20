@@ -6,7 +6,7 @@
 	<TableSkeleton rows={5} columns={4} />
 -->
 <script lang="ts">
-	import Skeleton from '$components/ui/Skeleton.svelte';
+	import Skeleton from '#lib/components/ui/Skeleton.svelte';
 
 	interface Props {
 		rows?: number;
