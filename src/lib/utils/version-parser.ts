@@ -118,3 +118,26 @@ export function isVersionCompatible(
 		return comparison >= 0;
 	}
 }
+
+/**
+ * Exact match of a version/PTF pair as stored (no numeric normalisation).
+ * Treats null, undefined and '' PTF levels as equal.
+ */
+export function sameVersion(
+	a: { version: string; ptf_level: string | null | undefined },
+	b: { version: string; ptf_level: string | null | undefined }
+): boolean {
+	return a.version === b.version && (a.ptf_level || null) === (b.ptf_level || null);
+}
+
+/**
+ * lpar_software stores version/PTF strings; map them back to a software_versions id.
+ * Returns '' when no matching version exists.
+ */
+export function findVersionId(
+	softwareById: Map<string, { versions: { id: string; version: string; ptf_level: string | null }[] }>,
+	install: { software_id: string; current_version: string; current_ptf_level: string | null }
+): string {
+	const target = { version: install.current_version, ptf_level: install.current_ptf_level };
+	return softwareById.get(install.software_id)?.versions.find((v) => sameVersion(v, target))?.id ?? '';
+}

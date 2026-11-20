@@ -1,5 +1,5 @@
 import type { PageServerLoad, Actions } from './$types';
-import { error, redirect, fail, isRedirect } from '@sveltejs/kit';
+import { error, redirect, fail } from '@sveltejs/kit';
 import { db, createAuditLog } from '#lib/server/db.ts';
 import { packageUpdateSchema } from '#lib/schemas/package.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
@@ -80,10 +80,10 @@ export const load: PageServerLoad = async ({ params }) => {
 export const actions: Actions = {
 	default: async (event) => {
 		// Use Superforms to validate form data
-		const form = await validateMasterDetailForm(event.request, packageUpdateSchema, ['items']);
+		const form = await validateMasterDetailForm(event.request, packageUpdateSchema);
 
 		if (!form.valid) {
-			return fail(400, { form });
+			return fail(400, { form, message: 'Please correct the errors below' });
 		}
 
 		const validated = form.data;
@@ -98,12 +98,8 @@ export const actions: Actions = {
 		});
 
 		if (existing) {
-			return fail(400, {
-				form: {
-					...form,
-					errors: { ...form.errors, code: ['A package with this code and version already exists.'] }
-				}
-			});
+			const msg = 'A package with this code and version already exists.';
+			return fail(400, { form: { ...form, errors: { ...form.errors, code: [msg] } }, message: msg });
 		}
 
 		// Validate unique order_index values
@@ -193,15 +189,11 @@ export const actions: Actions = {
 					}
 				);
 			});
-
-			throw redirect(303, '/packages');
 		} catch (err) {
-			if (isRedirect(err)) {
-				throw err;
-			}
-
 			console.error('Error updating package:', err);
 			return fail(500, { form, message: 'Failed to update package' });
 		}
+
+		redirect(303, '/packages');
 	}
 };

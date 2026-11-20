@@ -15,6 +15,7 @@
 
 	let availableLpars = $state<LparWithStatus[]>(data.lpars);
 	let selectedLpars = $state<LparWithStatus[]>([]);
+	const lparNameById = $derived(new Map(data.lpars.map((l) => [l.id, l.name])));
 
 	let deploymentMode = $state<'sequential' | 'parallel'>('sequential');
 	let stopOnError = $state(true);
@@ -80,11 +81,7 @@
 			// Action responses are devalue-encoded; deserialize() decodes them
 			const result = deserialize(await response.text());
 
-			if (result.type === 'success' && result.data?.success && result.data.previews) {
-				previewData = result.data.previews;
-			} else {
-				previewData = null;
-			}
+			previewData = result.type === 'success' ? (result.data?.previews ?? null) : null;
 		} catch (error) {
 			console.error('Preview error:', error);
 			previewData = null;
@@ -402,7 +399,7 @@
 							<span class={result.status === 'success' ? 'text-green-600' : 'text-destructive'}>
 								{result.status === 'success' ? '✓' : '✗'}
 							</span>
-							<span>LPAR: {result.lparName ?? result.lparId}</span>
+							<span>LPAR: {lparNameById.get(result.lparId) ?? result.lparId}</span>
 							{#if result.error}
 								<span class="text-destructive">- {result.error}</span>
 							{/if}

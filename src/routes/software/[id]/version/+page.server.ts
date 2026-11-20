@@ -1,4 +1,4 @@
-import { error, redirect, isRedirect } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '#lib/server/db.ts';
 import { z } from 'zod';
@@ -113,17 +113,13 @@ export const actions: Actions = {
 					}
 				);
 			});
-
-			throw redirect(303, `/software/${params.id}`);
 		} catch (err) {
-			if (isRedirect(err)) {
-				throw err;
-			}
-
 			console.error('Error creating version:', err);
 			return {
 				message: 'Failed to create version'
 			};
 		}
+
+		redirect(303, `/software/${params.id}`);
 	}
 };

@@ -30,10 +30,9 @@
 	interface Props {
 		items: PackageItem[];
 		allSoftware: SoftwareWithVersions[];
-		errors?: Record<string, string[]>;
 	}
 
-	let { items = $bindable([]), allSoftware, errors }: Props = $props();
+	let { items = $bindable([]), allSoftware }: Props = $props();
 
 	// Track which item is being edited (inline editing)
 	let editingIndex = $state<number | null>(null);
@@ -149,12 +148,6 @@
 					Please complete all required fields before submitting the form.
 				</div>
 			</div>
-		</div>
-	{/if}
-
-	{#if errors?.items}
-		<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-			{errors.items.join(', ')}
 		</div>
 	{/if}
 

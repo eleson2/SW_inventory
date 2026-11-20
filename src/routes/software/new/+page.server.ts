@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
-import { fail, redirect, isRedirect } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { softwareWithVersionsSchema } from '#lib/schemas/software.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
 
@@ -150,21 +150,19 @@ export const actions: Actions = {
 
 				return software;
 			});
-
-			// Check if we came from a vendor page (redirect back there)
-			const vendorIdFromUrl = new URL(event.request.url).searchParams.get('vendor_id');
-
-			if (vendorIdFromUrl) {
-				redirect(303, `/vendors/${vendorIdFromUrl}`);
-			}
-
-			// Otherwise redirect to software list
-			redirect(303, '/software');
 		} catch (error) {
-			if (isRedirect(error)) throw error;
-
 			console.error('Error creating software:', error);
 			return fail(500, { form });
 		}
+
+		// Check if we came from a vendor page (redirect back there)
+		const vendorIdFromUrl = new URL(event.request.url).searchParams.get('vendor_id');
+
+		if (vendorIdFromUrl) {
+			redirect(303, `/vendors/${vendorIdFromUrl}`);
+		}
+
+		// Otherwise redirect to software list
+		redirect(303, '/software');
 	}
 };

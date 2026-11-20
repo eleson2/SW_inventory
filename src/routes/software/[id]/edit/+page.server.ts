@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '#lib/server/db.ts';
 import { softwareWithVersionsSchema } from '#lib/schemas/software.ts';
-import { error, fail, redirect, isRedirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { serverValidate } from '#lib/utils/superforms.ts';
 import { validateMasterDetailForm } from '#lib/server/master-detail-form.ts';
 
@@ -72,10 +72,10 @@ export const actions: Actions = {
 	 */
 	default: async (event) => {
 		// Use Superforms to validate form data
-		const form = await validateMasterDetailForm(event.request, softwareWithVersionsSchema, ['versions']);
+		const form = await validateMasterDetailForm(event.request, softwareWithVersionsSchema);
 
 		if (!form.valid) {
-			return fail(400, { form });
+			return fail(400, { form, message: 'Please correct the errors below' });
 		}
 
 		const validated = form.data;
@@ -174,11 +174,7 @@ export const actions: Actions = {
 				new: updated.software,
 				version_changes: updated.versionChanges
 			});
-
-			throw redirect(303, '/software');
 		} catch (err) {
-			if (isRedirect(err)) throw err;
-
 			console.error('Software update error:', err);
 
 			// Handle Prisma unique constraint violations
@@ -190,5 +186,7 @@ export const actions: Actions = {
 
 			return fail(500, { form, message: 'Failed to update software' });
 		}
+
+		redirect(303, '/software');
 	}
 };

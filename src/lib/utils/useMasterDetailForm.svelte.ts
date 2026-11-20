@@ -3,8 +3,14 @@
  *
  * Common pattern for forms that manage a main entity (master) with related entities (detail)
  * Examples: Software with Versions, LPAR with Software Installations, Package with Items
+ *
+ * The server side reads these posts with validateMasterDetailForm (src/lib/server/master-detail-form.ts).
+ *
+ * Usage:
+ *   const masterDetail = useMasterDetailForm({ onBuildFormData: (fd) => fd.set('items', JSON.stringify(items)) });
+ *   <form method="POST" use:masterDetail.enhance> ... <FormButtons loading={masterDetail.submitting} />
  */
-import { applyAction, deserialize } from '$app/forms';
+import { enhance as kitEnhance } from '$app/forms';
 
 interface MasterDetailFormOptions {
 	/**
@@ -12,62 +18,28 @@ interface MasterDetailFormOptions {
 	 * Use this to add nested JSON data (e.g., versions, items, installations)
 	 */
 	onBuildFormData: (formData: FormData) => void;
-
-	/**
-	 * Optional success callback
-	 */
-	onSuccess?: (response: Response) => void;
-
-	/**
-	 * Optional error callback
-	 */
-	onError?: (error: Error) => void;
 }
 
 export function useMasterDetailForm(options: MasterDetailFormOptions) {
 	let submitting = $state(false);
 
 	/**
-	 * Form submission handler
-	 * Intercepts submit, builds FormData with detail data, and handles submission
+	 * Form action: progressive enhancement via SvelteKit's enhance. Redirects navigate;
+	 * failures update the page's `form` prop without resetting the user's edits.
 	 */
-	async function handleSubmit(event: SubmitEvent) {
-		event.preventDefault();
-		submitting = true;
-
-		const form = event.target as HTMLFormElement;
-		const formData = new FormData(form);
-
-		// Allow caller to add nested detail data
-		options.onBuildFormData(formData);
-
-		try {
-			const response = await fetch(form.action, {
-				method: 'POST',
-				body: formData,
-				headers: { accept: 'application/json', 'x-sveltekit-action': 'true' }
-			});
-
-			// Kit answers with a serialized ActionResult (redirect/success/failure/error).
-			// applyAction follows redirects and updates the page's `form` prop on failure,
-			// so validation errors show without losing the user's unsaved edits.
-			const result = deserialize(await response.text());
-			if (result.type === 'success' && options.onSuccess) {
-				options.onSuccess(response);
-			}
-			await applyAction(result);
-		} catch (error) {
-			console.error('Form submission error:', error);
-			if (options.onError) {
-				options.onError(error as Error);
-			}
-		} finally {
-			submitting = false;
-		}
+	function enhance(form: HTMLFormElement) {
+		return kitEnhance(form, ({ formData }) => {
+			options.onBuildFormData(formData);
+			submitting = true;
+			return async ({ update }) => {
+				await update({ reset: false });
+				submitting = false;
+			};
+		});
 	}
 
 	return {
-		handleSubmit,
+		enhance,
 		get submitting() {
 			return submitting;
 		}

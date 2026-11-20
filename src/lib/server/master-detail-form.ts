@@ -2,7 +2,7 @@
  * Server-side counterpart of `useMasterDetailForm` (src/lib/utils/useMasterDetailForm.svelte.ts).
  *
  * Master-detail edit pages post plain FormData: the master fields as regular inputs and
- * the detail rows (installations, items, versions) as a JSON string. Superforms cannot
+ * every array field (installations, items, versions) as a JSON string. Superforms cannot
  * parse that directly ("Object type found. Set the dataType option to json"), so this
  * builds a plain object from the FormData first and validates it with the schema.
  */
@@ -20,23 +20,23 @@ function baseTypeName(field: ZodType): string {
 
 export async function validateMasterDetailForm<T extends ZodObject>(
 	request: Request,
-	schema: T,
-	jsonFields: string[]
+	schema: T
 ): Promise<SuperForm<T>> {
 	const formData = await request.formData();
 	const data: Record<string, unknown> = {};
 
 	for (const [key, field] of Object.entries(schema.shape)) {
 		const raw = formData.get(key);
+		const type = baseTypeName(field as ZodType);
 
-		if (jsonFields.includes(key)) {
+		if (type === 'array') {
 			if (typeof raw !== 'string' || raw === '') continue; // let the schema default apply
 			try {
 				data[key] = JSON.parse(raw);
 			} catch {
 				data[key] = null; // invalid JSON fails validation instead of throwing
 			}
-		} else if (baseTypeName(field as ZodType) === 'boolean') {
+		} else if (type === 'boolean') {
 			// Checkboxes: present ("on") when checked, absent when unchecked
 			data[key] = raw === 'on' || raw === 'true';
 		} else if (typeof raw === 'string' && raw.trim() !== '') {

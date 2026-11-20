@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { lparSchema } from '#lib/schemas/index.ts';
 import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
-import { fail, redirect, isRedirect } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { serverValidate } from '#lib/utils/superforms.ts';
 
 // Load customers, packages, and all LPARs for dropdowns
@@ -112,21 +112,19 @@ export const actions: Actions = {
 
 			// Create audit log
 			await createAuditLog('lpar', lpar.id, 'create', lpar);
-
-			// Check if we came from a customer page (redirect back there)
-			const customerIdFromUrl = new URL(event.request.url).searchParams.get('customer_id');
-
-			if (customerIdFromUrl) {
-				redirect(303, `/customers/${customerIdFromUrl}`);
-			}
-
-			// Otherwise redirect to lpars list
-			redirect(303, '/lpars');
 		} catch (error) {
-			if (isRedirect(error)) throw error;
-
 			console.error('Error creating LPAR:', error);
 			return fail(500, { form });
 		}
+
+		// Check if we came from a customer page (redirect back there)
+		const customerIdFromUrl = new URL(event.request.url).searchParams.get('customer_id');
+
+		if (customerIdFromUrl) {
+			redirect(303, `/customers/${customerIdFromUrl}`);
+		}
+
+		// Otherwise redirect to lpars list
+		redirect(303, '/lpars');
 	}
 };

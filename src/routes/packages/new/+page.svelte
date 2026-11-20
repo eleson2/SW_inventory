@@ -245,7 +245,6 @@
 			<PackageItemsManager
 				bind:items={packageItems}
 				allSoftware={data.allSoftware}
-				errors={undefined}
 			/>
 		</Card>
 

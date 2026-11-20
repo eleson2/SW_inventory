@@ -4,6 +4,7 @@ import { fail, redirect, error } from '@sveltejs/kit';
 import { lparWithSoftwareSchema } from '#lib/schemas/lpar.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
 import { validateMasterDetailForm } from '#lib/server/master-detail-form.ts';
+import { findVersionId, sameVersion } from '#lib/utils/version-parser.ts';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const [lpar, customers, packages, allSoftware] = await Promise.all([
@@ -55,6 +56,8 @@ export const load: PageServerLoad = async ({ params }) => {
 		throw error(404, 'LPAR not found');
 	}
 
+	const softwareById = new Map(allSoftware.map((s) => [s.id, s]));
+
 	// Initialize Superforms with LPAR data (only fields matching schema)
 	const form = await serverValidate(
 		{
@@ -67,7 +70,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			software_installations: lpar.lpar_software.map(ls => ({
 				id: ls.id,
 				software_id: ls.software_id,
-				software_version_id: findVersionId(allSoftware, ls.software_id, ls.current_version, ls.current_ptf_level),
+				software_version_id: findVersionId(softwareById, ls),
 				installed_date: ls.installed_date,
 				_action: 'keep' as const
 			}))
@@ -84,54 +87,46 @@ export const load: PageServerLoad = async ({ params }) => {
 	};
 };
 
-type SoftwareWithVersions = { id: string; versions: { id: string; version: string; ptf_level: string | null }[] };
-
-/** lpar_software stores version/PTF strings; map them back to a software_versions id */
-function findVersionId(
-	allSoftware: SoftwareWithVersions[],
-	softwareId: string,
-	version: string,
-	ptfLevel: string | null
-): string {
-	const software = allSoftware.find((s) => s.id === softwareId);
-	const match = software?.versions.find(
-		(v) => v.version === version && (v.ptf_level || null) === (ptfLevel || null)
-	);
-	return match?.id ?? '';
-}
-
 export const actions: Actions = {
 	default: async ({ request, params }) => {
-		const form = await validateMasterDetailForm(request, lparWithSoftwareSchema, ['software_installations']);
-
+		const form = await validateMasterDetailForm(request, lparWithSoftwareSchema);
 		if (!form.valid) {
-			return fail(400, { form });
-		}
-
-		// Check unique code using helper
-		const uniqueCheck = await checkUniqueConstraint(db.lpars, 'code', form.data.code, params.id);
-		if (uniqueCheck.exists) {
-			return fail(400, {
-				form: {
-					...form,
-					errors: { ...form.errors, code: [uniqueCheck.error!] }
-				}
-			});
+			return fail(400, { form, message: 'Please correct the errors below' });
 		}
 
 		const validated = form.data;
+		const kept = validated.software_installations.filter((inst) => inst._action !== 'delete');
 
-		const existingLpar = await db.lpars.findUnique({
-			where: { id: params.id },
-			include: { lpar_software: true }
-		});
+		const [uniqueCheck, existingLpar, versions] = await Promise.all([
+			checkUniqueConstraint(db.lpars, 'code', validated.code, params.id),
+			db.lpars.findUnique({ where: { id: params.id }, include: { lpar_software: true } }),
+			db.software_versions.findMany({
+				where: { id: { in: kept.map((inst) => inst.software_version_id) } },
+				select: { id: true, software_id: true, version: true, ptf_level: true }
+			})
+		]);
+
 		if (!existingLpar) {
 			throw error(404, 'LPAR not found');
 		}
+		if (uniqueCheck.exists) {
+			return fail(400, {
+				form: { ...form, errors: { ...form.errors, code: [uniqueCheck.error!] } },
+				message: uniqueCheck.error!
+			});
+		}
+
+		const versionById = new Map(versions.map((v) => [v.id, v]));
+		if (kept.some((inst) => versionById.get(inst.software_version_id)?.software_id !== inst.software_id)) {
+			return fail(400, { form, message: 'One or more installations reference an invalid version' });
+		}
+
+		const existingById = new Map(existingLpar.lpar_software.map((ls) => [ls.id, ls]));
+		const keptIds = new Set(kept.flatMap((inst) => (inst.id ? [inst.id] : [])));
+		const installsToDelete = existingLpar.lpar_software.map((ls) => ls.id).filter((id) => !keptIds.has(id));
 
 		try {
 			await db.$transaction(async (tx) => {
-				// Update LPAR master data
 				await tx.lpars.update({
 					where: { id: params.id },
 					data: {
@@ -144,13 +139,7 @@ export const actions: Actions = {
 					}
 				});
 
-				const kept = validated.software_installations.filter((inst) => inst._action !== 'delete');
-				const keptIds = kept.filter((inst) => inst.id).map((inst) => inst.id as string);
-
 				// Delete installations that were removed or marked for deletion
-				const installsToDelete = existingLpar.lpar_software
-					.map((ls) => ls.id)
-					.filter((id) => !keptIds.includes(id));
 				if (installsToDelete.length > 0) {
 					await tx.lpar_software.deleteMany({
 						where: { id: { in: installsToDelete }, lpar_id: params.id }
@@ -158,21 +147,11 @@ export const actions: Actions = {
 				}
 
 				for (const installation of kept) {
-					const version = await tx.software_versions.findFirst({
-						where: { id: installation.software_version_id, software_id: installation.software_id },
-						select: { version: true, ptf_level: true }
-					});
-					if (!version) {
-						throw new Error(`Invalid version ID: ${installation.software_version_id}`);
-					}
-
-					const existing = installation.id
-						? existingLpar.lpar_software.find((ls) => ls.id === installation.id)
-						: undefined;
+					const version = versionById.get(installation.software_version_id)!;
+					const existing = installation.id ? existingById.get(installation.id) : undefined;
 					const versionChanged =
 						existing &&
-						(existing.current_version !== version.version ||
-							(existing.current_ptf_level || null) !== (version.ptf_level || null));
+						!sameVersion(version, { version: existing.current_version, ptf_level: existing.current_ptf_level });
 
 					const installData = {
 						lpar_id: params.id,

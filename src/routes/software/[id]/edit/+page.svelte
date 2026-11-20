@@ -56,7 +56,7 @@
 	}
 
 	// Use master-detail form utility
-	const { handleSubmit, submitting } = useMasterDetailForm({
+	const masterDetail = useMasterDetailForm({
 		onBuildFormData: (formData) => {
 			// Add versions as JSON
 			formData.set('versions', JSON.stringify(versions));
@@ -83,7 +83,7 @@
 		description="Update software product information and manage versions"
 	/>
 
-	<form method="POST" class="space-y-6" onsubmit={handleSubmit}>
+	<form method="POST" class="space-y-6" use:masterDetail.enhance>
 		<!-- Master Entity: Software Information -->
 		<Card class="p-6">
 			<h2 class="text-xl font-semibold mb-4">Software Details</h2>
@@ -132,8 +132,8 @@
 		<VersionManager bind:versions onVersionsChange={handleVersionsChange} errors={errors} />
 
 		<!-- Form Actions -->
-		<FormErrorMessage message={(form as { message?: string } | null)?.message} />
+		<FormErrorMessage message={form?.message} />
 
-		<FormButtons loading={submitting} />
+		<FormButtons loading={masterDetail.submitting} />
 	</form>
 </div>

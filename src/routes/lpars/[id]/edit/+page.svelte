@@ -10,6 +10,7 @@
 	import FormErrorMessage from '#lib/components/common/FormErrorMessage.svelte';
 	import FormTextarea from '#lib/components/common/FormTextarea.svelte';
 	import { useMasterDetailForm } from '#lib/utils/useMasterDetailForm.svelte.ts';
+	import { findVersionId } from '#lib/utils/version-parser.ts';
 	import Breadcrumb from '#lib/components/common/Breadcrumb.svelte';
 	import PageHeader from '#lib/components/common/PageHeader.svelte';
 	import TransactionId from '#lib/components/common/TransactionId.svelte';
@@ -39,29 +40,20 @@
 		active: data.lpar.active
 	});
 
-	// Detail form data (software installations)
-	// Need to derive software_version_id from the denormalized version data
+	// Detail form data (software installations); lpar_software stores version strings, so map back to ids
+	const softwareById = $derived(new Map(data.allSoftware.map((s) => [s.id, s])));
 	let softwareInstallations = $state<LparSoftwareInstallation[]>(
-		data.lpar.lpar_software.map((ls) => {
-			// Find the matching version ID by looking up version and PTF level
-			const software = data.allSoftware.find(s => s.id === ls.software_id);
-			const matchingVersion = software?.versions.find(v =>
-				v.version === ls.current_version &&
-				(v.ptf_level || null) === (ls.current_ptf_level || null)
-			);
-
-			return {
-				id: ls.id,
-				software_id: ls.software_id,
-				software_version_id: matchingVersion?.id || '',
-				installed_date: ls.installed_date,
-				_action: undefined
-			};
-		})
+		data.lpar.lpar_software.map((ls) => ({
+			id: ls.id,
+			software_id: ls.software_id,
+			software_version_id: findVersionId(softwareById, ls),
+			installed_date: ls.installed_date,
+			_action: undefined
+		}))
 	);
 
 	// Use master-detail form utility
-	const { handleSubmit, submitting } = useMasterDetailForm({
+	const masterDetail = useMasterDetailForm({
 		onBuildFormData: (formData) => {
 			// Add installations as JSON
 			formData.set('software_installations', JSON.stringify(softwareInstallations));
@@ -82,7 +74,7 @@
 		description="Update LPAR information and manage software installations"
 	/>
 
-	<form method="POST" class="space-y-6" onsubmit={handleSubmit}>
+	<form method="POST" class="space-y-6" use:masterDetail.enhance>
 		<!-- LPAR Information Card -->
 		<Card class="p-6">
 			<h2 class="text-xl font-semibold mb-4">LPAR Details</h2>
@@ -160,7 +152,7 @@
 					bind:checked={formData.active}
 				/>
 
-				<FormErrorMessage message={(form as { message?: string } | null)?.message} />
+				<FormErrorMessage message={form?.message} />
 			</div>
 		</Card>
 
@@ -176,7 +168,7 @@
 
 		<!-- Submit Buttons -->
 		<Card class="p-6">
-			<FormButtons loading={submitting} />
+			<FormButtons loading={masterDetail.submitting} />
 		</Card>
 	</form>
 </div>

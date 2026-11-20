@@ -5,7 +5,7 @@
 
 import type { RequestEvent } from '@sveltejs/kit';
 import type { z } from 'zod';
-import { fail, redirect, isRedirect } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { serverValidate } from '#lib/utils/superforms.ts';
 import { checkUniqueConstraint, createAuditLog } from '#lib/server/db.ts';
 
@@ -106,24 +106,23 @@ export function createFormAction<T extends z.ZodObject>(
 			}
 		}
 
+		let recordId: string;
 		try {
 			// Transform data if transform function provided
 			const data = config.transform ? config.transform(form.data) : form.data;
 
 			// Create entity in database
 			const record = await config.model.create({ data });
+			recordId = record.id;
 
 			// Create audit log entry
 			await createAuditLog(config.entityType, record.id, 'create', record);
-
-			// Redirect to specified path
-			redirect(303, config.redirectPath(record.id));
 		} catch (error) {
-			if (isRedirect(error)) throw error;
-
 			console.error(`Error creating ${config.entityType}:`, error);
 			return fail(500, { form });
 		}
+
+		redirect(303, config.redirectPath(recordId));
 	};
 }
 
@@ -230,14 +229,11 @@ export function createUpdateFormAction<T extends z.ZodObject>(
 
 			// Create audit log entry
 			await createAuditLog(config.entityType, record.id, 'update', record, oldRecord);
-
-			// Redirect to specified path
-			redirect(303, config.redirectPath(record.id));
 		} catch (error) {
-			if (isRedirect(error)) throw error;
-
 			console.error(`Error updating ${config.entityType}:`, error);
 			return fail(500, { form });
 		}
+
+		redirect(303, config.redirectPath(config.id));
 	};
 }

@@ -49,7 +49,7 @@
 	);
 
 	// Use master-detail form utility
-	const { handleSubmit, submitting } = useMasterDetailForm({
+	const masterDetail = useMasterDetailForm({
 		onBuildFormData: (formData) => {
 			// Add items as JSON
 			formData.set('items', JSON.stringify(packageItems));
@@ -70,7 +70,7 @@
 		description="Update package information and manage included software items"
 	/>
 
-	<form method="POST" class="space-y-6" onsubmit={handleSubmit}>
+	<form method="POST" class="space-y-6" use:masterDetail.enhance>
 		<!-- Master Entity: Package Information -->
 		<Card class="p-6">
 			<h2 class="text-xl font-semibold mb-4">Package Information</h2>
@@ -146,8 +146,8 @@
 		<!-- Form Actions -->
 		<Card class="p-6">
 			<div class="space-y-4">
-				<FormErrorMessage message={(form as { message?: string } | null)?.message} />
-				<FormButtons loading={submitting} />
+				<FormErrorMessage message={form?.message} />
+				<FormButtons loading={masterDetail.submitting} />
 			</div>
 		</Card>
 	</form>

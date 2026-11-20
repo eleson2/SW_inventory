@@ -3,7 +3,7 @@ import { db, createAuditLog } from '#lib/server/db.ts';
 import { fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { serverValidate } from '#lib/utils/superforms.ts';
-import { compareVersions } from '#lib/utils/version-parser.ts';
+import { compareVersions, sameVersion } from '#lib/utils/version-parser.ts';
 import { Prisma } from '@prisma/client';
 
 // Schema for deployment form
@@ -79,8 +79,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			if (!current) {
 				newInstalls++;
 			} else if (
-				current.current_version !== item.software_version.version ||
-				(current.current_ptf_level || null) !== (item.software_version.ptf_level || null)
+				!sameVersion(item.software_version, { version: current.current_version, ptf_level: current.current_ptf_level })
 			) {
 				changesNeeded++;
 			}
@@ -112,14 +111,14 @@ function parseLparIds(formData: FormData): string[] | null {
 	}
 }
 
-type DeployResult = { lparId: string; lparName?: string; status: 'success' | 'error'; error?: string };
+type DeployResult = { lparId: string; status: 'success' | 'error'; error?: string };
 
 export const actions: Actions = {
 	// Preview deployment impact for selected LPARs
 	preview: async ({ params, request }) => {
 		const lparIds = parseLparIds(await request.formData());
 		if (!lparIds) {
-			return fail(400, { success: false, message: 'Select at least one valid LPAR', previews: [] });
+			return fail(400, { message: 'Select at least one valid LPAR' });
 		}
 
 		// Use database function to check impact for each LPAR
@@ -190,7 +189,7 @@ export const actions: Actions = {
 			})
 		);
 
-		return { success: true, previews };
+		return { previews };
 	},
 
 	// Optimized deployment using Prisma batch operations
@@ -203,11 +202,8 @@ export const actions: Actions = {
 				results: [] as DeployResult[]
 			});
 		}
-		const lparNames = new Map(
-			(await db.lpars.findMany({ where: { id: { in: lparIds } }, select: { id: true, name: true } })).map(
-				(l) => [l.id, l.name]
-			)
-		);
+		const resultsFor = (status: DeployResult['status'], error?: string): DeployResult[] =>
+			lparIds.map((lparId) => ({ lparId, status, error }));
 
 		console.log('[DEPLOY] Starting deployment for package:', params.id);
 		console.log('[DEPLOY] Target LPARs:', lparIds);
@@ -336,9 +332,7 @@ export const actions: Actions = {
 			return {
 				success: true,
 				message: `Successfully deployed package to ${lparIds.length} LPAR(s)`,
-				results: lparIds.map(
-					(id): DeployResult => ({ lparId: id, lparName: lparNames.get(id), status: 'success' })
-				)
+				results: resultsFor('success')
 			};
 		} catch (error) {
 			console.error('[DEPLOY] Deployment error:', error);
@@ -348,9 +342,7 @@ export const actions: Actions = {
 				success: false,
 				message: 'Deployment failed; no LPARs were changed',
 				// The deployment runs in a single transaction, so every LPAR failed together
-				results: lparIds.map(
-					(id): DeployResult => ({ lparId: id, lparName: lparNames.get(id), status: 'error', error: message })
-				)
+				results: resultsFor('error', message)
 			});
 		}
 	}

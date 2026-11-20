@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '#lib/server/db.ts';
 import { createDetailLoader } from '#lib/server/route-factory.ts';
-import { redirect, fail, isRedirect } from '@sveltejs/kit';
+import { redirect, fail } from '@sveltejs/kit';
 
 export const load: PageServerLoad = createDetailLoader({
 	model: db.vendors,
@@ -56,13 +56,11 @@ export const actions: Actions = {
 				...vendor,
 				permanently_deleted: true
 			});
-
-			throw redirect(303, '/vendors');
 		} catch (error) {
-			if (isRedirect(error)) throw error;
-
 			console.error('Error deleting vendor:', error);
 			return fail(500, { error: 'Failed to delete vendor' });
 		}
+
+		redirect(303, '/vendors');
 	}
 };
