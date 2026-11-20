@@ -12,7 +12,7 @@ import { checkUniqueConstraint, createAuditLog } from '$lib/server/db';
 /**
  * Configuration for generic create form action
  */
-export interface CreateFormActionConfig<T extends z.ZodType> {
+export interface CreateFormActionConfig<T extends z.ZodObject> {
 	/** Zod schema for validation */
 	schema: T;
 	/** Prisma model delegate (e.g., db.vendors, db.customers) */
@@ -58,7 +58,7 @@ export interface CreateFormActionConfig<T extends z.ZodType> {
  *   })
  * };
  */
-export function createFormAction<T extends z.ZodType>(
+export function createFormAction<T extends z.ZodObject>(
 	config: CreateFormActionConfig<T>
 ) {
 	return async (event: RequestEvent) => {
@@ -128,7 +128,7 @@ export function createFormAction<T extends z.ZodType>(
 /**
  * Configuration for generic update form action
  */
-export interface UpdateFormActionConfig<T extends z.ZodType> {
+export interface UpdateFormActionConfig<T extends z.ZodObject> {
 	/** Zod schema for validation */
 	schema: T;
 	/** Prisma model delegate (e.g., db.vendors, db.customers) */
@@ -162,7 +162,7 @@ export interface UpdateFormActionConfig<T extends z.ZodType> {
  *   })
  * };
  */
-export function createUpdateFormAction<T extends z.ZodType>(
+export function createUpdateFormAction<T extends z.ZodObject>(
 	config: UpdateFormActionConfig<T>
 ) {
 	return async (event: RequestEvent) => {

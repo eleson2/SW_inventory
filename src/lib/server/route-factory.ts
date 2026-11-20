@@ -48,7 +48,7 @@ export function createDetailLoader<T = any>(options: DetailLoaderOptions<T>) {
 	};
 }
 
-export interface CreateActionOptions<TSchema extends z.ZodTypeAny = any> {
+export interface CreateActionOptions<TSchema extends z.ZodType = any> {
 	/** Zod validation schema */
 	schema: TSchema;
 	/** The Prisma model delegate */
@@ -98,7 +98,7 @@ export interface CreateActionOptions<TSchema extends z.ZodTypeAny = any> {
  *   })
  * };
  */
-export function createCreateAction<TSchema extends z.ZodTypeAny>(
+export function createCreateAction<TSchema extends z.ZodType>(
 	options: CreateActionOptions<TSchema>
 ) {
 	const {
@@ -159,7 +159,7 @@ export function createCreateAction<TSchema extends z.ZodTypeAny>(
 	};
 }
 
-export interface UpdateActionOptions<TSchema extends z.ZodTypeAny = any> {
+export interface UpdateActionOptions<TSchema extends z.ZodType = any> {
 	/** Zod validation schema */
 	schema: TSchema;
 	/** The Prisma model delegate */
@@ -209,7 +209,7 @@ export interface UpdateActionOptions<TSchema extends z.ZodTypeAny = any> {
  *   })
  * };
  */
-export function createUpdateAction<TSchema extends z.ZodTypeAny>(
+export function createUpdateAction<TSchema extends z.ZodType>(
 	options: UpdateActionOptions<TSchema>
 ) {
 	const {

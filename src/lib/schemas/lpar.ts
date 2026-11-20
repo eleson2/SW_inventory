@@ -39,7 +39,9 @@ export const lparSchema = z.object({
 
 export const lparUpdateSchema = lparSchema
 	.partial()
-	.required({ name: true, code: true, customer_id: true });
+	.required({ name: true, code: true, customer_id: true })
+	// Explicitly optional: Zod 4 applies .default() inside .partial(), which would reset active to true
+	.extend({ active: z.boolean().optional() });
 
 // Master-detail schema for LPAR with software installations
 export const lparWithSoftwareSchema = lparSchema.extend({

@@ -40,6 +40,8 @@ export const packageUpdateSchema = packageSchema
 	.partial()
 	.required({ name: true, code: true, version: true })
 	.extend({
+		// Explicitly optional: Zod 4 applies .default() inside .partial(), which would reset active to true
+		active: z.boolean().optional(),
 		items: z.array(packageItemSchema).optional()
 	});
 

@@ -1,6 +1,6 @@
 import { superForm, superValidate } from 'sveltekit-superforms';
-import { zod } from 'sveltekit-superforms/adapters';
-import type { AnyZodObject } from 'zod';
+import { zod as zod4 } from 'sveltekit-superforms/adapters/zod4';
+import type { ZodObject } from 'zod';
 import type { SuperForm } from '$lib/types/superforms';
 
 /**
@@ -26,11 +26,11 @@ import type { SuperForm } from '$lib/types/superforms';
  * };
  * ```
  */
-export async function serverValidate<T extends AnyZodObject>(
+export async function serverValidate<T extends ZodObject>(
     input: unknown,
     schema: T
 ): Promise<SuperForm<T>> {
-    const form = await superValidate(input as any, zod(schema));
+    const form = await superValidate(input as any, zod4(schema));
     return form as SuperForm<T>;
 }
 
@@ -46,13 +46,13 @@ export async function serverValidate<T extends AnyZodObject>(
  * });
  * ```
  */
-export function typedSuperForm<T extends AnyZodObject>(
+export function typedSuperForm<T extends ZodObject>(
     dataForm: unknown,
     schema: T,
     options: Record<string, any> = {}
 ) {
     const typed = dataForm as SuperForm<T>;
     // Ensure validators provided are the Zod adapter for this schema unless caller overrides
-    const merged = { validators: zod(schema), ...options };
+    const merged = { validators: zod4(schema), ...options };
     return superForm(typed, merged);
 }

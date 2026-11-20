@@ -20,7 +20,7 @@
  */
 
 import type { SuperValidated, Infer } from 'sveltekit-superforms';
-import type { z, AnyZodObject } from 'zod';
+import type { z, ZodObject } from 'zod';
 import type {
 	vendorSchema,
 	vendorUpdateSchema,
@@ -39,24 +39,24 @@ import type {
  * Properly typed SuperValidated form data for Zod object schemas.
  *
  * This type wraps SuperValidated with proper type inference from Zod schemas.
- * Using AnyZodObject ensures type safety by only accepting object schemas,
+ * Using ZodObject ensures type safety by only accepting object schemas,
  * which is what all forms in this app use.
  *
  * Usage: SuperForm<typeof vendorSchema>
  */
-export type SuperForm<T extends AnyZodObject> = SuperValidated<z.infer<T>>;
+export type SuperForm<T extends ZodObject> = SuperValidated<z.infer<T>>;
 
 /**
  * Validated form data type from a Zod schema
  * Usage: ValidatedFormData<typeof vendorSchema>
  */
-export type ValidatedFormData<T extends AnyZodObject> = z.infer<T>;
+export type ValidatedFormData<T extends ZodObject> = z.infer<T>;
 
 /**
  * Type-safe form data accessor
  * Usage: const data = formData(form, vendorSchema);
  */
-export function formData<T extends AnyZodObject>(
+export function formData<T extends ZodObject>(
 	form: SuperValidated<z.infer<T>>,
 	_schema: T
 ): z.infer<T> {
@@ -86,7 +86,7 @@ export type PackageWithItemsFormData = Infer<typeof packageWithItemsSchema>;
  *   const typedForm = data.form as SuperForm<typeof schema>;
  *   const { form, errors, enhance } = superForm(typedForm, { ... });
  */
-export type SuperFormClient<T extends ZodSchema> = {
+export type SuperFormClient<T extends ZodObject> = {
 	form: {
 		subscribe: (fn: (value: Infer<T>) => void) => void;
 	};

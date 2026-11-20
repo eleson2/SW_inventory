@@ -7,7 +7,7 @@ import { z } from 'zod';
 const cloneRequestSchema = z.object({
 	entityType: z.enum(['software', 'package', 'lpar', 'customer', 'vendor']),
 	sourceId: z.string().uuid(),
-	data: z.record(z.string())
+	data: z.record(z.string(), z.string())
 });
 
 export const POST: RequestHandler = async ({ request }) => {

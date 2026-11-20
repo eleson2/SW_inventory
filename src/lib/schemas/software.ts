@@ -44,7 +44,9 @@ export const softwareSchema = z.object({
 
 export const softwareUpdateSchema = softwareSchema
 	.partial()
-	.required({ name: true, vendor_id: true });
+	.required({ name: true, vendor_id: true })
+	// Explicitly optional: Zod 4 applies .default() inside .partial(), which would reset active to true
+	.extend({ active: z.boolean().optional() });
 
 // Master-detail schema for software with inline version management
 export const softwareWithVersionsSchema = z.object({
