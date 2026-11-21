@@ -86,16 +86,14 @@ async function importVendors(data: any[][]): Promise<ImportResult> {
   const existingCodes = new Set(existingVendors.map(v => v.code));
 
   // Split into creates and updates
-  const toCreate = vendorData.filter(v => !existingCodes.has(v.code));
+  // Dedupe by code: createMany fails on repeated codes (duplicate skipping is Postgres-only)
+  const toCreate = [...new Map(vendorData.filter(v => !existingCodes.has(v.code)).map(v => [v.code, v])).values()];
   const toUpdate = vendorData.filter(v => existingCodes.has(v.code));
 
   // Batch create new vendors
   let created = 0;
   if (toCreate.length > 0) {
-    await db.vendors.createMany({
-      data: toCreate,
-      skipDuplicates: true
-    });
+    await db.vendors.createMany({ data: toCreate });
     created = toCreate.length;
   }
 

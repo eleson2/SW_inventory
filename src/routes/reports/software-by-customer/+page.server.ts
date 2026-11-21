@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '#lib/server/db.ts';
-import { fail } from '@sveltejs/kit';
+import { getSoftwareByCustomer } from '#lib/server/reports.ts';
 
 export const load: PageServerLoad = async ({ url }) => {
 	// Get all customers for filter dropdown
@@ -12,56 +12,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	// Get selected customer IDs from query params
 	const customerIds = url.searchParams.getAll('customer');
-
-	// Query the report view
-	let reportData: any[] = [];
-
-	if (customerIds.length > 0) {
-		// Filter by selected customers
-		reportData = await db.$queryRaw`
-			SELECT
-				customer_id,
-				customer_name,
-				customer_code,
-				software_id,
-				software_name,
-				vendor_name,
-				vendor_code,
-				version,
-				ptf_level,
-				release_date,
-				lpar_count,
-				lpar_names,
-				lpar_codes,
-				latest_install_date,
-				has_rollbacks
-			FROM software_per_customer
-			WHERE customer_id = ANY(${customerIds}::uuid[])
-			ORDER BY customer_name, software_name, release_date DESC
-		`;
-	} else {
-		// No filter - show all
-		reportData = await db.$queryRaw`
-			SELECT
-				customer_id,
-				customer_name,
-				customer_code,
-				software_id,
-				software_name,
-				vendor_name,
-				vendor_code,
-				version,
-				ptf_level,
-				release_date,
-				lpar_count,
-				lpar_names,
-				lpar_codes,
-				latest_install_date,
-				has_rollbacks
-			FROM software_per_customer
-			ORDER BY customer_name, software_name, release_date DESC
-		`;
-	}
+	const reportData = await getSoftwareByCustomer(customerIds);
 
 	return {
 		customers,
@@ -73,44 +24,7 @@ export const load: PageServerLoad = async ({ url }) => {
 export const actions: Actions = {
 	// Export to CSV action
 	export: async ({ url }) => {
-		const customerIds = url.searchParams.getAll('customer');
-
-		let reportData: any[] = [];
-
-		if (customerIds.length > 0) {
-			reportData = await db.$queryRaw`
-				SELECT
-					customer_name,
-					customer_code,
-					software_name,
-					vendor_name,
-					vendor_code,
-					version,
-					ptf_level,
-					release_date,
-					lpar_count,
-					has_rollbacks
-				FROM software_per_customer
-				WHERE customer_id = ANY(${customerIds}::uuid[])
-				ORDER BY customer_name, software_name, release_date DESC
-			`;
-		} else {
-			reportData = await db.$queryRaw`
-				SELECT
-					customer_name,
-					customer_code,
-					software_name,
-					vendor_name,
-					vendor_code,
-					version,
-					ptf_level,
-					release_date,
-					lpar_count,
-					has_rollbacks
-				FROM software_per_customer
-				ORDER BY customer_name, software_name, release_date DESC
-			`;
-		}
+		const reportData = await getSoftwareByCustomer(url.searchParams.getAll('customer'));
 
 		// Generate CSV
 		const headers = [
@@ -128,7 +42,7 @@ export const actions: Actions = {
 
 		const csvRows = [
 			headers.join(','),
-			...reportData.map((row: any) => [
+			...reportData.map((row) => [
 				`"${row.customer_name}"`,
 				row.customer_code,
 				`"${row.software_name}"`,

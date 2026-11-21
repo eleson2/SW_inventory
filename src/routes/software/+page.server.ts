@@ -1,6 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { db } from '#lib/server/db.ts';
 import { createPageLoader } from '#lib/server/page-loader.ts';
+import { textContains } from '#lib/server/db-dialect.ts';
 
 export const load: PageServerLoad = async ({ url }) => {
 	// Get all vendors for filter dropdown
@@ -25,8 +26,8 @@ export const load: PageServerLoad = async ({ url }) => {
 		},
 		searchBuilder: (searchTerm) => ({
 			OR: [
-				{ name: { contains: searchTerm, mode: 'insensitive' } },
-				{ vendors: { name: { contains: searchTerm, mode: 'insensitive' } } }
+				{ name: textContains(searchTerm) },
+				{ vendors: { name: textContains(searchTerm) } }
 			]
 		}),
 		filterBuilder: (url) => {
@@ -48,12 +49,12 @@ export const load: PageServerLoad = async ({ url }) => {
 			// Column filters
 			const nameFilter = url.searchParams.get('col_name');
 			if (nameFilter) {
-				filters.name = { contains: nameFilter, mode: 'insensitive' };
+				filters.name = textContains(nameFilter);
 			}
 
 			const vendorFilter = url.searchParams.get('col_vendor');
 			if (vendorFilter) {
-				filters.vendors = { name: { contains: vendorFilter, mode: 'insensitive' } };
+				filters.vendors = { name: textContains(vendorFilter) };
 			}
 
 			const activeFilter = url.searchParams.get('col_active');

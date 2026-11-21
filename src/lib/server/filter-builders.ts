@@ -2,6 +2,7 @@
  * Reusable filter builder utilities for server-side page loaders
  * These functions help construct Prisma where clauses from URL parameters
  */
+import { textContains } from '#lib/server/db-dialect.ts';
 
 /**
  * Creates a filter for active/inactive status from URL parameter
@@ -74,12 +75,12 @@ export function createColumnFilters(
 		const relationPath = config?.relationColumns?.[column];
 		if (relationPath) {
 			const [relation, field] = relationPath.split('.');
-			filters[relation] = { [field]: { contains: filterValue, mode: 'insensitive' } };
+			filters[relation] = { [field]: textContains(filterValue) };
 			return;
 		}
 
 		// Default: case-insensitive string search
-		filters[column] = { contains: filterValue, mode: 'insensitive' };
+		filters[column] = textContains(filterValue);
 	});
 
 	return filters;

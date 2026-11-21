@@ -32,16 +32,16 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	// Get unique entity types and actions for filters
 	const [entityTypes, actions] = await Promise.all([
-		db.$queryRaw<Array<{ entity_type: string }>>`
-			SELECT DISTINCT entity_type
-			FROM audit_log
-			ORDER BY entity_type
-		`,
-		db.$queryRaw<Array<{ action: string }>>`
-			SELECT DISTINCT action
-			FROM audit_log
-			ORDER BY action
-		`
+		db.audit_log.findMany({
+			distinct: ['entity_type'],
+			select: { entity_type: true },
+			orderBy: { entity_type: 'asc' }
+		}),
+		db.audit_log.findMany({
+			distinct: ['action'],
+			select: { action: true },
+			orderBy: { action: 'asc' }
+		})
 	]);
 
 	return {

@@ -3,8 +3,10 @@ import { db, createAuditLog } from '#lib/server/db.ts';
 import { fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { serverValidate } from '#lib/utils/superforms.ts';
-import { compareVersions, sameVersion } from '#lib/utils/version-parser.ts';
+import { sameVersion } from '#lib/utils/version-parser.ts';
 import { Prisma } from '@prisma/client';
+import { transactionTimeouts } from '#lib/server/db-dialect.ts';
+import { getDeploymentImpact } from '#lib/server/deployment.ts';
 
 // Schema for deployment form
 const deploymentSchema = z.object({
@@ -121,74 +123,7 @@ export const actions: Actions = {
 			return fail(400, { message: 'Select at least one valid LPAR' });
 		}
 
-		// Use database function to check impact for each LPAR
-		const previews = await Promise.all(
-			lparIds.map(async (lparId) => {
-				try {
-					const impact = await db.$queryRaw<Array<{
-						software_id: string;
-						software_name: string;
-						current_version: string | null;
-						current_ptf_level: string | null;
-						new_version: string;
-						new_ptf_level: string | null;
-						change_type: string;
-					}>>`
-						SELECT * FROM check_package_deployment_impact(
-							${lparId}::uuid,
-							${params.id}::uuid
-						)
-					`;
-
-					const lpar = await db.lpars.findUnique({
-						where: { id: lparId },
-						select: { name: true, code: true }
-					});
-
-					// Map to expected format for frontend
-					const changes = impact
-						.filter((item) => item.software_name !== null)
-						.map((item) => {
-							let action = item.change_type.toLowerCase();
-
-							// Differentiate upgrade vs downgrade using version comparison
-							if (action === 'upgrade' && item.current_version && item.new_version) {
-								const comparison = compareVersions(item.new_version, item.current_version);
-								if (comparison < 0) {
-									action = 'downgrade';
-								}
-							}
-
-							return {
-								software_name: item.software_name,
-								current_version: item.current_version
-									? `${item.current_version}${item.current_ptf_level ? ` (${item.current_ptf_level})` : ''}`
-									: null,
-								target_version: item.new_version
-									? `${item.new_version}${item.new_ptf_level ? ` (${item.new_ptf_level})` : ''}`
-									: null,
-								action
-							};
-						});
-
-					return {
-						lparId,
-						lparName: lpar?.name,
-						lparCode: lpar?.code,
-						changes
-					};
-				} catch (error) {
-					console.error(`Preview error for LPAR ${lparId}:`, error);
-					return {
-						lparId,
-						lparName: 'Unknown',
-						lparCode: 'Unknown',
-						changes: []
-					};
-				}
-			})
-		);
-
+		const previews = await getDeploymentImpact(params.id, lparIds);
 		return { previews };
 	},
 
@@ -290,10 +225,8 @@ export const actions: Actions = {
 					// Batch create new installations
 					if (creates.length > 0) {
 						console.log('[DEPLOY] Creating', creates.length, 'new installations');
-						await tx.lpar_software.createMany({
-							data: creates,
-							skipDuplicates: true
-						});
+						// lpar_software rows were read above; the serializable transaction guards against races
+						await tx.lpar_software.createMany({ data: creates });
 					}
 
 					// Batch update existing installations
@@ -320,8 +253,7 @@ export const actions: Actions = {
 				},
 				{
 					isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-					maxWait: 5000,   // 5 seconds max wait for transaction to start
-					timeout: 10000   // 10 seconds max transaction duration
+					...transactionTimeouts()
 				}
 			);
 			console.timeEnd('Database Transaction');

@@ -4,16 +4,21 @@
  */
 import { PrismaClient } from '@prisma/client';
 import { dev } from '$app/env';
+import { configureDatabase } from './db-dialect.ts';
 
 // PrismaClient is attached to the `globalThis` object in development to prevent
 // exhausting your database connection limit during hot reload in development
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
+const isNewClient = !globalForPrisma.prisma;
 export const db = globalForPrisma.prisma || new PrismaClient({
 	log: ['error']
 });
 
 if (dev) globalForPrisma.prisma = db;
+if (isNewClient) {
+	configureDatabase(db).catch((error) => console.error('Database setup failed:', error));
+}
 
 // Helper functions for common queries
 

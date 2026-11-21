@@ -1,6 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { db } from '#lib/server/db.ts';
 import { createPageLoader } from '#lib/server/page-loader.ts';
+import { textContains } from '#lib/server/db-dialect.ts';
 
 export const load: PageServerLoad = async ({ url }) => {
 	// Get all customers for filter dropdown
@@ -51,9 +52,9 @@ export const load: PageServerLoad = async ({ url }) => {
 		},
 		searchBuilder: (searchTerm) => ({
 			OR: [
-				{ name: { contains: searchTerm, mode: 'insensitive' } },
-				{ code: { contains: searchTerm, mode: 'insensitive' } },
-				{ customers: { name: { contains: searchTerm, mode: 'insensitive' } } }
+				{ name: textContains(searchTerm) },
+				{ code: textContains(searchTerm) },
+				{ customers: { name: textContains(searchTerm) } }
 			]
 		}),
 		filterBuilder: (url) => {

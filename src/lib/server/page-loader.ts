@@ -4,6 +4,7 @@
  */
 import type { SortOptions } from '#lib/types/index.ts';
 import { db, getPaginated } from './db';
+import { textContains } from '#lib/server/db-dialect.ts';
 
 export interface PageLoaderOptions<T = any> {
 	/** The Prisma model delegate to query (e.g., db.customer, db.vendor) */
@@ -88,7 +89,7 @@ export function createPageLoader<T = any>(options: PageLoaderOptions<T>) {
 				// Use default field-based search
 				whereConditions.push({
 					OR: searchFields.map(field => ({
-						[field]: { contains: search, mode: 'insensitive' as const }
+						[field]: textContains(search)
 					}))
 				});
 			}
