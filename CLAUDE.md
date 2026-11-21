@@ -76,7 +76,7 @@ come from `AUTH_USERNAME`, `AUTH_PASSWORD`, `AUTH_SECRET` (declared in `src/env.
 
 Built with `@sveltejs/adapter-node`: `npm run build`, then `node build` on the server with
 `DATABASE_URL`, the `AUTH_*` vars and `ORIGIN=https://your.host` set (see `.env.example`).
-Note: SvelteKit 3.4's build crashes on Node 25 (`styleText('grey')`); use Node 22/24 LTS to build.
+Use Node 26 LTS (tested; 22/24 also work). SvelteKit 3.4's build crashes on Node 25 (`styleText('grey')`).
 
 ## Architecture
 
