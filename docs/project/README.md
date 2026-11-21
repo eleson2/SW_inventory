@@ -124,7 +124,7 @@ SW_inventory/
 │       └── activity/            # Activity/audit logs
 ├── prisma/
 │   ├── schema.prisma            # Database schema
-│   ├── migrations/              # Database migrations
+│   ├── postgres-extras/         # Optional PostgreSQL-only views/functions/indexes
 │   └── scripts/                 # Database utility scripts
 └── docs/                        # Documentation (you are here!)
 ```
@@ -244,7 +244,7 @@ The system includes several PostgreSQL views for complex queries:
 - **software_adoption_rate**: Version adoption statistics across LPARs
 - **lpar_dashboard**: Pre-computed dashboard metrics (materialized view)
 
-See `prisma/migrations/add_views_and_functions.sql` for details.
+See `prisma/postgres-extras/add_views_and_functions.sql` for details (PostgreSQL only; the app does not depend on these).
 
 ## Security Considerations
 

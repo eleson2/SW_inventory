@@ -6,6 +6,11 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+if (process.env.DATABASE_URL?.startsWith('file:')) {
+	console.error('apply-views.ts is PostgreSQL-only. On SQLite use nothing: the app does not need these views instead.');
+	process.exit(1);
+}
+
 const prisma = new PrismaClient();
 
 async function applyViews() {
@@ -13,7 +18,7 @@ async function applyViews() {
 
 	try {
 		const sql = readFileSync(
-			join(__dirname, 'migrations', 'add_views_and_functions.sql'),
+			join(__dirname, 'postgres-extras', 'add_views_and_functions.sql'),
 			'utf-8'
 		);
 

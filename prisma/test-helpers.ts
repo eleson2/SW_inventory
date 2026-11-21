@@ -5,7 +5,9 @@
 
 import { PrismaClient } from '@prisma/client';
 import { execSync } from 'child_process';
+import { clearAllData } from './lib/clear-data.ts';
 
+// Use TEST_DATABASE_URL="file:./test.db" to run against SQLite (needs the SQLite client generated)
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/sw_inventory_test?schema=public';
 
 export const testDb = new PrismaClient({
@@ -24,8 +26,8 @@ export async function setupTestDatabase() {
 	process.env.DATABASE_URL = TEST_DATABASE_URL;
 
 	try {
-		// Push schema to test database
-		execSync('npx prisma db push --force-reset --skip-generate', {
+		// Push schema to test database (scripts/db.ts picks the schema for the provider in DATABASE_URL)
+		execSync('npx tsx scripts/db.ts db push --force-reset --skip-generate', {
 			env: {
 				...process.env,
 				DATABASE_URL: TEST_DATABASE_URL,
@@ -42,25 +44,10 @@ export async function setupTestDatabase() {
 }
 
 /**
- * Cleanup test database - truncate all tables
+ * Cleanup test database - delete all rows
  */
 export async function cleanupTestDatabase() {
-	const tables = [
-		'audit_log',
-		'lpar_software',
-		'package_items',
-		'lpars',
-		'packages',
-		'software_versions',
-		'software',
-		'customers',
-		'vendors'
-	];
-
-	// Truncate in reverse order to respect foreign keys
-	for (const table of tables) {
-		await testDb.$executeRawUnsafe(`TRUNCATE TABLE ${table} CASCADE`);
-	}
+	await clearAllData(testDb);
 }
 
 /**

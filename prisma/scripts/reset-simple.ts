@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { clearAllData } from '../lib/clear-data.ts';
 
 const prisma = new PrismaClient();
 
@@ -6,25 +7,16 @@ async function reset() {
 	console.log('🗑️  Resetting database...');
 
 	try {
-		// Truncate in dependency order
-		console.log('Truncating tables...');
+		console.log('Deleting all rows...');
+		await clearAllData(prisma);
 
-		await prisma.$executeRaw`TRUNCATE TABLE audit_log CASCADE`;
-		await prisma.$executeRaw`TRUNCATE TABLE lpar_software CASCADE`;
-		await prisma.$executeRaw`TRUNCATE TABLE package_items CASCADE`;
-		await prisma.$executeRaw`TRUNCATE TABLE lpars CASCADE`;
-		await prisma.$executeRaw`TRUNCATE TABLE packages CASCADE`;
-		await prisma.$executeRaw`TRUNCATE TABLE software_versions CASCADE`;
-		await prisma.$executeRaw`TRUNCATE TABLE software CASCADE`;
-		await prisma.$executeRaw`TRUNCATE TABLE customers CASCADE`;
-		await prisma.$executeRaw`TRUNCATE TABLE vendors CASCADE`;
-
-		// Refresh materialized view if it exists
-		try {
-			await prisma.$executeRaw`REFRESH MATERIALIZED VIEW lpar_dashboard`;
-		} catch (error: any) {
-			// View doesn't exist yet, that's OK
-			console.log('   (materialized view not yet created)');
+		// Refresh the Postgres-only materialized view if it exists
+		if (!process.env.DATABASE_URL?.startsWith('file:')) {
+			try {
+				await prisma.$executeRaw`REFRESH MATERIALIZED VIEW lpar_dashboard`;
+			} catch {
+				console.log('   (materialized view not created)');
+			}
 		}
 
 		console.log('✅ Database reset successfully!');

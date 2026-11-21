@@ -4,28 +4,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Software Inventory Management System for tracking mainframe software in a multi-tenant environment. Built with SvelteKit, TypeScript, Prisma, and PostgreSQL.
+Software Inventory Management System for tracking mainframe software in a multi-tenant environment. Built with SvelteKit, TypeScript, Prisma, and PostgreSQL or SQLite.
 
 ## Development Commands
 
 ### Setup & Database
 ```bash
 npm install                                        # Install dependencies
-npx prisma generate                               # Generate Prisma client
-npx prisma db push                                # Push schema to database
+npm run db:generate                               # Generate Prisma client for the provider in DATABASE_URL
+npm run db:push                                   # Push schema to database
 
 # Data Management - Choose one approach:
 
 # Option A: TypeScript seed script
-npx prisma db seed                                # Seed via TypeScript (seed.ts)
+npm run db:seed                                   # Seed via TypeScript (seed.ts); both providers
 
-# Option B: SQL scripts (recommended for production-like workflows)
+# Option B: SQL scripts (PostgreSQL only)
 npx tsx prisma/scripts/run-sql.ts reset           # Empty all tables
 npx tsx prisma/scripts/run-sql.ts test-data       # Load test data
 npx tsx prisma/scripts/run-sql.ts reset-and-load  # Reset + load (full refresh)
 
 # Database Tools
-npx prisma studio                                 # Open Prisma Studio on http://localhost:5556
+npm run db:studio                                 # Open Prisma Studio on http://localhost:5556
+npm run db:export                                 # Dump all tables to backup/*.json
+npm run db:import [-- --replace]                  # Load backup/*.json into the current database
+npm run check:portable                            # Fail on raw SQL / Postgres-only Prisma options in src/
 ```
 
 ### Development
@@ -37,8 +40,33 @@ npm run check                 # Type-check without watching
 npm run check:watch           # Type-check with watch mode
 ```
 
-### Database Connection
-Set `DATABASE_URL` environment variable to PostgreSQL connection string. The application uses Prisma with PostgreSQL.
+### Database Connection & Providers
+`DATABASE_URL` selects the database **and** the provider:
+- PostgreSQL: `postgresql://user:pass@host:5432/sw_inventory?schema=public`
+- SQLite: `file:./dev.db` (relative to `prisma/`, so this is `prisma/dev.db`). Optionally add
+  `?socket_timeout=10` to wait up to 10 s for write locks.
+
+`prisma/schema.prisma` (PostgreSQL) is the single source of truth. For SQLite, `scripts/db.ts`
+derives `prisma/schema.sqlite.prisma` (git-ignored) by stripping `@db.*` native types and
+replacing `gen_random_uuid()` with `uuid()`. **Always use the `npm run db:*` scripts** instead
+of bare `npx prisma ...`, which would always use the Postgres schema.
+
+The provider is fixed when the client is generated. To switch databases:
+```bash
+npm run db:export                 # 1. dump data from the current database
+# 2. change DATABASE_URL in .env, and stop the dev server (it locks the Prisma engine on Windows)
+npm run db:generate               # 3. regenerate the client for the new provider
+npm run db:push                   # 4. create the tables
+npm run db:import                 # 5. load the data
+```
+
+**Portability rules for app code** (enforced by `npm run check:portable`):
+- No `$queryRaw` / `$executeRaw` in `src/`; use Prisma queries.
+- Case-insensitive search: `textContains(value)` from `#lib/server/db-dialect.ts`, never
+  `mode: 'insensitive'` (does not exist on SQLite; SQLite ignores case for ASCII only).
+- No `createMany({ skipDuplicates })`; filter out existing rows first.
+- Anything genuinely provider-specific goes in `src/lib/server/db-dialect.ts`.
+- SQLite allows one writer at a time; use `transactionTimeouts()` for interactive transactions.
 
 ## Architecture
 
@@ -166,9 +194,11 @@ All entity changes logged to `audit_log` table:
 - Indexed by entity type, entity ID, and timestamp
 - Optional `user_id` for user tracking (not yet implemented)
 
-## Database Views and Functions
+## Database Views and Functions (PostgreSQL only, optional)
 
-The database includes several powerful views and functions for common queries:
+`prisma/postgres-extras/` holds optional PostgreSQL views, functions, partial and trigram
+indexes. **The app does not use them** and they do not exist on SQLite; do not query them
+from app code. They are available for ad-hoc SQL on a PostgreSQL database:
 
 ### Views (Auto-Updated)
 - **`software_with_current_version`**: Software with current version details denormalized
@@ -183,9 +213,8 @@ The database includes several powerful views and functions for common queries:
 - **`get_software_problem_score(software_id, days_lookback)`**: Calculates problem score from rollbacks
 - **`refresh_dashboard()`**: Helper to refresh the materialized view
 
-**Usage Example**:
+**Usage Example** (ad-hoc psql/scripts only, not app code):
 ```typescript
-// In +page.server.ts
 const compliance = await db.$queryRaw`
   SELECT * FROM lpar_package_compliance
   WHERE customer_id = ${customerId}
@@ -201,20 +230,25 @@ const upgradePath = await db.$queryRaw`
 `;
 ```
 
-See `prisma/migrations/add_views_and_functions.sql` for full documentation.
+See `prisma/postgres-extras/add_views_and_functions.sql` for full documentation.
 
 ## Key Files
 
 **Database:**
-- `prisma/schema.prisma`: Database schema with all models
-- `prisma/seed.ts`: TypeScript seed script (alternative to SQL scripts)
-- `prisma/scripts/reset.sql`: Empty all tables (preserves schema/views)
-- `prisma/scripts/test-data.sql`: Load test data via SQL
-- `prisma/scripts/run-sql.ts`: Helper to execute SQL scripts
-- `prisma/migrations/add_views_and_functions.sql`: Database views and functions
+- `prisma/schema.prisma`: Database schema with all models (PostgreSQL; source of truth for both providers)
+- `scripts/db.ts`: Provider-aware Prisma CLI wrapper; derives `prisma/schema.sqlite.prisma`
+- `scripts/db-transfer.ts`: `db:export` / `db:import` (JSON, provider-neutral)
+- `scripts/check-portable.ts`: Guards against non-portable database code in `src/`
+- `prisma/lib/clear-data.ts`: Portable "empty all tables" (used by tests, reset, import)
+- `prisma/seed.ts`: TypeScript seed script (works on both providers)
+- `prisma/scripts/reset.sql`: Empty all tables (PostgreSQL only)
+- `prisma/scripts/test-data.sql`: Load test data via SQL (PostgreSQL only)
+- `prisma/scripts/run-sql.ts`: Helper to execute SQL scripts (PostgreSQL only)
+- `prisma/postgres-extras/`: Optional PostgreSQL-only views, functions and indexes
 
 **Application:**
 - `src/lib/server/db.ts`: Database singleton and helper functions
+- `src/lib/server/db-dialect.ts`: The only place for provider-specific query code
 - `src/lib/utils/version-parser.ts`: Version parsing and comparison logic
 - `src/lib/schemas/index.ts`: Zod validation schemas
 - `src/routes/+layout.svelte`: Navigation and page structure
@@ -222,8 +256,9 @@ See `prisma/migrations/add_views_and_functions.sql` for full documentation.
 ## Development Notes
 
 ### When Adding New Features
-1. Update Prisma schema if database changes needed
-2. Run `npx prisma db push` to update database
+1. Update Prisma schema if database changes needed (`prisma/schema.prisma` only; use only
+   attributes that `scripts/db.ts` can translate for SQLite)
+2. Run `npm run db:push` to update database
 3. Add/update Zod schemas for validation
 4. Create/update TypeScript types in `src/lib/types/`
 5. Implement server load functions in `+page.server.ts`
@@ -233,10 +268,10 @@ See `prisma/migrations/add_views_and_functions.sql` for full documentation.
 
 **Option A: TypeScript Seed** (integrates with Prisma)
 ```bash
-npx prisma db seed
+npm run db:seed
 ```
 
-**Option B: SQL Scripts** (production-like, more explicit)
+**Option B: SQL Scripts** (PostgreSQL only)
 ```bash
 npx tsx prisma/scripts/run-sql.ts reset-and-load
 ```

@@ -6,6 +6,11 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+if (process.env.DATABASE_URL?.startsWith('file:')) {
+	console.error('run-sql.ts (SQL scripts) is PostgreSQL-only. On SQLite use npm run db:seed / prisma/scripts/reset-simple.ts instead.');
+	process.exit(1);
+}
+
 const prisma = new PrismaClient();
 
 async function runSqlFile(filename: string) {

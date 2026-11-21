@@ -14,3 +14,14 @@ vite.config.ts.timestamp-*
 # Playwright
 playwright-report/
 test-results/
+
+# Derived SQLite schema (generated from prisma/schema.prisma by scripts/db.ts) and local SQLite databases
+/prisma/schema.sqlite.prisma
+/prisma/*.db
+/prisma/*.db-journal
+/prisma/*.db-wal
+/prisma/*.db-shm
+
+# Data exports from npm run db:export
+/backup/
+/prisma/test.db*
