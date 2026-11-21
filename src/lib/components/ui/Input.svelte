@@ -3,7 +3,7 @@
 
 	let {
 		type = 'text',
-		value = $bindable(''),
+		value = $bindable(), // no fallback: optional form fields may be undefined
 		placeholder = '',
 		disabled = false,
 		required = false,
@@ -16,7 +16,7 @@
 		onchange
 	}: {
 		type?: string;
-		value?: string;
+		value?: string | null;
 		placeholder?: string;
 		disabled?: boolean;
 		required?: boolean;

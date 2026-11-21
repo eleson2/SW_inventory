@@ -7,7 +7,7 @@
 		id,
 		name,
 		type = 'text',
-		value = $bindable(''),
+		value = $bindable(), // no fallback: optional form fields may be undefined
 		placeholder = '',
 		required = false,
 		disabled = false,
@@ -22,7 +22,7 @@
 		id: string;
 		name: string;
 		type?: string;
-		value?: string;
+		value?: string | null;
 		placeholder?: string;
 		required?: boolean;
 		disabled?: boolean;

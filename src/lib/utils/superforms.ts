@@ -30,8 +30,28 @@ export async function serverValidate<T extends ZodObject>(
     input: unknown,
     schema: T
 ): Promise<SuperForm<T>> {
-    const form = await superValidate(input as any, zod4(schema));
+    const form = await superValidate(nullsToUndefined(input) as any, zod4(schema));
     return form as SuperForm<T>;
+}
+
+/**
+ * Database rows use null for empty optional columns, while the Zod schemas use
+ * .optional() (undefined). Without this, every empty optional field fails
+ * validation ("Invalid input") as soon as an edit form loads, and arrives on the
+ * client as undefined. Only plain data objects are converted; request events,
+ * Requests and FormData are passed through untouched.
+ */
+function nullsToUndefined(value: unknown): unknown {
+    if (Array.isArray(value)) return value.map(nullsToUndefined);
+    if (value === null || typeof value !== 'object' || Object.getPrototypeOf(value) !== Object.prototype) {
+        return value;
+    }
+    if ('request' in value && (value as { request: unknown }).request instanceof Request) {
+        return value; // SvelteKit RequestEvent
+    }
+    return Object.fromEntries(
+        Object.entries(value).map(([key, v]) => [key, v === null ? undefined : nullsToUndefined(v)])
+    );
 }
 
 /**
