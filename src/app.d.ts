@@ -1,11 +1,13 @@
 import type { PrismaClient } from '@prisma/client';
+import type { SessionUser } from '#lib/server/auth.ts';
 
 declare global {
 	namespace App {
 		interface Locals {
 			// Prisma client instance attached in hooks.server.ts
 			prisma: PrismaClient;
-			// ...other locals like user/session can be declared here...
+			// Logged-in user, set in hooks.server.ts (null when not logged in)
+			user: SessionUser | null;
 		}
 	}
 }

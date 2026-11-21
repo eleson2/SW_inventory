@@ -68,6 +68,16 @@ npm run db:import                 # 5. load the data
 - Anything genuinely provider-specific goes in `src/lib/server/db-dialect.ts`.
 - SQLite allows one writer at a time; use `transactionTimeouts()` for interactive transactions.
 
+### Authentication & Deployment
+Single-user login for demos. `src/hooks.server.ts` requires a valid session for every route except
+`/login` (pages redirect to `/login`, `/api/*` returns 401). Credentials and the cookie-signing secret
+come from `AUTH_USERNAME`, `AUTH_PASSWORD`, `AUTH_SECRET` (declared in `src/env.ts`, read via
+`$app/env/private`; the app refuses to start without them). Logic lives in `src/lib/server/auth.ts`.
+
+Built with `@sveltejs/adapter-node`: `npm run build`, then `node build` on the server with
+`DATABASE_URL`, the `AUTH_*` vars and `ORIGIN=https://your.host` set (see `.env.example`).
+Note: SvelteKit 3.4's build crashes on Node 25 (`styleText('grey')`); use Node 22/24 LTS to build.
+
 ## Architecture
 
 ### Data Model Hierarchy

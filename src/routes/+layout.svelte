@@ -1,11 +1,12 @@
 <script lang="ts">
 	import '../app.css';
 	import { page } from '$app/state';
+	import { enhance } from '$app/forms';
 	import Toast from '#lib/components/ui/Toast.svelte';
 	import KeyboardShortcutsHelp from '#lib/components/common/KeyboardShortcutsHelp.svelte';
 	import { useKeyboardShortcuts } from '#lib/utils/keyboard-shortcuts.svelte.ts';
 
-	let { children } = $props();
+	let { children, data } = $props();
 
 	// Keyboard shortcuts
 	let showShortcutsHelp = $state(false);
@@ -37,6 +38,7 @@
 					<span class="font-bold text-lg">SW Inventory</span>
 				</a>
 				<!-- Desktop Navigation -->
+				{#if data.user}
 				<nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
 					<a
 						href="/customers"
@@ -81,7 +83,14 @@
 						Reports
 					</a>
 				</nav>
+				{/if}
 			</div>
+
+			{#if data.user}
+			<form method="POST" action="/logout" use:enhance class="hidden md:flex items-center gap-3 text-sm">
+				<span class="text-foreground/60">{data.user.username}</span>
+				<button type="submit" class="rounded-md border px-3 py-1.5 hover:bg-accent transition-colors">Sign out</button>
+			</form>
 
 			<!-- Mobile Menu Button -->
 			<button
@@ -102,10 +111,11 @@
 					</svg>
 				{/if}
 			</button>
+			{/if}
 		</div>
 
 		<!-- Mobile Navigation Menu -->
-		{#if mobileMenuOpen}
+		{#if data.user && mobileMenuOpen}
 			<div class="md:hidden border-t bg-background">
 				<nav class="container py-4 flex flex-col space-y-3">
 					<a
@@ -157,6 +167,11 @@
 					>
 						Reports
 					</a>
+					<form method="POST" action="/logout" use:enhance class="border-t pt-3">
+						<button type="submit" onclick={handleNavClick} class="w-full text-left py-2 px-4 rounded-md min-h-[44px] text-foreground/60 hover:bg-accent/50">
+							Sign out ({data.user.username})
+						</button>
+					</form>
 				</nav>
 			</div>
 		{/if}
