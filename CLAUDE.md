@@ -29,6 +29,11 @@ npm run db:studio                                 # Open Prisma Studio on http:/
 npm run db:export                                 # Dump all tables to backup/*.json
 npm run db:import [-- --replace]                  # Load backup/*.json into the current database
 npm run check:portable                            # Fail on raw SQL / Postgres-only Prisma options in src/
+
+# Vendor bundles (fetch from vendor sites into bundles/<LEVEL>.csv, then import on /import)
+npm run bundles:fetch -- ibm RSU2510                      # IBM CST/RSU report (public)
+npm run bundles:fetch -- broadcom CARS2510 --products AL2121,CCS150
+npm run bundles:fetch -- broadcom CARS2510                # product codes from software.product_code
 ```
 
 ### Development
@@ -89,11 +94,43 @@ The system follows this entity relationship:
 - **Packages** → contain **Package Items** → assigned to **LPARs**
 - **Customers** → own **LPARs**
 - **LPARs** → track installed **Software** with version history via **lpar_software**
+- **Vendors** → publish **Vendor Bundles** (Broadcom CARS, IBM RSU) → **Vendor Bundle Items** (software versions)
+- **Packages** are built from one or more bundles: items are *copied* and keep `source_bundle_id`
 
 **Key Tables**:
 - `software_versions`: Normalized version history (replaces JSON `version_history`)
 - `package_items`: Links packages to specific software versions
 - `lpar_software`: Current and previous versions installed on each LPAR
+- `vendor_bundles` / `vendor_bundle_items`: vendor maintenance levels (`CARS2511`, `RSU2511`).
+  A level is complete (every product of the vendor's level) and *references* `software_versions`;
+  a version/PTF level is stored once and shared by every level, package and LPAR that has it.
+  PTF level convention: IBM = the RSU code (`RSU2511`, no per-product PTFs are published);
+  Broadcom = the product's highest PTF in the level (`LU17806`). The level code and PTF count go in `notes`
+
+### Vendor Bundles
+- Server logic in `src/lib/server/bundles.ts` (`saveBundle`, `importBundleRows`, `resolveVersion`).
+  Versions that don't exist yet are created automatically with `is_current: false`.
+  `resolveVersion` matches regardless of notation/case ("6.1"/"rsu2510" = "V6R1M0"/"RSU2510").
+- Import carries forward: products in the vendor's previous level of the same type but not in
+  the file (Broadcom lists only products with new PTFs) keep their previous version
+  (note "Unchanged since CARS2510"). When cloning a level, only the ticked (changed) items get a
+  new PTF level.
+- Packages: `BundlePicker.svelte` merges bundles into package items via the pure
+  `mergeBundlesIntoItems()` (`src/lib/utils/bundle-merge.ts`); existing software gets the bundle's
+  version (reported as a conflict). `PackageItemsManager` shows each item's source: bundle code,
+  "adjusted" (version differs from the bundle) or "Manual". `/packages/new?bundles=<id>,<id>` preselects.
+- "Clone as next level" (`/bundles/new?clone=<id>`) copies items and suggests the next code
+  (`nextBundleCode`: CARS2511 → CARS2512).
+- `software.product_code` matches fetched/imported rows (Broadcom: product+release, e.g. `AL2121`;
+  IBM: report name without spaces, e.g. `CICSTS`), then the software name.
+- CSV columns (`BUNDLE_CSV_COLUMNS` in `src/lib/schemas/bundle.ts`): `vendor_code, bundle_code,
+  bundle_name, bundle_type, release_date, product_code, product_name, version, ptf_level, notes,
+  source_url`. Unknown products are skipped and listed; re-importing a bundle replaces its items.
+  If a level lists several releases of one product, the release the inventory has wins
+  (`releaseMatchLength`: "5.6" = "V5R6M0"), else the highest.
+- Fetchers in `scripts/fetch-bundles/` (run locally only; the app never contacts vendor sites).
+  Parsers are tested against text fixtures from real PDFs in `__fixtures__/`; vendor PDF
+  layouts are not an API, so a parser test failing on a new layout is the expected signal.
 
 ### Version Management
 
@@ -251,6 +288,7 @@ See `prisma/postgres-extras/add_views_and_functions.sql` for full documentation.
 - `scripts/check-portable.ts`: Guards against non-portable database code in `src/`
 - `prisma/lib/clear-data.ts`: Portable "empty all tables" (used by tests, reset, import)
 - `prisma/seed.ts`: TypeScript seed script (works on both providers)
+- `scripts/fetch-bundles/`: Broadcom CARS / IBM RSU fetchers writing bundle CSVs
 - `prisma/scripts/reset.sql`: Empty all tables (PostgreSQL only)
 - `prisma/scripts/test-data.sql`: Load test data via SQL (PostgreSQL only)
 - `prisma/scripts/run-sql.ts`: Helper to execute SQL scripts (PostgreSQL only)
@@ -291,7 +329,8 @@ Both methods create the same test data:
 - 2 customers (Acme, Globex)
 - 3 software products (CICS, DB2, Endevor)
 - 8 software versions (3 versions per product showing upgrade history)
-- 2 packages (Q1 2025, Q4 2024)
+- 2 vendor bundles (Broadcom CARS2410 with Endevor, IBM RSU2410 with CICS and DB2)
+- 2 packages (Q1 2025 built from both bundles, Q4 2024 manual)
 - 3 LPARs with installed software
 - 2 audit log entries
 

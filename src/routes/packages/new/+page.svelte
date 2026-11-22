@@ -8,6 +8,8 @@
 	import CloneModeToggle from '#lib/components/common/CloneModeToggle.svelte';
 	import FormButtons from '#lib/components/common/FormButtons.svelte';
 	import PackageItemsManager from '#lib/components/domain/PackageItemsManager.svelte';
+	import BundlePicker from '#lib/components/domain/BundlePicker.svelte';
+	import { mergeBundlesIntoItems } from '#lib/utils/bundle-merge.ts';
 	import FormTextarea from '#lib/components/common/FormTextarea.svelte';
 	import { useUnsavedChanges } from '#lib/utils/unsaved-changes.svelte.ts';
 	import FormValidationSummary from '#lib/components/common/FormValidationSummary.svelte';
@@ -39,8 +41,14 @@
 	let creationMode = $state<'blank' | 'clone'>('blank');
 	let cloneSourceId = $state('');
 
-	// Package items state for master-detail pattern (bound to form.items via $form)
-	let packageItems = $state<PackageItem[]>([]);
+	// Package items state for master-detail pattern (bound to form.items via $form).
+	// Starts from the bundles in ?bundles=..., if any ("Create package from this bundle").
+	let packageItems = $state<PackageItem[]>(
+		mergeBundlesIntoItems(
+			[],
+			data.bundles.filter((b) => data.preselectedBundleIds.includes(b.id))
+		).items
+	);
 
 	// Track unsaved changes
 	const unsavedChanges = useUnsavedChanges();
@@ -74,7 +82,8 @@
 				packageItems = source.package_items.map((item, index) => ({
 					software_id: item.software_id,
 					software_version_id: item.software_version_id,
-					order_index: index
+					order_index: index,
+					source_bundle_id: item.source_bundle_id
 				}));
 				$form.items = packageItems;
 			}
@@ -240,11 +249,17 @@
 			</div>
 		</Card>
 
+		<!-- Vendor bundles: copy their items into the package -->
+		<Card class="p-6">
+			<BundlePicker bind:items={packageItems} bundles={data.bundles} />
+		</Card>
+
 		<!-- Package Items Card -->
 		<Card class="p-6">
 			<PackageItemsManager
 				bind:items={packageItems}
 				allSoftware={data.allSoftware}
+				bundles={data.bundles}
 			/>
 		</Card>
 

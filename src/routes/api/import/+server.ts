@@ -1,6 +1,7 @@
 import type { RequestHandler } from './$types';
 import XLSX from 'xlsx';
 import { db } from '#lib/server/db.ts';
+import { importBundleRows, parseBundleRows } from '#lib/server/bundles.ts';
 
 interface ImportResult {
   success: boolean;
@@ -24,7 +25,8 @@ export const POST: RequestHandler = async ({ request }) => {
 
     // Read the file
     const arrayBuffer = await file.arrayBuffer();
-    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    // raw: keep CSV cells as text, so codes like "0120" and dates are not reinterpreted
+    const workbook = XLSX.read(arrayBuffer, { type: 'array', raw: importType === 'bundles' });
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const data: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
@@ -43,6 +45,9 @@ export const POST: RequestHandler = async ({ request }) => {
       case 'lpars':
         result = await importLpars(data);
         break;
+      case 'bundles':
+        // Vendor bundle CSV (see BUNDLE_CSV_COLUMNS / scripts/fetch-bundles)
+        return Response.json(await importBundleRows(parseBundleRows(data)));
       default:
         return Response.json({ success: false, message: 'Invalid import type' }, { status: 400 });
     }

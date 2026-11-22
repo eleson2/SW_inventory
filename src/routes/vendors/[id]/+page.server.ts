@@ -14,6 +14,17 @@ export const load: PageServerLoad = createDetailLoader({
 			orderBy: {
 				name: 'asc'
 			}
+		},
+		bundles: {
+			select: {
+				id: true,
+				code: true,
+				name: true,
+				release_date: true,
+				active: true,
+				_count: { select: { items: true } }
+			},
+			orderBy: { release_date: 'desc' }
 		}
 	}
 });
@@ -25,7 +36,8 @@ export const actions: Actions = {
 			const vendor = await db.vendors.findUnique({
 				where: { id: params.id },
 				include: {
-					software: true
+					software: true,
+					_count: { select: { bundles: true } }
 				}
 			});
 
@@ -44,6 +56,13 @@ export const actions: Actions = {
 			if (vendor.software && vendor.software.length > 0) {
 				return fail(400, {
 					error: `Cannot delete vendor with ${vendor.software.length} software product(s). Please remove or reassign the software first.`
+				});
+			}
+
+			// Rule 3: Cannot delete vendor with maintenance bundles
+			if (vendor._count.bundles > 0) {
+				return fail(400, {
+					error: `Cannot delete vendor with ${vendor._count.bundles} bundle(s). Please delete the bundles first.`
 				});
 			}
 

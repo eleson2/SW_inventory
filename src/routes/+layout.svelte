@@ -59,6 +59,12 @@
 						Software
 					</a>
 					<a
+						href="/bundles"
+						class="transition-colors hover:text-foreground/80 {isActive('/bundles') ? 'text-foreground font-semibold border-b-2 border-primary' : 'text-foreground/60'}"
+					>
+						Bundles
+					</a>
+					<a
 						href="/packages"
 						class="transition-colors hover:text-foreground/80 {isActive('/packages') ? 'text-foreground font-semibold border-b-2 border-primary' : 'text-foreground/60'}"
 					>
@@ -138,6 +144,13 @@
 						class="py-2 px-4 rounded-md transition-colors min-h-[44px] flex items-center {isActive('/software') ? 'bg-accent text-foreground font-semibold' : 'text-foreground/60 hover:bg-accent/50'}"
 					>
 						Software
+					</a>
+					<a
+						href="/bundles"
+						onclick={handleNavClick}
+						class="py-2 px-4 rounded-md transition-colors min-h-[44px] flex items-center {isActive('/bundles') ? 'bg-accent text-foreground font-semibold' : 'text-foreground/60 hover:bg-accent/50'}"
+					>
+						Bundles
 					</a>
 					<a
 						href="/packages"

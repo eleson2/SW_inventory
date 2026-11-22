@@ -9,7 +9,7 @@
 	import Breadcrumb from '#lib/components/common/Breadcrumb.svelte';
 	import PageHeader from '#lib/components/common/PageHeader.svelte';
 	import VersionDisplay from '#lib/components/domain/VersionDisplay.svelte';
-	import { formatDateTime } from '#lib/utils/date-format.ts';
+	import { formatDate, formatDateTime } from '#lib/utils/date-format.ts';
 
 	let { data }: { data: PageData } = $props();
 	const { vendor } = data;
@@ -152,6 +152,34 @@
 						</div>
 						<div class="flex items-center gap-2">
 							<StatusBadge active={software.active} />
+						</div>
+					</div>
+				{/each}
+			</div>
+		{/if}
+	</Card>
+
+	<Card class="p-6">
+		<div class="flex items-center justify-between mb-4">
+			<h2 class="text-xl font-semibold">Vendor Bundles</h2>
+			<Button size="sm" onclick={() => goto(`/bundles/new?vendor_id=${vendor.id}`)}>
+				Add Bundle
+			</Button>
+		</div>
+		{#if vendor.bundles.length === 0}
+			<p class="text-sm text-muted-foreground text-center py-8">No maintenance bundles recorded for this vendor</p>
+		{:else}
+			<div class="space-y-2">
+				{#each vendor.bundles as bundle}
+					<div class="flex items-center justify-between p-3 border rounded-lg text-sm">
+						<div class="flex items-center gap-3">
+							<a href="/bundles/{bundle.id}" class="font-mono text-primary hover:underline">{bundle.code}</a>
+							<span>{bundle.name}</span>
+						</div>
+						<div class="flex items-center gap-3 text-muted-foreground">
+							<span>{formatDate(bundle.release_date)}</span>
+							<span>{bundle._count.items} items</span>
+							<StatusBadge active={bundle.active} />
 						</div>
 					</div>
 				{/each}

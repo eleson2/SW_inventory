@@ -1,0 +1,57 @@
+Consolidated Service Test
+CST2Q24 (RSU2406)
+July 4, 2024
+Prepared by: CST TeamConsolidated Service Test
+What Service was Installed:
+NOTE: Refer to Appendix A for a list of the excluded maintenance due to unresolved PE fixes.
+Product/Tool Maintenance Level
+- CICS TS 6.1
+- CICS TS 5.6
+All service through the end of March 2024 not already marked RSU. PE
+resolution and HIPER/Security/Integrity/Pervasive PTFs and their
+associated requisites and supersedes through the end of May 2024.
+- Db2 V12
+- Db2 V13
+All service through the end of March 2024 not already marked RSU. PE
+resolution and HIPER/Security/Integrity/Pervasive PTFs and their
+associated requisites and supersedes through the end of May 2024.
+- GDPS V4.6.0
+- GDPS V4.7.0
+All service through the end of March 2024 not already marked RSU. PE
+resolution and HIPER/Security/Integrity/Pervasive PTFs and their
+associated requisites and supersedes through the end of May 2024.
+- IMS V15
+- IMS V15.2
+- IMS V15.3
+- IMS V15.4
+All service through the end of March 2024 not already marked RSU. PE
+resolution and HIPER/Security/Integrity/Pervasive PTFs and their
+associated requisites and supersedes through the end of May 2024.
+- IRLM 2.3 All service through the end of March 2024 not already marked RSU. PE
+resolution and HIPER/Security/Integrity/Pervasive PTFs and their
+associated requisites and supersedes through the end of May 2024.
+JAVA Technology Edition
+- IBM 31-bit SDK for z/OS V8
+- IBM 64-bit SDK for z/OS V8
+Java V11
+All service through the end of May 2024 not already marked RSU.
+WebSphere Application Server for
+z/OS
+V9 – Service level 9.0.5.19
+V8.5 – Service level 8.5.5.25
+All service through the end of March 2024
+- Java 8, build 8.0.8.25 - pmz6480sr8fp20-20240112_01
+All service through the end of February 2024
+- Java 8, build 8.0.8.15 - pmz6480sr8fp15-20231030_01
+- IBM MQ V9.3.5 CD
+- IBM MQ V9.3.0 LTS
+- IBM MQ V9.2.0 LTS
+All service through the end of March 2024 not already marked RSU. PE
+resolution and HIPER/Security/Integrity/Pervasive PTFs and their
+associated requisites and supersedes through the end of May 2024.
+- z/OS V2R4
+- z/OS V2R5
+- z/OS V3.1
+All service through the end of March 2024 not already marked RSU. PE
+resolution and HIPER/Security/Integrity/Pervasive PTFs and their
+associated requisites and supersedes through the end of May 2024.Consolidated Service Test

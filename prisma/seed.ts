@@ -57,6 +57,7 @@ async function main() {
 		data: {
 			name: 'CICS Transaction Server',
 			vendor_id: ibm.id,
+			product_code: 'CICSTS', // as in IBM RSU reports ("CICS TS")
 			description: 'Enterprise transaction processing system',
 			active: true,
 			created_at: new Date()
@@ -67,6 +68,7 @@ async function main() {
 		data: {
 			name: 'DB2 for z/OS',
 			vendor_id: ibm.id,
+			product_code: 'DB2',
 			description: 'Relational database management system',
 			active: true,
 			created_at: new Date()
@@ -189,6 +191,39 @@ async function main() {
 		data: { current_version_id: endevorV18R2M0.id }
 	});
 
+	// Vendor bundles: maintenance levels as published by the vendors
+	console.log('Creating vendor bundles...');
+	const cars2410 = await prisma.vendor_bundles.create({
+		data: {
+			vendor_id: broadcom.id,
+			name: 'Broadcom CA RS 2410',
+			code: 'CARS2410',
+			bundle_type: 'CARS',
+			release_date: new Date('2024-10-01'),
+			description: 'Broadcom CA Recommended Service, October 2024',
+			items: {
+				create: [{ software_id: endevor.id, software_version_id: endevorV18R2M0.id, notes: '12 PTFs, highest SO12345' }]
+			}
+		}
+	});
+
+	const rsu2410 = await prisma.vendor_bundles.create({
+		data: {
+			vendor_id: ibm.id,
+			name: 'IBM CST RSU2410',
+			code: 'RSU2410',
+			bundle_type: 'RSU',
+			release_date: new Date('2024-11-01'),
+			description: 'IBM Consolidated Service Test, RSU2410',
+			items: {
+				create: [
+					{ software_id: cics.id, software_version_id: cicsV5R6M0.id, notes: 'CST tested' },
+					{ software_id: db2.id, software_version_id: db2V13R1M0.id, notes: 'CST tested' }
+				]
+			}
+		}
+	});
+
 	// Create packages
 	console.log('Creating packages...');
 	const package2025Q1 = await prisma.packages.create({
@@ -205,18 +240,21 @@ async function main() {
 					{
 						software_id: cics.id,
 						software_version_id: cicsV5R6M0.id,
+						source_bundle_id: rsu2410.id,
 						order_index: 1,
 						created_at: new Date()
 					},
 					{
 						software_id: db2.id,
 						software_version_id: db2V13R1M0.id,
+						source_bundle_id: rsu2410.id,
 						order_index: 2,
 						created_at: new Date()
 					},
 					{
 						software_id: endevor.id,
 						software_version_id: endevorV18R2M0.id,
+						source_bundle_id: cars2410.id,
 						order_index: 3,
 						created_at: new Date()
 					}
@@ -392,6 +430,7 @@ async function main() {
 	console.log(`   - ${2} Customers created`);
 	console.log(`   - ${3} Software products created`);
 	console.log(`   - ${8} Software versions created`);
+	console.log(`   - ${2} Vendor bundles created (CARS2410, RSU2410)`);
 	console.log(`   - ${2} Packages created`);
 	console.log(`   - ${3} LPARs created`);
 	console.log(`   - ${2} Audit log entries created`);

@@ -14,6 +14,7 @@
 	import Badge from '#lib/components/ui/Badge.svelte';
 	import Label from '#lib/components/ui/Label.svelte';
 	import ConfirmationDialog from '#lib/components/common/ConfirmationDialog.svelte';
+	import { describeItemSource, type MergeBundle } from '#lib/utils/bundle-merge.ts';
 
 	interface SoftwareWithVersions {
 		id: string;
@@ -30,9 +31,11 @@
 	interface Props {
 		items: PackageItem[];
 		allSoftware: SoftwareWithVersions[];
+		/** Vendor bundles, used to label where each item came from */
+		bundles?: MergeBundle[];
 	}
 
-	let { items = $bindable([]), allSoftware }: Props = $props();
+	let { items = $bindable([]), allSoftware, bundles = [] }: Props = $props();
 
 	// Track which item is being edited (inline editing)
 	let editingIndex = $state<number | null>(null);
@@ -161,6 +164,8 @@
 				{@const status = getItemStatus(item)}
 				{@const error = validateItem(item)}
 				{@const isEditing = editingIndex === index}
+				{@const itemIndex = items.indexOf(item)}
+				{@const source = describeItemSource(item, bundles)}
 
 				<div
 					class="border rounded-lg p-4 transition-all hover:bg-accent/5
@@ -181,8 +186,9 @@
 											id="software-{index}"
 											bind:value={item.software_id}
 											onchange={() => {
-												// Reset version when software changes
+												// Reset version when software changes; a different product is no longer the bundle's item
 												item.software_version_id = '';
+												item.source_bundle_id = null;
 											}}
 											class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 											required
@@ -245,7 +251,7 @@
 										variant="ghost"
 										onclick={() => {
 											if (!item.id) {
-												items.splice(index, 1);
+												items.splice(itemIndex, 1);
 											}
 											editingIndex = null;
 										}}
@@ -267,6 +273,13 @@
 											{#if status === 'new'}
 												<Badge variant="outline" class="text-xs">New</Badge>
 											{/if}
+											{#if source.kind === 'bundle'}
+												<span title="Copied from vendor bundle"><Badge variant="secondary" class="text-xs">{source.code}</Badge></span>
+											{:else if source.kind === 'adjusted'}
+												<span title="Version differs from the vendor bundle"><Badge variant="outline" class="text-xs border-amber-400 text-amber-700">{source.code} · adjusted</Badge></span>
+											{:else if bundles.length > 0}
+												<span title="Added manually"><Badge variant="outline" class="text-xs text-muted-foreground">Manual</Badge></span>
+											{/if}
 										</div>
 										<div class="text-sm text-muted-foreground">
 											Version: <span class="font-medium">{getVersionDisplay(item.software_version_id, item.software_id)}</span>
@@ -286,7 +299,7 @@
 											type="button"
 											size="sm"
 											variant="ghost"
-											onclick={() => initiateRemoveItem(index)}
+											onclick={() => initiateRemoveItem(itemIndex)}
 										>
 											Remove
 										</Button>

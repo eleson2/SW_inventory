@@ -26,6 +26,8 @@ const TABLES = [
 	'customers',
 	'software',
 	'software_versions',
+	'vendor_bundles',
+	'vendor_bundle_items',
 	'packages',
 	'package_items',
 	'lpars',
@@ -75,7 +77,11 @@ async function importAll() {
 	const data = Object.fromEntries(
 		TABLES.map((table) => {
 			const file = join(dir, `${table}.json`);
-			if (!existsSync(file)) throw new Error(`Missing ${file}`);
+			if (!existsSync(file)) {
+				// Backups made before a table existed (e.g. vendor_bundles) simply lack its file
+				console.warn(`  ${table.padEnd(18)} no ${table}.json, importing 0 rows`);
+				return [table, []];
+			}
 			const rows = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>[];
 			return [table, rows.map((row) => reviveDates(table, row))];
 		})

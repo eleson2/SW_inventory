@@ -1,0 +1,41 @@
+CST 3rd Quarter 2025
+1st Addendum (RSU2510)
+Dated: November 7th, 2025
+Prepared by: CST Team
+This addendum is based on the CST 3rd quarter 2025 recommendation (RSU2509 - all service
+through end of June 2025 not already marked RSU and PE
+resolution/HIPER/Security/Integrity/Pervasive PTFs and their associated requisites and supersedes
+through August 2025).
+The contents of this addendum (RSU2510) are PE resolution and HIPER/Security/Integrity/Pervasive
+PTFs and their associated requisites and supersedes through the end of September 2025; however,
+the following products/tools are all service through the end of September 2025 not already marked
+RSU:
+o IBM 31-bit SDK for z/OS,Java Technology Edition, V8 SR8 FP45 PTF UO03118
+o IBM 64-bit SDK for z/OS,Java Technology Edition, V8 SR8 FP45 PTF UO03135
+o IBM Semeru Runtime Certified Edition for z/OS, Version 11 FP11.0.27.0 PTF UO03438
+o IBM Semeru Runtime Certified Edition for z/OS, Version 17 FP17.0.15.0 PTF UO03440
+o IBM Semeru Runtime Certified Edition for z/OS, Version 21 FP21.0.7.0 PTF UO03538
+o WebSphere Application Server for z/ OS V90_9.0.5024.20250528_1828– Service level
+9.0.5.24
+- Java 8, build 8.0.8.45 pmz6480sr8fp45-20250422_01
+o WebSphere Application Server for z/ OS V85_8.5.5027.20250129 – Service level 8.5.5.28
+- Java 8, build 8.0.8.45 pmz6480sr8fp45-20250422_01
+A list of all the PTFs included in this month’s RSU can be found here:
+https://public.dhe.ibm.com/eserver/zseries/assigns/rsu2510.txt
+If more information is needed regarding our CST 3rd quarter recommendation, the URL is:
+https://public.dhe.ibm.com/systems/z/servicetest/RSU2509.pdf
+Problems Encountered
+The APARs listed in the table below represent the problems the CST team encountered during the month
+following the quarterly recommendation; however, if a problem was encountered and corrected for this
+recommendation, it will not be listed in the table below. The APARs listed below are either open, or their
+associated PTFs were not yet available for testing in the CST environment prior to this recommendation.
+Customers should verify APAR status through normal means.
+Note: Consolidated Service Test does not replace the regular service procedure. If a problem is
+encountered with product code, you should report the problem to IBM support.
+CICSTS 6.1
+PH68638 CICS TS 6.1 PL/1 COPYBOOK DFHMNTDS HEADER INFORMATION
+WAS INADVERTENTLY CHANGED.
+PH68688 UPDATE CICS EMBEDDED WEBSPHERE LIBERTY TO FIXPACK
+25.0.0.9
+CICSTS 6.2
+PH68380 0 LENGTH GETMAIN IN EYU9XDJG AT OFFSET X'20A8'

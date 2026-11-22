@@ -7,6 +7,7 @@
 	import FormField from '#lib/components/common/FormField.svelte';
 	import FormCheckbox from '#lib/components/common/FormCheckbox.svelte';
 	import PackageItemsManager from '#lib/components/domain/PackageItemsManager.svelte';
+	import BundlePicker from '#lib/components/domain/BundlePicker.svelte';
 	import FormButtons from '#lib/components/common/FormButtons.svelte';
 	import FormErrorMessage from '#lib/components/common/FormErrorMessage.svelte';
 	import FormTextarea from '#lib/components/common/FormTextarea.svelte';
@@ -123,11 +124,17 @@
 			</div>
 		</Card>
 
+		<!-- Vendor bundles: copy their items into the package -->
+		<Card class="p-6">
+			<BundlePicker bind:items={packageItems} bundles={data.bundles.filter((b) => b.active)} />
+		</Card>
+
 		<!-- Detail Entity: Package Items -->
 		<Card class="p-6">
 			<PackageItemsManager
 				bind:items={packageItems}
 				allSoftware={data.allSoftware}
+				bundles={data.bundles}
 			/>
 		</Card>
 

@@ -17,6 +17,8 @@ TRUNCATE TABLE lpar_software CASCADE;
 TRUNCATE TABLE package_items CASCADE;
 TRUNCATE TABLE lpars CASCADE;
 TRUNCATE TABLE packages CASCADE;
+TRUNCATE TABLE vendor_bundle_items CASCADE;
+TRUNCATE TABLE vendor_bundles CASCADE;
 TRUNCATE TABLE software_versions CASCADE;
 TRUNCATE TABLE software CASCADE;
 TRUNCATE TABLE customers CASCADE;
@@ -42,6 +44,8 @@ BEGIN
     RAISE NOTICE '  - software_versions';
     RAISE NOTICE '  - packages';
     RAISE NOTICE '  - package_items';
+    RAISE NOTICE '  - vendor_bundles';
+    RAISE NOTICE '  - vendor_bundle_items';
     RAISE NOTICE '  - lpars';
     RAISE NOTICE '  - lpar_software';
     RAISE NOTICE '  - audit_log';

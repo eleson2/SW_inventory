@@ -3,16 +3,17 @@ import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
 import { fail, redirect } from '@sveltejs/kit';
 import { packageWithItemsSchema } from '#lib/schemas/package.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
+import { loadBundlesForPackages } from '#lib/server/bundles.ts';
 
 // Load all packages for clone dropdown and all software for PackageItemsManager
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ url }) => {
 	// Initialize Superforms with default values
 	const form = await serverValidate(
 		{ description: '', active: true, items: [] },
 		packageWithItemsSchema
 	);
 
-	const [allPackages, allSoftware] = await Promise.all([
+	const [allPackages, allSoftware, bundles] = await Promise.all([
 		db.packages.findMany({
 			where: { active: true },
 			include: {
@@ -49,13 +50,20 @@ export const load: PageServerLoad = async () => {
 				}
 			},
 			orderBy: { name: 'asc' }
-		})
+		}),
+		loadBundlesForPackages()
 	]);
+
+	// /packages/new?bundles=<id>,<id> pre-fills the package from those bundles
+	const requested = (url.searchParams.get('bundles') ?? '').split(',').filter(Boolean);
+	const preselectedBundleIds = bundles.filter((b) => requested.includes(b.id)).map((b) => b.id);
 
 	return {
 		form,
 		allPackages,
-		allSoftware
+		allSoftware,
+		bundles,
+		preselectedBundleIds
 	};
 };
 
@@ -122,7 +130,8 @@ export const actions: Actions = {
 								package_id: pkg.id,
 								software_id: item.software_id,
 								software_version_id: item.software_version_id,
-								order_index: item.order_index
+								order_index: item.order_index,
+								source_bundle_id: item.source_bundle_id ?? null
 							}
 						});
 					}

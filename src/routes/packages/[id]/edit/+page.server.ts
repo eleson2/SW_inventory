@@ -4,6 +4,7 @@ import { db, createAuditLog } from '#lib/server/db.ts';
 import { packageUpdateSchema } from '#lib/schemas/package.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
 import { message, setError } from 'sveltekit-superforms';
+import { loadBundlesForPackages } from '#lib/server/bundles.ts';
 
 /**
  * Load package with items, plus all software and their versions for dropdowns
@@ -31,6 +32,8 @@ export const load: PageServerLoad = async ({ params }) => {
 	if (!pkg) {
 		throw error(404, 'Package not found');
 	}
+
+	const bundles = await loadBundlesForPackages(pkg.package_items.map((item) => item.source_bundle_id));
 
 	// Load all active software with their versions for the dropdowns
 	const allSoftware = await db.software.findMany({
@@ -61,6 +64,7 @@ export const load: PageServerLoad = async ({ params }) => {
 				software_id: item.software_id,
 				software_version_id: item.software_version_id,
 				order_index: item.order_index,
+				source_bundle_id: item.source_bundle_id,
 				_action: 'keep' as const
 			}))
 		},
@@ -70,7 +74,8 @@ export const load: PageServerLoad = async ({ params }) => {
 	return {
 		form,
 		package: pkg,
-		allSoftware
+		allSoftware,
+		bundles
 	};
 };
 
@@ -155,7 +160,8 @@ export const actions: Actions = {
 							package_id: event.params.id,
 							software_id: item.software_id,
 							software_version_id: item.software_version_id,
-							order_index: item.order_index
+							order_index: item.order_index,
+							source_bundle_id: item.source_bundle_id ?? null
 						};
 
 						if (item.id) {

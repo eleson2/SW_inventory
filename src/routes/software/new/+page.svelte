@@ -204,6 +204,16 @@
 					</div>
 				{/if}
 
+				<FormField
+					label="Vendor Product Code"
+					id="product_code"
+					name="product_code"
+					bind:value={$form.product_code as any}
+					placeholder="e.g. AL2120 (optional)"
+					helperText="Vendor's product/FMID code; used to match products when importing vendor bundles"
+					error={$errors.product_code?.[0]}
+				/>
+
 				<FormTextarea
 					label="Description"
 					id="description"

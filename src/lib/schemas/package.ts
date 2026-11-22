@@ -10,6 +10,7 @@ export const packageItemSchema = z.object({
 	software_id: z.string().uuid('Invalid software ID'),
 	software_version_id: z.string().uuid('Invalid version ID'),
 	order_index: z.number().int().min(0, 'Order index must be non-negative'), // Installation order
+	source_bundle_id: z.string().uuid().nullable().optional(), // Vendor bundle this item was copied from
 	_action: z.enum(['keep', 'delete']).optional() // Track item state for deletion
 });
 

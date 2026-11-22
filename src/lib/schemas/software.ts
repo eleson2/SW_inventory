@@ -37,6 +37,7 @@ export const softwareSchema = z.object({
 		.min(FIELD_LENGTHS.name.min, `Name must be at least ${FIELD_LENGTHS.name.min} characters`)
 		.max(FIELD_LENGTHS.name.max),
 	vendor_id: z.string().uuid('Invalid vendor'),
+	product_code: z.string().max(50).optional().or(z.literal('')), // Vendor product id, matches bundle imports
 	description: z.string().max(FIELD_LENGTHS.description.max).optional(),
 	current_version_id: z.string().uuid('Invalid version').optional(),
 	active: z.boolean().default(true)
@@ -55,6 +56,7 @@ export const softwareWithVersionsSchema = z.object({
 		.min(FIELD_LENGTHS.name.min, `Name must be at least ${FIELD_LENGTHS.name.min} characters`)
 		.max(FIELD_LENGTHS.name.max),
 	vendor_id: z.string().uuid('Invalid vendor'),
+	product_code: z.string().max(50).optional().or(z.literal('')), // Vendor product id, matches bundle imports
 	description: z.string().max(FIELD_LENGTHS.description.max).optional().or(z.literal('')),
 	active: z.boolean().default(true),
 	versions: z.array(softwareVersionDetailSchema).optional().default([]),

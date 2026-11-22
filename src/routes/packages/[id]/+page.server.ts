@@ -14,7 +14,14 @@ export const load: PageServerLoad = createDetailLoader({
 						vendors: true
 					}
 				},
-				software_version: true
+				software_version: true,
+				source_bundle: {
+					select: {
+						id: true,
+						code: true,
+						items: { select: { software_id: true, software_version_id: true } }
+					}
+				}
 			},
 			orderBy: {
 				order_index: 'asc'

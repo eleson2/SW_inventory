@@ -90,6 +90,10 @@
 					</dd>
 				</div>
 				<div>
+					<dt class="text-sm font-medium text-muted-foreground">Vendor Product Code</dt>
+					<dd class="text-sm mt-1 font-mono">{software.product_code || '-'}</dd>
+				</div>
+				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Description</dt>
 					<dd class="text-sm mt-1">{software.description || '-'}</dd>
 				</div>

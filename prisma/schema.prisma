@@ -93,15 +93,17 @@ model lpars {
 // Junction table: software items in each package
 // NOTE: version/ptf_level are intentionally denormalized for historical package snapshots
 model package_items {
-  id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  package_id          String             @db.Uuid
-  software_id         String             @db.Uuid
-  software_version_id String             @db.Uuid
+  id                  String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  package_id          String            @db.Uuid
+  software_id         String            @db.Uuid
+  software_version_id String            @db.Uuid
   order_index         Int
-  created_at          DateTime           @default(now())
-  packages            packages           @relation(fields: [package_id], references: [id], onDelete: Cascade)
-  software            software           @relation(fields: [software_id], references: [id], onDelete: Restrict)
-  software_version    software_versions  @relation(fields: [software_version_id], references: [id], onDelete: Restrict)
+  source_bundle_id    String?           @db.Uuid
+  created_at          DateTime          @default(now())
+  packages            packages          @relation(fields: [package_id], references: [id], onDelete: Cascade)
+  source_bundle       vendor_bundles?   @relation(fields: [source_bundle_id], references: [id], onDelete: SetNull)
+  software            software          @relation(fields: [software_id], references: [id], onDelete: Restrict)
+  software_version    software_versions @relation(fields: [software_version_id], references: [id], onDelete: Restrict)
 
   @@unique([package_id, software_id])
   @@unique([package_id, order_index])
@@ -109,6 +111,7 @@ model package_items {
   @@index([package_id, order_index])
   @@index([software_id])
   @@index([software_version_id])
+  @@index([source_bundle_id])
 }
 
 // Coordinated software package releases
@@ -137,23 +140,26 @@ model packages {
 
 // Software products (e.g., CICS, DB2, Endevor)
 model software {
-  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name               String              @db.VarChar(100)
-  vendor_id          String              @db.Uuid
+  id                 String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name               String                @db.VarChar(100)
+  vendor_id          String                @db.Uuid
+  product_code       String?               @db.VarChar(50)
   description        String?
-  current_version_id String?             @db.Uuid
-  active             Boolean             @default(true)
+  current_version_id String?               @db.Uuid
+  active             Boolean               @default(true)
   deleted_at         DateTime?
-  deleted_by         String?             @db.Uuid
-  created_at         DateTime            @default(now())
-  updated_at         DateTime            @updatedAt
-  current_version    software_versions?  @relation("CurrentVersion", fields: [current_version_id], references: [id], onDelete: SetNull)
-  versions           software_versions[] @relation("AllVersions")
+  deleted_by         String?               @db.Uuid
+  created_at         DateTime              @default(now())
+  updated_at         DateTime              @updatedAt
+  current_version    software_versions?    @relation("CurrentVersion", fields: [current_version_id], references: [id], onDelete: SetNull)
+  versions           software_versions[]   @relation("AllVersions")
   lpar_software      lpar_software[]
   package_items      package_items[]
-  vendors            vendors             @relation(fields: [vendor_id], references: [id], onDelete: Restrict)
+  bundle_items       vendor_bundle_items[]
+  vendors            vendors               @relation(fields: [vendor_id], references: [id], onDelete: Restrict)
 
   @@unique([vendor_id, name])
+  @@index([product_code])
   @@index([active])
   @@index([name])
   @@index([vendor_id])
@@ -162,18 +168,19 @@ model software {
 
 // Version history for software products (normalized)
 model software_versions {
-  id                    String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  software_id           String     @db.Uuid
-  version               String     @db.VarChar(50)
-  ptf_level             String?    @db.VarChar(50)
-  release_date          DateTime
-  end_of_support        DateTime?
-  release_notes         String?
-  is_current            Boolean    @default(false)
-  created_at            DateTime   @default(now())
-  software              software   @relation("AllVersions", fields: [software_id], references: [id], onDelete: Cascade)
-  software_as_current   software[] @relation("CurrentVersion")
-  package_items         package_items[]
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  software_id         String                @db.Uuid
+  version             String                @db.VarChar(50)
+  ptf_level           String?               @db.VarChar(50)
+  release_date        DateTime
+  end_of_support      DateTime?
+  release_notes       String?
+  is_current          Boolean               @default(false)
+  created_at          DateTime              @default(now())
+  software            software              @relation("AllVersions", fields: [software_id], references: [id], onDelete: Cascade)
+  software_as_current software[]            @relation("CurrentVersion")
+  package_items       package_items[]
+  bundle_items        vendor_bundle_items[]
 
   @@unique([software_id, version, ptf_level])
   @@index([software_id])
@@ -184,19 +191,65 @@ model software_versions {
 
 // Software vendors
 model vendors {
-  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name          String     @db.VarChar(100)
-  code          String     @unique @db.VarChar(20)
-  website       String?    @db.VarChar(255)
-  contact_email String?    @db.VarChar(255)
-  active        Boolean    @default(true)
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String           @db.VarChar(100)
+  code          String           @unique @db.VarChar(20)
+  website       String?          @db.VarChar(255)
+  contact_email String?          @db.VarChar(255)
+  active        Boolean          @default(true)
   deleted_at    DateTime?
-  deleted_by    String?    @db.Uuid
-  created_at    DateTime   @default(now())
-  updated_at    DateTime   @updatedAt
+  deleted_by    String?          @db.Uuid
+  created_at    DateTime         @default(now())
+  updated_at    DateTime         @updatedAt
   software      software[]
+  bundles       vendor_bundles[]
 
   @@index([active])
   @@index([code])
   @@index([name])
+}
+
+// Vendor maintenance bundles (e.g. Broadcom CARS2511, IBM RSU2511)
+// Packages copy bundle items; package_items.source_bundle_id records the origin.
+model vendor_bundles {
+  id            String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  vendor_id     String                @db.Uuid
+  name          String                @db.VarChar(100)
+  code          String                @db.VarChar(20)
+  bundle_type   String                @db.VarChar(20)
+  release_date  DateTime              @db.Date
+  description   String?
+  source_url    String?               @db.VarChar(500)
+  active        Boolean               @default(true)
+  deleted_at    DateTime?
+  deleted_by    String?               @db.Uuid
+  created_at    DateTime              @default(now())
+  updated_at    DateTime              @updatedAt
+  vendors       vendors               @relation(fields: [vendor_id], references: [id], onDelete: Restrict)
+  items         vendor_bundle_items[]
+  package_items package_items[]
+
+  @@unique([vendor_id, code])
+  @@index([active])
+  @@index([vendor_id])
+  @@index([code])
+  @@index([release_date(sort: Desc)])
+}
+
+// Software versions contained in a vendor bundle
+model vendor_bundle_items {
+  id                  String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bundle_id           String            @db.Uuid
+  software_id         String            @db.Uuid
+  software_version_id String            @db.Uuid
+  notes               String?
+  created_at          DateTime          @default(now())
+  bundle              vendor_bundles    @relation(fields: [bundle_id], references: [id], onDelete: Cascade)
+  software            software          @relation(fields: [software_id], references: [id], onDelete: Restrict)
+  software_version    software_versions @relation(fields: [software_version_id], references: [id], onDelete: Restrict)
+
+  @@unique([bundle_id, software_id])
+  @@index([bundle_id])
+  @@index([software_id])
+  @@index([software_version_id])
 }

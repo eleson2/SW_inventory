@@ -259,6 +259,37 @@ SET current_version_id = t.endevor_v18r2m0_id
 FROM temp_ids t
 WHERE s.name = 'Endevor';
 
+-- Vendor product codes (used to match fetched/imported vendor bundle rows)
+UPDATE software SET product_code = 'CICSTS' WHERE name = 'CICS Transaction Server';
+UPDATE software SET product_code = 'DB2' WHERE name = 'DB2 for z/OS';
+
+-- ============================================================================
+-- VENDOR BUNDLES
+-- ============================================================================
+
+INSERT INTO vendor_bundles (id, vendor_id, name, code, bundle_type, release_date, description, active, created_at, updated_at)
+SELECT gen_random_uuid(), broadcom_id, 'Broadcom CA RS 2410', 'CARS2410', 'CARS', '2024-10-01'::DATE,
+       'Broadcom CA Recommended Service, October 2024', true, NOW(), NOW()
+FROM temp_ids;
+
+INSERT INTO vendor_bundles (id, vendor_id, name, code, bundle_type, release_date, description, active, created_at, updated_at)
+SELECT gen_random_uuid(), ibm_id, 'IBM CST RSU2410', 'RSU2410', 'RSU', '2024-11-01'::DATE,
+       'IBM Consolidated Service Test, RSU2410', true, NOW(), NOW()
+FROM temp_ids;
+
+INSERT INTO vendor_bundle_items (id, bundle_id, software_id, software_version_id, notes, created_at)
+SELECT gen_random_uuid(), (SELECT id FROM vendor_bundles WHERE code = 'CARS2410'), endevor_id, endevor_v18r2m0_id,
+       '12 PTFs, highest SO12345', NOW()
+FROM temp_ids;
+
+INSERT INTO vendor_bundle_items (id, bundle_id, software_id, software_version_id, notes, created_at)
+SELECT gen_random_uuid(), (SELECT id FROM vendor_bundles WHERE code = 'RSU2410'), cics_id, cics_v5r6m0_id, 'CST tested', NOW()
+FROM temp_ids;
+
+INSERT INTO vendor_bundle_items (id, bundle_id, software_id, software_version_id, notes, created_at)
+SELECT gen_random_uuid(), (SELECT id FROM vendor_bundles WHERE code = 'RSU2410'), db2_id, db2_v13r1m0_id, 'CST tested', NOW()
+FROM temp_ids;
+
 -- ============================================================================
 -- PACKAGES
 -- ============================================================================
@@ -335,6 +366,15 @@ SELECT
     2,
     NOW()
 FROM temp_ids;
+
+-- Q1 2025 was built from vendor bundles RSU2410 (CICS, DB2) and CARS2410 (Endevor)
+UPDATE package_items pi SET source_bundle_id = (SELECT id FROM vendor_bundles WHERE code = 'RSU2410')
+FROM temp_ids t
+WHERE pi.package_id = t.package_2025q1_id AND pi.software_id IN (t.cics_id, t.db2_id);
+
+UPDATE package_items pi SET source_bundle_id = (SELECT id FROM vendor_bundles WHERE code = 'CARS2410')
+FROM temp_ids t
+WHERE pi.package_id = t.package_2025q1_id AND pi.software_id = t.endevor_id;
 
 -- ============================================================================
 -- LPARS
@@ -535,6 +575,8 @@ BEGIN
     RAISE NOTICE '   - % Customers created', (SELECT COUNT(*) FROM customers);
     RAISE NOTICE '   - % Software products created', (SELECT COUNT(*) FROM software);
     RAISE NOTICE '   - % Software versions created', (SELECT COUNT(*) FROM software_versions);
+    RAISE NOTICE '   - % Vendor bundles created', (SELECT COUNT(*) FROM vendor_bundles);
+    RAISE NOTICE '   - % Vendor bundle items created', (SELECT COUNT(*) FROM vendor_bundle_items);
     RAISE NOTICE '   - % Packages created', (SELECT COUNT(*) FROM packages);
     RAISE NOTICE '   - % Package items created', (SELECT COUNT(*) FROM package_items);
     RAISE NOTICE '   - % LPARs created', (SELECT COUNT(*) FROM lpars);

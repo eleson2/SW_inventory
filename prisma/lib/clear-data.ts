@@ -11,6 +11,8 @@ export async function clearAllData(db: PrismaClient): Promise<void> {
 		db.package_items.deleteMany(),
 		db.lpars.deleteMany(),
 		db.packages.deleteMany(),
+		db.vendor_bundle_items.deleteMany(),
+		db.vendor_bundles.deleteMany(),
 		// software.current_version_id points at software_versions; clear it first
 		db.software.updateMany({ data: { current_version_id: null } }),
 		db.software_versions.deleteMany(),

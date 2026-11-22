@@ -12,9 +12,20 @@
 	import CloneDialog from '#lib/components/common/CloneDialog.svelte';
 	import { formatDate } from '#lib/utils/date-format.ts';
 	import { createCloneHandler } from '#lib/utils/clone-handler.ts';
+	import { describeItemSource } from '#lib/utils/bundle-merge.ts';
 
 	let { data }: { data: PageData } = $props();
 	const { package: pkg } = data;
+
+	// Vendor bundles the items were copied from
+	type SourceBundle = NonNullable<(typeof pkg.package_items)[number]['source_bundle']>;
+	const sourceBundles: SourceBundle[] = [
+		...new Map(
+			pkg.package_items.flatMap((item: (typeof pkg.package_items)[number]) =>
+				item.source_bundle ? [[item.source_bundle.id, item.source_bundle] as const] : []
+			)
+		).values()
+	];
 
 	let showCloneDialog = $state(false);
 	let cloning = $state(false);
@@ -117,7 +128,17 @@
 
 	<Card class="p-6">
 		<div class="flex items-center justify-between mb-4">
-			<h2 class="text-xl font-semibold">Package Items</h2>
+			<div>
+				<h2 class="text-xl font-semibold">Package Items</h2>
+				{#if sourceBundles.length > 0}
+					<p class="text-sm text-muted-foreground mt-1">
+						Built from vendor bundles:
+						{#each sourceBundles as bundle, i}
+							<a href="/bundles/{bundle.id}" class="font-mono text-primary hover:underline">{bundle.code}</a>{i < sourceBundles.length - 1 ? ', ' : ''}
+						{/each}
+					</p>
+				{/if}
+			</div>
 			<Button size="sm" onclick={() => goto(`/packages/${pkg.id}/edit`)}>
 				Manage Items
 			</Button>
@@ -128,6 +149,7 @@
 		{:else}
 			<div class="space-y-3">
 				{#each pkg.package_items as item}
+					{@const source = describeItemSource(item, sourceBundles)}
 					<div class="flex items-center justify-between p-4 border rounded-lg">
 						<div class="flex-1">
 							<div class="flex items-center gap-3">
@@ -145,11 +167,19 @@
 										<span>•</span>
 										<VersionDisplay
 											version={{
-												version: item.version,
-												ptfLevel: item.ptf_level ?? undefined
+												version: item.software_version.version,
+												ptfLevel: item.software_version.ptf_level ?? undefined
 											}}
 											showBadge={true}
 										/>
+										<span>•</span>
+										{#if source.kind === 'bundle'}
+											<a href="/bundles/{item.source_bundle_id}"><Badge variant="secondary" class="text-xs">{source.code}</Badge></a>
+										{:else if source.kind === 'adjusted'}
+											<a href="/bundles/{item.source_bundle_id}"><Badge variant="outline" class="text-xs border-amber-400 text-amber-700">{source.code} · adjusted</Badge></a>
+										{:else}
+											<span class="text-xs">Manual</span>
+										{/if}
 									</div>
 								</div>
 							</div>

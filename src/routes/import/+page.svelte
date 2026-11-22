@@ -4,7 +4,10 @@
 	let fileInput: HTMLInputElement;
 	let selectedFile: File | null = null;
 	let importingType: string | null = null;
-	let results: Record<string, { success: boolean; message: string; counts?: any }> = {};
+	let results: Record<
+		string,
+		{ success: boolean; message: string; counts?: any; skippedProducts?: string[]; errors?: string[] }
+	> = {};
 
 	function handleFileSelect(event: Event) {
 		const target = event.target as HTMLInputElement;
@@ -87,14 +90,14 @@
 				<input
 					bind:this={fileInput}
 					type="file"
-					accept=".ods,.xlsx,.xls"
+					accept=".ods,.xlsx,.xls,.csv"
 					on:change={handleFileSelect}
 					class="hidden"
 					id="file-upload"
 				/>
 				<Button
 					variant="outline"
-					on:click={() => fileInput?.click()}
+					onclick={() => fileInput?.click()}
 					class="flex items-center gap-2"
 				>
 					📁 Choose File
@@ -151,7 +154,7 @@
 					{/if}
 				</div>
 				<Button
-					on:click={() => handleImport('vendors')}
+					onclick={() => handleImport('vendors')}
 					disabled={!selectedFile || isImporting('vendors') || importingType !== null}
 				>
 					{#if isImporting('vendors')}
@@ -188,7 +191,7 @@
 					{/if}
 				</div>
 				<Button
-					on:click={() => handleImport('customers')}
+					onclick={() => handleImport('customers')}
 					disabled={!selectedFile || isImporting('customers') || importingType !== null}
 				>
 					{#if isImporting('customers')}
@@ -225,7 +228,7 @@
 					{/if}
 				</div>
 				<Button
-					on:click={() => handleImport('products')}
+					onclick={() => handleImport('products')}
 					disabled={!selectedFile || isImporting('products') || importingType !== null}
 				>
 					{#if isImporting('products')}
@@ -261,13 +264,64 @@
 					{/if}
 				</div>
 				<Button
-					on:click={() => handleImport('lpars')}
+					onclick={() => handleImport('lpars')}
 					disabled={!selectedFile || isImporting('lpars') || importingType !== null}
 				>
 					{#if isImporting('lpars')}
 						⏳ Importing...
 					{:else}
 						Import LPARs
+					{/if}
+				</Button>
+			</div>
+		</Card>
+	</div>
+
+	<!-- Vendor bundles (separate from the SW Master steps) -->
+	<div class="space-y-4">
+		<h2 class="text-lg font-semibold">Vendor Bundles</h2>
+		<Card class="p-6">
+			<div class="flex items-start justify-between gap-4">
+				<div class="flex-1 space-y-2">
+					<h3 class="text-lg font-semibold">Import Vendor Bundle CSV</h3>
+					<p class="text-sm text-muted-foreground">
+						Broadcom CARS / IBM RSU levels, e.g. produced by <code>npm run bundles:fetch</code>. Columns:
+						<code class="text-xs">vendor_code, bundle_code, bundle_name, bundle_type, release_date, product_code,
+						product_name, version, ptf_level, notes</code>. Products are matched on the software's vendor
+						product code, then on name; unknown products are skipped. Re-importing a bundle replaces its items.
+					</p>
+					{#if results.bundles}
+						<div class="space-y-1 {getResultClass('bundles')}">
+							<div class="flex items-center gap-2">
+								<span class="text-lg">{getResultEmoji('bundles')}</span>
+								<span class="text-sm">{results.bundles.message}</span>
+							</div>
+							{#if results.bundles.errors?.length}
+								<ul class="list-disc pl-6 text-sm text-red-600">
+									{#each results.bundles.errors as err}<li>{err}</li>{/each}
+								</ul>
+							{/if}
+							{#if results.bundles.skippedProducts?.length}
+								<details class="text-sm text-muted-foreground">
+									<summary class="cursor-pointer">
+										{results.bundles.skippedProducts.length} product(s) not in the inventory, skipped
+									</summary>
+									<ul class="mt-1 max-h-48 overflow-y-auto pl-6 list-disc">
+										{#each results.bundles.skippedProducts as product}<li>{product}</li>{/each}
+									</ul>
+								</details>
+							{/if}
+						</div>
+					{/if}
+				</div>
+				<Button
+					onclick={() => handleImport('bundles')}
+					disabled={!selectedFile || isImporting('bundles') || importingType !== null}
+				>
+					{#if isImporting('bundles')}
+						⏳ Importing...
+					{:else}
+						Import Bundles
 					{/if}
 				</Button>
 			</div>

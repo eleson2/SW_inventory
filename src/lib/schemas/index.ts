@@ -8,5 +8,6 @@ export * from './customer';
 export * from './vendor';
 export * from './software';
 export * from './package';
+export * from './bundle';
 export * from './lpar';
 export * from './common';

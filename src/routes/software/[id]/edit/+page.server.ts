@@ -40,6 +40,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			name: software.name,
 			vendor_id: software.vendor_id,
 			description: software.description || '',
+			product_code: software.product_code || '',
 			active: software.active,
 			current_version_id: software.current_version_id || '',
 			versions: software.versions.map(v => ({
@@ -154,6 +155,7 @@ export const actions: Actions = {
 						name: validated.name,
 						vendor_id: validated.vendor_id,
 						description: validated.description || null,
+						product_code: validated.product_code?.trim().toUpperCase() || null,
 						active: validated.active,
 						current_version_id: currentVersionId,
 						updated_at: new Date()

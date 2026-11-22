@@ -100,6 +100,7 @@ export const actions: Actions = {
 					data: {
 						name: form.data.name,
 						vendor_id: form.data.vendor_id,
+						product_code: form.data.product_code?.trim().toUpperCase() || null,
 						description: form.data.description || null,
 						active: form.data.active
 					}

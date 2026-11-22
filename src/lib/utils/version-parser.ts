@@ -141,3 +141,17 @@ export function findVersionId(
 	const target = { version: install.current_version, ptf_level: install.current_ptf_level };
 	return softwareById.get(install.software_id)?.versions.find((v) => sameVersion(v, target))?.id ?? '';
 }
+
+/**
+ * How many leading release components two version strings share, if one is a prefix of
+ * the other: "6.1" vs "V6R1M0" -> 2, "12" vs "V12R1M0" -> 1, "12" vs "V13R1M0" -> 0.
+ * Vendors publish releases in different notations; this matches them up.
+ */
+export function releaseMatchLength(a: string, b: string): number {
+	const parts = (v: string) => v.split(/[.VvRrMm]/).filter((p) => p).map((p) => parseInt(p) || 0);
+	const pa = parts(a);
+	const pb = parts(b);
+	const n = Math.min(pa.length, pb.length);
+	for (let i = 0; i < n; i++) if (pa[i] !== pb[i]) return 0;
+	return n;
+}

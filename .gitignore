@@ -28,3 +28,6 @@ test-results/
 
 # Local Caddy CA root cert (demo server)
 caddy-root.crt
+
+# Vendor bundle CSVs from npm run bundles:fetch
+/bundles/
