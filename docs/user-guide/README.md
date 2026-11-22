@@ -9,7 +9,7 @@ Welcome to the Software Inventory Management System! This guide will help you un
 3. [Managing Vendors](#managing-vendors)
 4. [Managing Customers](#managing-customers)
 5. [Managing Software](#managing-software)
-6. [Managing Packages](#managing-packages)
+6. [Managing Packages](#managing-packages) (see also [Vendor Bundles](./VENDOR_BUNDLES.md))
 7. [Managing LPARs](#managing-lpars)
 8. [Deploying Packages](#deploying-packages)
 9. [Rollback Operations](#rollback-operations)
@@ -235,6 +235,13 @@ A package is like a "software bundle" that includes:
    - **Version**: Select the specific version
    - **Order**: Installation sequence (1, 2, 3...)
 4. Click **Save**
+
+### Building a Package from Vendor Bundles
+
+Instead of adding items one by one, copy the contents of vendor maintenance levels
+(Broadcom CARS, IBM RSU) into the package with **Add from Vendor Bundles**. Each item keeps
+its source bundle and can be adjusted afterwards. See **[Vendor Bundles](./VENDOR_BUNDLES.md)**
+for importing levels, cloning them, and how versions are merged.
 
 ### Editing a Package
 
@@ -556,6 +563,10 @@ For technical issues or questions:
 **PTF**: Program Temporary Fix - IBM's term for patches/fixes
 
 **Package**: A coordinated bundle of software products tested together
+
+**Vendor Bundle**: A vendor maintenance level (Broadcom CARS, IBM RSU) holding the software versions it contains; packages can be built from it
+
+**Vendor notation**: A release as the vendor writes it ("6.1"), shown next to the inventory's notation: V6R1M0 [6.1]
 
 **Compliance**: Whether an LPAR has the software versions it should have
 

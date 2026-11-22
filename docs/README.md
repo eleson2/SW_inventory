@@ -55,7 +55,8 @@ Complete user manual including:
 ### For End Users
 1. Start with [Getting Started](./user-guide/README.md#getting-started)
 2. Learn about [Navigation](./user-guide/README.md#navigation)
-3. Follow specific guides for your role
+3. Build packages from vendor maintenance levels: [Vendor Bundles](./user-guide/VENDOR_BUNDLES.md)
+4. Follow specific guides for your role
 
 ### For Project Managers
 1. Review [Project Overview](./project/README.md#overview)

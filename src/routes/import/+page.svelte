@@ -295,7 +295,9 @@
 						Broadcom CARS / IBM RSU levels, e.g. produced by <code>npm run bundles:fetch</code>. Columns:
 						<code class="text-xs">vendor_code, bundle_code, bundle_name, bundle_type, release_date, product_code,
 						product_name, version, ptf_level, notes</code>. Products are matched on the software's vendor
-						product code, then on name; unknown products are skipped. Re-importing a bundle replaces its items.
+						product code, then on name; unknown products are added. Missing versions are created, products
+						missing from the file keep their version from the vendor's previous level, and re-importing a
+						bundle replaces its items.
 					</p>
 					{#if results.bundles}
 						<div class="space-y-1 {getResultClass('bundles')}">
