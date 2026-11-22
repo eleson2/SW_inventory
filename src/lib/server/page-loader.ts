@@ -6,7 +6,7 @@ import type { SortOptions } from '#lib/types/index.ts';
 import { db, getPaginated } from './db';
 import { textContains } from '#lib/server/db-dialect.ts';
 
-export interface PageLoaderOptions<T = any> {
+export interface PageLoaderOptions<T = any, K extends string = string> {
 	/** The Prisma model delegate to query (e.g., db.customer, db.vendor) */
 	model: any;
 	/** Default sort field (defaults to 'name') */
@@ -20,7 +20,7 @@ export interface PageLoaderOptions<T = any> {
 	/** Relations to include in the query */
 	include?: Record<string, any>;
 	/** Return key for the data (e.g., 'customers', 'vendors') */
-	dataKey: string;
+	dataKey: K;
 	/** Additional filter function to build custom where clauses */
 	filterBuilder?: (url: URL) => Record<string, any>;
 	/** Custom search builder for complex searches (e.g., searching relations) */
@@ -56,7 +56,10 @@ export interface PageLoaderOptions<T = any> {
  *   })(url);
  * };
  */
-export function createPageLoader<T = any>(options: PageLoaderOptions<T>) {
+/** One page of rows; items are untyped because the model delegate is passed in dynamically */
+export type PaginatedData = Awaited<ReturnType<typeof getPaginated>>;
+
+export function createPageLoader<T = any, K extends string = string>(options: PageLoaderOptions<T, K>) {
 	const {
 		model,
 		defaultSortField = 'name',
@@ -121,9 +124,7 @@ export function createPageLoader<T = any>(options: PageLoaderOptions<T>) {
 			direction: sortDirection
 		};
 
-		return {
-			[dataKey]: data,
-			sort
-		};
+		// Computed keys widen to string; restore the literal data key for the page's types
+		return { [dataKey]: data, sort } as { [P in K]: PaginatedData } & { sort: SortOptions };
 	};
 }

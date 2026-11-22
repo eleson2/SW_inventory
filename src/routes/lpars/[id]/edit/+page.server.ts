@@ -11,6 +11,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		db.lpars.findUnique({
 			where: { id: params.id },
 			include: {
+				customers: { select: { name: true } },
 				lpar_software: {
 					include: {
 						software: {

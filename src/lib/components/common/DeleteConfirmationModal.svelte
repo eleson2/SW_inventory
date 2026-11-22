@@ -119,7 +119,7 @@
 						errorMessage = '';
 						return async ({ result, update }) => {
 							if (result.type === 'failure' && result.data?.error) {
-								errorMessage = result.data.error;
+								errorMessage = String(result.data.error);
 								isSubmitting = false;
 							} else if (result.type === 'redirect') {
 								// Success - close modal and redirect

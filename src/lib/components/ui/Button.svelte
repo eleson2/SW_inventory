@@ -13,6 +13,7 @@
 		onclick,
 		formaction,
 		href,
+		title,
 		children
 	}: {
 		variant?: Variant;
@@ -23,6 +24,7 @@
 		onclick?: (e: MouseEvent) => void;
 		formaction?: string;
 		href?: string;
+		title?: string;
 		children: any;
 	} = $props();
 
@@ -55,6 +57,7 @@
 			className
 		)}
 		aria-disabled={disabled}
+		{title}
 	>
 		{@render children()}
 	</a>
@@ -72,6 +75,7 @@
 			className
 		)}
 		{onclick}
+		{title}
 	>
 		{@render children()}
 	</button>

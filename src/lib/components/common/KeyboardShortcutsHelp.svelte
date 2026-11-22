@@ -66,7 +66,7 @@
 	>
 		<Card
 			class="w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-			onclick={(e) => e.stopPropagation()}
+			onclick={(e: MouseEvent) => e.stopPropagation()}
 		>
 			<div class="p-6">
 				<div class="flex items-center justify-between mb-6">

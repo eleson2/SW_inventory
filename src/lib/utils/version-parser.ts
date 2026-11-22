@@ -64,7 +64,7 @@ export function compareVersions(v1: string, v2: string): number {
  * Compare two PTF levels
  * Returns: -1 if p1 < p2, 0 if equal, 1 if p1 > p2
  */
-export function comparePtfLevels(p1: string | undefined, p2: string | undefined): number {
+export function comparePtfLevels(p1: string | null | undefined, p2: string | null | undefined): number {
 	if (!p1 && !p2) return 0;
 	if (!p1) return -1;
 	if (!p2) return 1;

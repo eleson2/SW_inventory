@@ -10,14 +10,14 @@
 	let { data } = $props();
 
 	// Action type color mapping
-	function getActionColor(action: string): 'default' | 'success' | 'warning' | 'danger' {
+	function getActionColor(action: string): 'default' | 'success' | 'warning' | 'destructive' {
 		switch (action.toLowerCase()) {
 			case 'create':
 				return 'success';
 			case 'update':
 				return 'default';
 			case 'delete':
-				return 'danger';
+				return 'destructive';
 			case 'rollback':
 				return 'warning';
 			default:

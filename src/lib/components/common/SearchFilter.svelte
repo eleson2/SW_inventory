@@ -25,7 +25,6 @@
 
 	let searchValue = $state('');
 	let filterValues = $state<Record<string, string>>({});
-	let searchInput: HTMLInputElement | undefined = $state();
 
 	// Initialize from URL params
 	onMount(() => {
@@ -89,7 +88,6 @@
 		<!-- Search Input -->
 		<div class="flex-1 min-w-[250px]">
 			<Input
-				bind:this={searchInput}
 				bind:value={searchValue}
 				{placeholder}
 				onkeydown={handleKeydown}
