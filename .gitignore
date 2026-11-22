@@ -25,3 +25,6 @@ test-results/
 # Data exports from npm run db:export
 /backup/
 /prisma/test.db*
+
+# Local Caddy CA root cert (demo server)
+caddy-root.crt
