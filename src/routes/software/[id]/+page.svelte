@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { versionName } from '#lib/utils/version-parser.ts';
 	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
 	import Button from '#lib/components/ui/Button.svelte';
@@ -147,7 +148,7 @@
 							<div class="flex items-center gap-3">
 								<VersionDisplay
 									version={{
-										version: version.version,
+										version: versionName(version),
 										ptfLevel: version.ptf_level ?? undefined
 									}}
 									showBadge={true}

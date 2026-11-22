@@ -21,19 +21,27 @@
 			software_id: string;
 			software_version_id: string;
 			software?: { name: string } | null;
+			software_version?: { version: string } | null;
 		}>;
 	}
 
 	interface Props {
 		items: PackageItem[];
 		bundles: PickerBundle[];
+		/** Software with versions, to know the release of the package's current rows */
+		allSoftware?: Array<{ versions: Array<{ id: string; version: string }> }>;
 	}
 
-	let { items = $bindable([]), bundles }: Props = $props();
+	let { items = $bindable([]), bundles, allSoftware = [] }: Props = $props();
+
+	const versionOf = (versionId: string) =>
+		allSoftware.flatMap((s) => s.versions).find((v) => v.id === versionId)?.version;
 
 	let selected = $state<string[]>([]);
 	let lastResult = $state<(MergeResult & { codes: string[] }) | null>(null);
 	let expanded = $state(false);
+	/** Upgrade software already in the package to the bundle's highest release */
+	let latestOnly = $state(false);
 
 	const byVendor = $derived.by(() => {
 		const groups = new Map<string, { vendor: string; bundles: PickerBundle[] }>();
@@ -51,7 +59,7 @@
 	export function applySelected() {
 		const chosen = bundles.filter((b) => selected.includes(b.id));
 		if (chosen.length === 0) return;
-		const result = mergeBundlesIntoItems(items, chosen, codeById);
+		const result = mergeBundlesIntoItems(items, chosen, { bundleCodeById: codeById, versionOf, latestOnly });
 		items = result.items;
 		lastResult = { ...result, codes: chosen.map((b) => b.code) };
 		selected = [];
@@ -106,12 +114,22 @@
 					</div>
 				{/each}
 			</div>
+			<label class="flex items-center gap-2 text-sm cursor-pointer w-fit">
+				<input type="checkbox" bind:checked={latestOnly} />
+				Latest release only
+				<span class="text-xs text-muted-foreground">
+					(software already in the package is upgraded to the bundle's highest release, e.g. Db2 12 → 13)
+				</span>
+			</label>
 			<div class="flex items-center gap-3">
 				<Button type="button" size="sm" disabled={selected.length === 0} onclick={applySelected}>
 					Add {selected.length || ''} selected bundle{selected.length === 1 ? '' : 's'} to package
 				</Button>
 				<span class="text-xs text-muted-foreground">
-					Software already in the package gets the bundle's version; bundles are applied top to bottom.
+					{latestOnly
+						? "Every product gets the bundle's highest release."
+						: "Software already in the package moves to the bundle's level of the same release; new software gets the bundle's highest release."}
+					Bundles are applied top to bottom.
 				</span>
 			</div>
 		{/if}
@@ -124,6 +142,16 @@
 				<strong>{lastResult.replaced}</strong> version(s) replaced,
 				{lastResult.unchanged} already at that level.
 			</div>
+			{#if lastResult.keptRelease.length > 0}
+				<div class="mt-2 text-amber-800">
+					Kept as is, the bundle does not contain the package's release:
+					<ul class="list-disc pl-5 space-y-0.5">
+						{#each lastResult.keptRelease as kept}
+							<li>{kept.softwareName} {kept.release ?? ''} (not in {kept.bundleCode})</li>
+						{/each}
+					</ul>
+				</div>
+			{/if}
 			{#if lastResult.conflicts.length > 0}
 				<ul class="mt-2 list-disc pl-5 space-y-0.5">
 					{#each lastResult.conflicts as conflict}

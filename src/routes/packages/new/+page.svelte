@@ -251,7 +251,7 @@
 
 		<!-- Vendor bundles: copy their items into the package -->
 		<Card class="p-6">
-			<BundlePicker bind:items={packageItems} bundles={data.bundles} />
+			<BundlePicker bind:items={packageItems} bundles={data.bundles} allSoftware={data.allSoftware} />
 		</Card>
 
 		<!-- Package Items Card -->

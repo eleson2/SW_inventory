@@ -125,9 +125,17 @@ The system follows this entity relationship:
   IBM: report name without spaces, e.g. `CICSTS`), then the software name.
 - CSV columns (`BUNDLE_CSV_COLUMNS` in `src/lib/schemas/bundle.ts`): `vendor_code, bundle_code,
   bundle_name, bundle_type, release_date, product_code, product_name, version, ptf_level, notes,
-  source_url`. Unknown products are skipped and listed; re-importing a bundle replaces its items.
-  If a level lists several releases of one product, the release the inventory has wins
-  (`releaseMatchLength`: "5.6" = "V5R6M0"), else the highest.
+  source_url`. Re-importing a bundle replaces its items. Products not in the inventory are
+  added under the vendor (their highest release becomes current). Every release the vendor
+  lists is kept (a level may hold Db2 12 and 13), written in the inventory's notation by
+  `spellLikeInventory()` ("5.6" -> "V5R6M0", "12" -> "V12R1M0", "6.3" -> "V6R3M0").
+  The vendor's own spelling is kept in `software_versions.vendor_version` ("6.1" on V6R1M0),
+  matched on import too, and shown as `V6R1M0 [6.1]` via `versionName()`. One row per release.
+- Adding a bundle to a package (`mergeBundlesIntoItems`): software already in the package moves
+  to the bundle's level of the *same release* (kept and reported if the bundle lacks it);
+  software not in the package gets the bundle's highest release.
+  The "Latest release only" checkbox (`latestOnly`) moves software already in the package to
+  the bundle's highest release instead (Db2 12 -> 13).
 - Fetchers in `scripts/fetch-bundles/` (run locally only; the app never contacts vendor sites).
   Parsers are tested against text fixtures from real PDFs in `__fixtures__/`; vendor PDF
   layouts are not an API, so a parser test failing on a new layout is the expected signal.
@@ -355,3 +363,4 @@ Both methods create the same test data:
   - `[software_id, version, ptf_level]` on software_versions
   - `[package_id, order_index]` on package_items (installation order)
   - `[lpar_id, software_id]` on lpar_software (one install per LPAR)
+  - `[bundle_id, software_version_id]` on vendor_bundle_items (several releases per software)

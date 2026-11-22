@@ -18,6 +18,8 @@ export const bundleItemSchema = z
 		software_version_id: z.string().uuid().optional().or(z.literal('')),
 		new_version: z.string().max(FIELD_LENGTHS.version.max).optional(),
 		new_ptf_level: z.string().max(FIELD_LENGTHS.ptfLevel.max).optional(),
+		/** The release as the vendor writes it ("6.1" for V6R1M0), stored with a new version */
+		new_vendor_version: z.string().max(FIELD_LENGTHS.version.max).optional(),
 		notes: z.string().max(FIELD_LENGTHS.description.max).optional(),
 		_action: z.enum(['keep', 'delete']).optional()
 	})

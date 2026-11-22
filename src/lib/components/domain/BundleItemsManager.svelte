@@ -8,6 +8,7 @@
 	pointing at the version they had in the previous level.
 -->
 <script lang="ts">
+	import { versionName } from '#lib/utils/version-parser.ts';
 	import type { BundleItem } from '#lib/schemas/bundle.ts';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Input from '#lib/components/ui/Input.svelte';
@@ -60,7 +61,7 @@
 	const versionsOf = (softwareId: string) => allSoftware.find((s) => s.id === softwareId)?.versions ?? [];
 	const isNew = (item: BundleItem) => item.new_version !== undefined;
 	const versionLabel = (v: { version: string; ptf_level: string | null; is_current: boolean }) =>
-		`${v.version}${v.ptf_level ? ` (${v.ptf_level})` : ''}${v.is_current ? ' – current' : ''}`;
+		`${versionName(v)}${v.ptf_level ? ` (${v.ptf_level})` : ''}${v.is_current ? ' – current' : ''}`;
 
 	/** The version string currently chosen for a row, existing or new */
 	function currentVersion(item: BundleItem): string {
@@ -235,10 +236,7 @@
 									>
 										<option value="">Select software…</option>
 										{#each vendorSoftware as software}
-											<option
-												value={software.id}
-												disabled={software.id !== item.software_id && visible.some((i) => i.software_id === software.id)}
-											>
+											<option value={software.id}>
 												{software.name}{software.product_code ? ` [${software.product_code}]` : ''}
 											</option>
 										{/each}

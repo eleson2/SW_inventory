@@ -9,6 +9,7 @@
 	- Visual state tracking (new/modified/deleted)
 -->
 <script lang="ts">
+	import { versionName } from '#lib/utils/version-parser.ts';
 	import type { PackageItem } from '#lib/schemas/package.ts';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Badge from '#lib/components/ui/Badge.svelte';
@@ -99,8 +100,8 @@
 		const version = versions.find(v => v.id === versionId);
 		if (!version) return 'Unknown';
 		return version.ptf_level
-			? `${version.version} (${version.ptf_level})`
-			: version.version;
+			? `${versionName(version)} (${version.ptf_level})`
+			: versionName(version);
 	}
 
 	// Filter out deleted items for display
@@ -214,7 +215,7 @@
 											<option value="">Select version...</option>
 											{#each getVersionsForSoftware(item.software_id) as version}
 												<option value={version.id}>
-													{version.version}
+													{versionName(version)}
 													{#if version.ptf_level}
 														({version.ptf_level})
 													{/if}

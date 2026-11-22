@@ -171,6 +171,8 @@ model software_versions {
   id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   software_id         String                @db.Uuid
   version             String                @db.VarChar(50)
+  /// The release as the vendor writes it in its bundles ("6.1" for V6R1M0); optional
+  vendor_version      String?               @db.VarChar(50)
   ptf_level           String?               @db.VarChar(50)
   release_date        DateTime
   end_of_support      DateTime?
@@ -248,7 +250,7 @@ model vendor_bundle_items {
   software            software          @relation(fields: [software_id], references: [id], onDelete: Restrict)
   software_version    software_versions @relation(fields: [software_version_id], references: [id], onDelete: Restrict)
 
-  @@unique([bundle_id, software_id])
+  @@unique([bundle_id, software_version_id])
   @@index([bundle_id])
   @@index([software_id])
   @@index([software_version_id])

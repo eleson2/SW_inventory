@@ -59,6 +59,7 @@
 	function addVersion() {
 		const newVersion: VersionRow = {
 			version: '',
+			vendor_version: '',
 			ptf_level: '',
 			release_date: new Date(),
 			end_of_support: null,
@@ -249,7 +250,7 @@
 						{#if isEditing}
 							<!-- Edit Mode -->
 							<div class="space-y-4">
-								<div class="grid grid-cols-2 gap-4">
+								<div class="grid grid-cols-3 gap-4">
 									<div class="space-y-2">
 										<Label for="version-{index}">
 											Version <span class="text-destructive">*</span>
@@ -260,6 +261,17 @@
 											bind:value={editForm.version}
 											placeholder="e.g., V5R6M0 or 2.4.0"
 											required
+											class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+										/>
+									</div>
+
+									<div class="space-y-2">
+										<Label for="vendor-version-{index}">Vendor notation</Label>
+										<input
+											id="vendor-version-{index}"
+											type="text"
+											bind:value={editForm.vendor_version}
+											placeholder="As the vendor writes it, e.g. 6.1"
 											class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 										/>
 									</div>
@@ -346,6 +358,9 @@
 									<div class="flex items-center gap-2 mb-2 flex-wrap">
 										<h4 class="font-semibold text-lg">
 											{version.version}
+											{#if version.vendor_version && version.vendor_version !== version.version}
+												<span class="text-sm font-normal text-muted-foreground">[{version.vendor_version}]</span>
+											{/if}
 											{#if version.ptf_level}
 												<span class="text-sm text-muted-foreground">({version.ptf_level})</span>
 											{/if}

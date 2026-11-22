@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { versionName } from '#lib/utils/version-parser.ts';
 	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
 	import Button from '#lib/components/ui/Button.svelte';
@@ -167,7 +168,7 @@
 										<span>•</span>
 										<VersionDisplay
 											version={{
-												version: item.software_version.version,
+												version: versionName(item.software_version),
 												ptfLevel: item.software_version.ptf_level ?? undefined
 											}}
 											showBadge={true}

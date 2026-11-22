@@ -13,6 +13,7 @@ export const softwareVersionSchema = z.object({
 export const softwareVersionDetailSchema = z.object({
 	id: z.string().uuid().optional(), // Optional for new versions
 	version: z.string().min(1, 'Version is required').max(50),
+	vendor_version: z.string().max(50).optional().or(z.literal('')),
 	ptf_level: z.string().max(50).optional().or(z.literal('')),
 	release_date: z.string().or(z.date()).transform((val) => {
 		if (typeof val === 'string') {

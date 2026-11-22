@@ -6,7 +6,14 @@
 	let importingType: string | null = null;
 	let results: Record<
 		string,
-		{ success: boolean; message: string; counts?: any; skippedProducts?: string[]; errors?: string[] }
+		{
+			success: boolean;
+			message: string;
+			counts?: any;
+			softwareCreated?: string[];
+			skippedProducts?: string[];
+			errors?: string[];
+		}
 	> = {};
 
 	function handleFileSelect(event: Event) {
@@ -301,10 +308,20 @@
 									{#each results.bundles.errors as err}<li>{err}</li>{/each}
 								</ul>
 							{/if}
+							{#if results.bundles.softwareCreated?.length}
+								<details class="text-sm text-muted-foreground">
+									<summary class="cursor-pointer">
+										{results.bundles.softwareCreated.length} new software product(s) added to the inventory
+									</summary>
+									<ul class="mt-1 max-h-48 overflow-y-auto pl-6 list-disc">
+										{#each results.bundles.softwareCreated as product}<li>{product}</li>{/each}
+									</ul>
+								</details>
+							{/if}
 							{#if results.bundles.skippedProducts?.length}
 								<details class="text-sm text-muted-foreground">
 									<summary class="cursor-pointer">
-										{results.bundles.skippedProducts.length} product(s) not in the inventory, skipped
+										{results.bundles.skippedProducts.length} row(s) not imported
 									</summary>
 									<ul class="mt-1 max-h-48 overflow-y-auto pl-6 list-disc">
 										{#each results.bundles.skippedProducts as product}<li>{product}</li>{/each}

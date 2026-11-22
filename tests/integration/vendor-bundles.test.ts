@@ -98,7 +98,7 @@ describe('Vendor bundles', () => {
 		await expect(saveBundle({ ...base, items: [] })).rejects.toThrow(/already has a bundle/);
 	});
 
-	it('imports CSV rows: matches by product code or name, skips unknown products, picks the known release', async () => {
+	it('imports CSV rows: matches by product code or name, adds unknown products, keeps every release', async () => {
 		await testDb.software.update({ where: { id: data.software.cics.id }, data: { product_code: 'CICSTS' } });
 		const db2 = await testDb.software.create({ data: { name: 'Db2', vendor_id: data.vendors.ibm.id } });
 		await testDb.software_versions.create({
@@ -116,20 +116,36 @@ describe('Vendor bundles', () => {
 
 		expect(result.counts.created).toBe(1);
 		expect(result.errors).toEqual([expect.stringContaining('unknown vendor code "NOPE"')]);
-		expect(result.skippedProducts).toEqual(
-			expect.arrayContaining([expect.stringContaining('IMS'), expect.stringContaining('Db2 13')])
-		);
+		expect(result.skippedProducts).toEqual([]);
+		// IMS was not in the inventory: added under the vendor, its version becomes current
+		expect(result.softwareCreated).toEqual(['RSU2510: IMS [IMS]']);
+		const ims = await testDb.software.findFirstOrThrow({
+			where: { vendor_id: data.vendors.ibm.id, name: 'IMS' },
+			include: { current_version: true }
+		});
+		expect(ims).toMatchObject({ product_code: 'IMS', active: true });
+		expect(ims.current_version).toMatchObject({ version: '15.5', ptf_level: 'RSU2510', is_current: true });
 
 		const bundle = await testDb.vendor_bundles.findFirstOrThrow({
 			where: { code: 'RSU2510' },
 			include: { items: { include: { software: true, software_version: true } } }
 		});
-		const versionOf = (name: string) => bundle.items.find((i) => i.software.name === name)?.software_version;
-		// CICS: "5.6" is the inventory's V5R6M0, so that release wins over the higher 6.1
-		expect(versionOf('CICS Transaction Server')).toMatchObject({ version: 'V5R6M0', ptf_level: 'RSU2510' });
-		expect(result.skippedProducts).toEqual(expect.arrayContaining([expect.stringContaining('CICS Transaction Server 6.1')]));
-		// Db2: "12" matches the inventory's V12R1M0 and keeps its spelling
-		expect(versionOf('Db2')).toMatchObject({ version: 'V12R1M0', ptf_level: 'RSU2510', is_current: false });
+		// Every listed release is in the bundle, in the inventory's notation where it has one
+		expect(bundle.items).toHaveLength(5);
+		const releasesOf = (name: string) =>
+			bundle.items
+				.filter((i) => i.software.name === name)
+				.map((i) => `${i.software_version.version}/${i.software_version.ptf_level}`)
+				.sort();
+		// CICS: "5.6" is the inventory's V5R6M0; "6.1" follows its VRM notation
+		expect(releasesOf('CICS Transaction Server')).toEqual(['V5R6M0/RSU2510', 'V6R1M0/RSU2510']);
+		// Db2: "12" is the inventory's V12R1M0; "13" has no known spelling and is kept
+		expect(releasesOf('Db2')).toEqual(['13/RSU2510', 'V12R1M0/RSU2510']);
+		// The vendor's spelling is kept alongside the inventory's
+		const cics61 = bundle.items.find((i) => i.software_version.version === 'V6R1M0')!.software_version;
+		expect(cics61.vendor_version).toBe('6.1');
+		const db212 = bundle.items.find((i) => i.software_version.version === 'V12R1M0')!.software_version;
+		expect(db212.vendor_version).toBe('12'); // filled in on the existing version
 
 		// Re-import replaces the items of the existing bundle
 		const second = await importBundleRows([csvRow({ product_code: 'CICSTS', version: '6.1' })]);
@@ -216,7 +232,9 @@ describe('Vendor bundles', () => {
 			include: { items: { include: { software: { select: { name: true } } } } },
 			orderBy: { code: 'desc' }
 		});
-		const merged = mergeBundlesIntoItems([], bundles, (id) => bundles.find((b) => b.id === id)?.code);
+		const merged = mergeBundlesIntoItems([], bundles, {
+			bundleCodeById: (bundleId) => bundles.find((b) => b.id === bundleId)?.code
+		});
 		expect(merged.added).toBe(2);
 
 		const pkg = await testDb.packages.create({

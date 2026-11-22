@@ -46,6 +46,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			versions: software.versions.map(v => ({
 				id: v.id,
 				version: v.version,
+				vendor_version: v.vendor_version || '',
 				ptf_level: v.ptf_level || '',
 				release_date: v.release_date,
 				end_of_support: v.end_of_support,
@@ -113,6 +114,7 @@ export const actions: Actions = {
 							where: { id: version.id },
 							data: {
 								version: version.version,
+								vendor_version: version.vendor_version?.trim() || null,
 								ptf_level: version.ptf_level || null,
 								release_date: version.release_date,
 								end_of_support: version.end_of_support || null,
@@ -132,6 +134,7 @@ export const actions: Actions = {
 							data: {
 								software_id: event.params.id,
 								version: version.version,
+								vendor_version: version.vendor_version?.trim() || null,
 								ptf_level: version.ptf_level || null,
 								release_date: version.release_date,
 								end_of_support: version.end_of_support || null,

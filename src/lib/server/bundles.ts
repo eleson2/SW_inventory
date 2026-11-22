@@ -14,45 +14,51 @@ import {
 	type BundleItem,
 	type BundleType
 } from '#lib/schemas/bundle.ts';
-import { compareVersions, releaseMatchLength } from '#lib/utils/version-parser.ts';
+import { compareVersions, equivalentVersion, spellLikeInventory } from '#lib/utils/version-parser.ts';
 
 type Tx = Prisma.TransactionClient;
 
 export class BundleValidationError extends Error {}
 
-/** Same version in another notation: "6.1" = "V6R1M0" = "6.1.0"; non-numeric versions must match exactly. */
-function sameVersion(a: string, b: string): boolean {
-	if (a.trim().toUpperCase() === b.trim().toUpperCase()) return true;
-	return /\d/.test(a) && /\d/.test(b) && compareVersions(a, b) === 0;
-}
-
 const normalizePtf = (ptf: string | null | undefined) => ptf?.trim().toUpperCase() || null;
 
 /**
  * Find a software version by version + PTF level, creating it if it does not exist.
- * A version/PTF level is stored once per software: "6.1"/"rsu2510" finds an existing
- * "V6R1M0"/"RSU2510". Created versions are not marked current; that stays a deliberate
- * choice on the software page.
+ * A version/PTF level is stored once per software, under both notations: "6.1"/"rsu2510"
+ * finds an existing "V6R1M0"/"RSU2510" (via version or vendor_version). A missing
+ * vendor_version is filled in on the way. Created versions are not marked current; that
+ * stays a deliberate choice on the software page.
  */
 export async function resolveVersion(
 	tx: Tx,
 	softwareId: string,
 	version: string,
 	ptfLevel: string | null | undefined,
-	releaseDate: Date
+	releaseDate: Date,
+	vendorVersion?: string | null
 ): Promise<{ id: string; created: boolean }> {
 	const ptf = normalizePtf(ptfLevel);
+	const vendor = vendorVersion?.trim() || null;
 	const versions = await tx.software_versions.findMany({
 		where: { software_id: softwareId },
-		select: { id: true, version: true, ptf_level: true }
+		select: { id: true, version: true, vendor_version: true, ptf_level: true }
 	});
-	const existing = versions.find((v) => normalizePtf(v.ptf_level) === ptf && sameVersion(v.version, version));
-	if (existing) return { id: existing.id, created: false };
+	const sameRelease = (v: (typeof versions)[number]) =>
+		equivalentVersion(v.version, version) ||
+		(!!vendor && !!v.vendor_version && equivalentVersion(v.vendor_version, vendor));
+	const existing = versions.find((v) => normalizePtf(v.ptf_level) === ptf && sameRelease(v));
+	if (existing) {
+		if (vendor && !existing.vendor_version) {
+			await tx.software_versions.update({ where: { id: existing.id }, data: { vendor_version: vendor } });
+		}
+		return { id: existing.id, created: false };
+	}
 
 	const created = await tx.software_versions.create({
 		data: {
 			software_id: softwareId,
 			version: version.trim(),
+			vendor_version: vendor,
 			ptf_level: ptf,
 			release_date: releaseDate,
 			is_current: false
@@ -88,9 +94,12 @@ export interface SaveBundleResult {
 export async function saveBundle(data: BundleData, existingId?: string): Promise<SaveBundleResult> {
 	const items = data.items.filter((item) => item._action !== 'delete');
 
-	const softwareIds = items.map((item) => item.software_id);
-	if (new Set(softwareIds).size !== softwareIds.length) {
-		throw new BundleValidationError('Each software product can only appear once in a bundle');
+	// A bundle lists every release the vendor ships, so a software may appear several
+	// times, but each version/PTF level only once (checked again after resolving new versions)
+	const softwareIds = [...new Set(items.map((item) => item.software_id))];
+	const chosenIds = items.map((item) => item.software_version_id).filter((id): id is string => !!id);
+	if (new Set(chosenIds).size !== chosenIds.length) {
+		throw new BundleValidationError('The same version/PTF level is listed twice in this bundle');
 	}
 
 	const duplicate = await db.vendor_bundles.findFirst({
@@ -143,6 +152,7 @@ export async function saveBundle(data: BundleData, existingId?: string): Promise
 		}
 
 		let versionsCreated = 0;
+		const used = new Set<string>();
 		for (const item of items) {
 			let versionId = item.software_version_id || '';
 			if (!versionId) {
@@ -151,11 +161,18 @@ export async function saveBundle(data: BundleData, existingId?: string): Promise
 					item.software_id,
 					item.new_version ?? '',
 					item.new_ptf_level,
-					data.release_date
+					data.release_date,
+					item.new_vendor_version
 				);
 				versionId = resolved.id;
 				if (resolved.created) versionsCreated++;
 			}
+			if (used.has(versionId)) {
+				throw new BundleValidationError(
+					`Version ${item.new_version ?? ''} ${item.new_ptf_level ?? ''} is listed twice for the same software`.replace(/\s+/g, ' ')
+				);
+			}
+			used.add(versionId);
 			await tx.vendor_bundle_items.create({
 				data: {
 					bundle_id: bundle.id,
@@ -210,6 +227,8 @@ export interface BundleImportResult {
 	versionsCreated: number;
 	/** Products not in the file, kept at the version they had in the previous level */
 	carriedForward: number;
+	/** Products in the file that were not in the inventory and have been added */
+	softwareCreated: string[];
 	skippedProducts: string[];
 	errors: string[];
 }
@@ -262,6 +281,7 @@ export async function importBundleRows(rows: BundleCsvRow[]): Promise<BundleImpo
 		counts: { created: 0, updated: 0, skipped: 0 },
 		versionsCreated: 0,
 		carriedForward: 0,
+		softwareCreated: [],
 		skippedProducts: [],
 		errors: []
 	};
@@ -281,14 +301,44 @@ export async function importBundleRows(rows: BundleCsvRow[]): Promise<BundleImpo
 			continue;
 		}
 
-		const vendorSoftware = await db.software.findMany({
-			where: { vendor_id: vendor.id, active: true },
-			select: { id: true, name: true, product_code: true, versions: { select: { version: true } } }
+		const allVendorSoftware = await db.software.findMany({
+			where: { vendor_id: vendor.id },
+			select: {
+				id: true,
+				name: true,
+				product_code: true,
+				active: true,
+				versions: { select: { version: true, vendor_version: true } }
+			}
 		});
+		const vendorSoftware = allVendorSoftware.filter((s) => s.active);
 		const byCode = new Map(
 			vendorSoftware.filter((s) => s.product_code).map((s) => [s.product_code!.toUpperCase(), s])
 		);
 		const byName = new Map(vendorSoftware.map((s) => [s.name.toLowerCase(), s]));
+		const inactiveNames = new Set(allVendorSoftware.filter((s) => !s.active).map((s) => s.name.toLowerCase()));
+		const createdHere: Array<{ id: string; name: string }> = [];
+
+		/** A product the vendor ships in this level but the inventory does not have yet: add it. */
+		async function addSoftware(row: BundleCsvRow) {
+			const name = (row.product_name || row.product_code).trim().slice(0, 100);
+			const created = await db.software.create({
+				data: {
+					vendor_id: vendor!.id,
+					name,
+					product_code: row.product_code?.trim().toUpperCase() || null,
+					description: `Added by import of ${bundleCode}`
+				},
+				select: { id: true, name: true, product_code: true, active: true }
+			});
+			const software = { ...created, versions: [] as Array<{ version: string; vendor_version: string | null }> };
+			byName.set(name.toLowerCase(), software);
+			if (software.product_code) byCode.set(software.product_code, software);
+			createdHere.push({ id: software.id, name });
+			result.softwareCreated.push(`${bundleCode}: ${name}${software.product_code ? ` [${software.product_code}]` : ''}`);
+			await createAuditLog('software', software.id, 'create', { after: created, source: `bundle import ${bundleCode}` });
+			return software;
+		}
 
 		const first = groupRows[0];
 		const releaseDate = parseDate(first.release_date) ?? new Date();
@@ -296,12 +346,21 @@ export async function importBundleRows(rows: BundleCsvRow[]): Promise<BundleImpo
 		// Match rows to software; a level may list several releases of one product
 		const candidates = new Map<string, { software: (typeof vendorSoftware)[number]; rows: BundleCsvRow[] }>();
 		for (const row of groupRows) {
-			const software =
-				(row.product_code && byCode.get(row.product_code.toUpperCase())) ||
-				(row.product_name && byName.get(row.product_name.toLowerCase()));
 			const label = row.product_name || row.product_code || '(unnamed)';
+			let software =
+				(row.product_code && byCode.get(row.product_code.toUpperCase())) ||
+				(row.product_name && byName.get(row.product_name.toLowerCase())) ||
+				undefined;
+			if (!software && (row.product_name || row.product_code) && row.version) {
+				if (inactiveNames.has(label.toLowerCase())) {
+					result.skippedProducts.push(`${bundleCode}: ${label} (inactive in the inventory; reactivate it to include it)`);
+					result.counts.skipped++;
+					continue;
+				}
+				software = await addSoftware(row);
+			}
 			if (!software) {
-				result.skippedProducts.push(`${bundleCode}: ${label}${row.product_code ? ` [${row.product_code}]` : ''}`);
+				result.skippedProducts.push(`${bundleCode}: ${label} (no product name or code)`);
 				result.counts.skipped++;
 				continue;
 			}
@@ -315,37 +374,36 @@ export async function importBundleRows(rows: BundleCsvRow[]): Promise<BundleImpo
 			candidates.set(software.id, entry);
 		}
 
+		// Every release the vendor lists becomes an item, written in the inventory's notation
+		// ("6.1" -> "V6R1M0", "12" -> "V12R1M0") so a release is not stored under two spellings
 		const items: BundleItem[] = [];
 		for (const { software, rows: softwareRows } of candidates.values()) {
-			// "6.1" / "12" and "V6R1M0" / "V12R1M0" are the same release: reuse the inventory's spelling
-			const bestKnown = (version: string) => {
-				let best: { version: string; score: number } | undefined;
-				for (const v of software.versions) {
-					const score = releaseMatchLength(v.version, version);
-					if (score > 0 && (!best || score > best.score)) best = { version: v.version, score };
-				}
-				return best;
-			};
-			// Prefer the listed release that best matches one the inventory has, else the highest listed
-			const scored = softwareRows.map((row) => ({ row, known: bestKnown(row.version) }));
-			const matched = scored
-				.filter((s) => s.known)
-				.sort((a, b) => b.known!.score - a.known!.score || compareVersions(b.row.version, a.row.version))[0];
-			const chosen = matched?.row ?? [...softwareRows].sort((a, b) => compareVersions(b.version, a.version))[0];
-			const knownSpelling = (version: string) => bestKnown(version)?.version;
-			for (const other of softwareRows) {
-				if (other === chosen) continue;
-				result.skippedProducts.push(
-					`${bundleCode}: ${software.name} ${other.version} (other release; ${chosen.version} used)`
+			const known = software.versions.map((v) => v.version);
+			const seen = new Map<string, string>();
+			for (const row of softwareRows) {
+				// Stored under the inventory's notation, with the vendor's spelling alongside
+				const byVendorSpelling = software.versions.find(
+					(v) => v.vendor_version?.trim().toUpperCase() === row.version.trim().toUpperCase()
 				);
-				result.counts.skipped++;
+				const version = byVendorSpelling?.version ?? spellLikeInventory(row.version, known);
+				const ptf = row.ptf_level || bundleCode;
+				const key = `${version.toUpperCase()}|${ptf.toUpperCase()}`;
+				if (seen.has(key)) {
+					result.skippedProducts.push(
+						`${bundleCode}: ${software.name} ${row.version} (same release as ${seen.get(key)})`
+					);
+					result.counts.skipped++;
+					continue;
+				}
+				seen.set(key, row.version);
+				items.push({
+					software_id: software.id,
+					new_version: version,
+					new_vendor_version: row.version.trim(),
+					new_ptf_level: ptf,
+					notes: row.notes || undefined
+				});
 			}
-			items.push({
-				software_id: software.id,
-				new_version: knownSpelling(chosen.version) ?? chosen.version,
-				new_ptf_level: chosen.ptf_level || bundleCode,
-				notes: chosen.notes || undefined
-			});
 		}
 
 		const existing = await db.vendor_bundles.findFirst({
@@ -400,6 +458,19 @@ export async function importBundleRows(rows: BundleCsvRow[]): Promise<BundleImpo
 				existing?.id
 			);
 			result.versionsCreated += saved.versionsCreated;
+			// Newly added products: their highest release in this level becomes the current version
+			for (const created of createdHere) {
+				const releases = await db.vendor_bundle_items.findMany({
+					where: { bundle_id: saved.id, software_id: created.id },
+					select: { software_version: { select: { id: true, version: true } } }
+				});
+				const top = releases
+					.map((r) => r.software_version)
+					.sort((a, b) => compareVersions(b.version, a.version))[0];
+				if (!top) continue;
+				await db.software_versions.update({ where: { id: top.id }, data: { is_current: true } });
+				await db.software.update({ where: { id: created.id }, data: { current_version_id: top.id } });
+			}
 			if (existing) result.counts.updated++;
 			else result.counts.created++;
 		} catch (error) {
@@ -410,7 +481,7 @@ export async function importBundleRows(rows: BundleCsvRow[]): Promise<BundleImpo
 	const { created, updated, skipped } = result.counts;
 	result.success = result.errors.length === 0 || created + updated > 0;
 	result.message =
-		`Bundles: ${created} created, ${updated} updated. ` +
+		`Bundles: ${created} created, ${updated} updated. ${result.softwareCreated.length} new software product(s), ` +
 		`${result.versionsCreated} new version(s), ${result.carriedForward} unchanged product(s) carried over ` +
 		`from the previous level. ${skipped} row(s) skipped.`;
 	return result;
@@ -426,7 +497,7 @@ export function loadSoftwareForBundles() {
 			vendor_id: true,
 			product_code: true,
 			versions: {
-				select: { id: true, version: true, ptf_level: true, is_current: true },
+				select: { id: true, version: true, vendor_version: true, ptf_level: true, is_current: true },
 				orderBy: [{ release_date: 'desc' }, { version: 'desc' }]
 			}
 		},

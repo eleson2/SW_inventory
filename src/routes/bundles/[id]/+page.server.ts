@@ -10,9 +10,9 @@ export const load: PageServerLoad = async ({ params }) => {
 			items: {
 				include: {
 					software: { select: { id: true, name: true, product_code: true } },
-					software_version: { select: { id: true, version: true, ptf_level: true, is_current: true } }
+					software_version: { select: { id: true, version: true, vendor_version: true, ptf_level: true, is_current: true } }
 				},
-				orderBy: { software: { name: 'asc' } }
+				orderBy: [{ software: { name: 'asc' } }, { software_version: { version: 'desc' } }]
 			}
 		}
 	});

@@ -155,3 +155,60 @@ export function releaseMatchLength(a: string, b: string): number {
 	for (let i = 0; i < n; i++) if (pa[i] !== pb[i]) return 0;
 	return n;
 }
+
+/**
+ * Same version in another notation: "6.1" = "V6R1M0" = "6.1.0".
+ * Versions without digits must match exactly (case-insensitive).
+ */
+export function equivalentVersion(a: string, b: string): boolean {
+	if (a.trim().toUpperCase() === b.trim().toUpperCase()) return true;
+	return /\d/.test(a) && /\d/.test(b) && compareVersions(a, b) === 0;
+}
+
+const versionParts = (v: string) =>
+	v
+		.split(/[.VvRrMm]/)
+		.filter((p) => p)
+		.map((p) => parseInt(p) || 0);
+
+/**
+ * Write a vendor's release in the notation the inventory already uses for that product,
+ * so one release is not stored under two spellings:
+ * - same release in another notation: "6.1" -> "V6R1M0"
+ * - a shorter release that is a prefix of known ones: "12" -> "V12R1M0", "15" -> "V15R1M0"
+ *   (the lowest match: IBM's "IMS 15" is 15.1)
+ * - otherwise, dotted releases follow a mostly-VRM inventory: "6.3" -> "V6R3M0", "3.2" -> "V3R2"
+ * The vendor's own spelling is kept separately in software_versions.vendor_version.
+ */
+export function spellLikeInventory(version: string, known: string[]): string {
+	const trimmed = version.trim();
+	const exact = known.find((k) => equivalentVersion(k, trimmed));
+	if (exact) return exact;
+
+	const parts = versionParts(trimmed);
+	if (/\d/.test(trimmed)) {
+		const prefixOf = known
+			.filter((k) => {
+				const kp = versionParts(k);
+				return kp.length > parts.length && parts.every((p, i) => p === kp[i]);
+			})
+			.sort(compareVersions);
+		if (prefixOf.length > 0) return prefixOf[0];
+	}
+
+	// Follow the notation most of the product's versions use, so one odd entry does not decide
+	const vrm = known.filter((k) => /^V\d+R\d+(M\d+)?$/i.test(k));
+	if (/^\d+(\.\d+)+$/.test(trimmed) && vrm.length * 2 > known.length) {
+		const [v, r, m = 0] = parts;
+		return vrm.every((k) => /M\d+$/i.test(k)) ? `V${v}R${r}M${m}` : `V${v}R${r}`;
+	}
+	return trimmed;
+}
+
+/**
+ * Version for display with the vendor's notation when it differs: "V6R1M0 [6.1]".
+ */
+export function versionName(v: { version: string; vendor_version?: string | null }): string {
+	const vendor = v.vendor_version?.trim();
+	return vendor && vendor.toUpperCase() !== v.version.trim().toUpperCase() ? `${v.version} [${vendor}]` : v.version;
+}

@@ -126,7 +126,11 @@
 
 		<!-- Vendor bundles: copy their items into the package -->
 		<Card class="p-6">
-			<BundlePicker bind:items={packageItems} bundles={data.bundles.filter((b) => b.active)} />
+			<BundlePicker
+				bind:items={packageItems}
+				bundles={data.bundles.filter((b) => b.active)}
+				allSoftware={data.allSoftware}
+			/>
 		</Card>
 
 		<!-- Detail Entity: Package Items -->

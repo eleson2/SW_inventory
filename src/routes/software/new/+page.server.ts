@@ -115,6 +115,7 @@ export const actions: Actions = {
 							data: {
 								software_id: software.id,
 								version: versionData.version,
+								vendor_version: versionData.vendor_version?.trim() || null,
 								ptf_level: versionData.ptf_level || null,
 								release_date: new Date(versionData.release_date),
 								end_of_support: versionData.end_of_support ? new Date(versionData.end_of_support) : null,

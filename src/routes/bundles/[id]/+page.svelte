@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { versionName } from '#lib/utils/version-parser.ts';
 	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
 	import Button from '#lib/components/ui/Button.svelte';
@@ -112,7 +113,7 @@
 								</td>
 								<td class="py-2 pr-4 font-mono text-xs">{item.software.product_code ?? '-'}</td>
 								<td class="py-2 pr-4">
-									{item.software_version.version}
+									{versionName(item.software_version)}
 									{#if item.software_version.is_current}
 										<Badge variant="outline" class="ml-1 text-xs">current</Badge>
 									{/if}
