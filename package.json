@@ -21,6 +21,7 @@
     "db:export": "tsx scripts/db-transfer.ts export",
     "db:import": "tsx scripts/db-transfer.ts import",
     "bundles:fetch": "tsx scripts/fetch-bundles/index.ts",
+    "bundles:import": "tsx scripts/bundle-import.ts",
     "lint": "eslint . --ext .ts,.js,.svelte",
     "test": "vitest",
     "test:unit": "vitest run src scripts",

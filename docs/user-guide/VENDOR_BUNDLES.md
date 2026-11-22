@@ -93,6 +93,26 @@ carried products and skipped rows.
 Newly created versions are never made current for existing software. Choosing the current
 version stays a deliberate step on the software page.
 
+### Or import from the command line
+
+The same import runs without the browser, also on the server:
+
+```bash
+npm run bundles:import -- bundles/RSU2601.csv --check   # dry run: report only, nothing saved (SQLite)
+npm run bundles:import -- bundles/RSU2601.csv           # import
+npm run bundles:import -- --codes BROADCOM              # software and their product codes
+npm run bundles:import -- --set-code BROADCOM "CA 7" AL2121
+```
+
+The report lists new products, new versions per product and carried-forward items. Lines
+starting with `!` need a decision:
+
+- a new product looks like an existing one (e.g. "Enterprise COBOL" vs "IBM COBOL for z/OS"
+  without a product code): set the code on the existing software and check again;
+- a later level was already imported: re-import that later level afterwards so its
+  carry-forward includes this one;
+- a version was stored in another notation than the product's other versions.
+
 ### 3. Create or clone by hand
 
 **Bundles** → **Add Bundle**:

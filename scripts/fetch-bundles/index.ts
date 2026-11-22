@@ -84,7 +84,7 @@ async function main() {
 	const file = join(outDir, `${code}.csv`);
 	writeFileSync(file, toCsv(result.rows));
 	console.log(`Wrote ${result.rows.length} row(s) to ${file}`);
-	console.log('Import it on the /import page under "Vendor Bundles".');
+	console.log(`Next: npm run bundles:import -- ${file} --check   (then without --check)`);
 }
 
 main().catch((error) => {

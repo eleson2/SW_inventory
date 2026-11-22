@@ -3,7 +3,6 @@
  * Implements singleton pattern for development to prevent too many connections
  */
 import { PrismaClient } from '@prisma/client';
-import { dev } from '$app/env';
 import { configureDatabase } from './db-dialect.ts';
 
 // PrismaClient is attached to the `globalThis` object in development to prevent
@@ -15,7 +14,9 @@ export const db = globalForPrisma.prisma || new PrismaClient({
 	log: ['error']
 });
 
-if (dev) globalForPrisma.prisma = db;
+// Cache across hot reloads in development. process.env instead of $app/env keeps this
+// module usable from CLI scripts (scripts/bundle-import.ts).
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db;
 if (isNewClient) {
 	configureDatabase(db).catch((error) => console.error('Database setup failed:', error));
 }

@@ -271,8 +271,8 @@ function guessBundleType(code: string): BundleType {
 /**
  * Import bundle rows. Rows are grouped per (vendor, bundle code); a bundle is created
  * if missing, otherwise its items are replaced. Products are matched on
- * software.product_code, then on name within the vendor. Unmatched products are
- * skipped and reported: vendor bundles cover many products the provider does not manage.
+ * software.product_code, then on name within the vendor. Products not in the inventory
+ * are added; products missing from the file are carried forward from the previous level.
  */
 export async function importBundleRows(rows: BundleCsvRow[]): Promise<BundleImportResult> {
 	const result: BundleImportResult = {
