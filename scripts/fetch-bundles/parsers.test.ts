@@ -46,6 +46,23 @@ describe('IBM RSU report', () => {
 		expect(products.some((p) => p.name.startsWith('Java 8'))).toBe(false);
 	});
 
+	it('reads WebSphere fix-pack bullets as WAS releases (RSU2609 layout)', () => {
+		const page = [
+			'What Service was Installed',
+			'WebSphere Application Server for',
+			'z/OS V9',
+			'- Fix pack 9.0.5.28 w/ ifixes',
+			'9.0.5.15-WS-WASProd-IFPH71757',
+			'- Fixpack 8.5.5.29',
+			'- CICS TS 6.2'
+		].join('\n');
+		expect(parseRsuProducts([page])).toEqual([
+			{ name: 'WebSphere Application Server for z/OS', version: '9.0.5.28', code: 'WEBSPHEREAPPLICATIONSERVERFORZOS' },
+			{ name: 'WebSphere Application Server for z/OS', version: '8.5.5.29', code: 'WEBSPHEREAPPLICATIONSERVERFORZOS' },
+			{ name: 'CICS TS', version: '6.2', code: 'CICSTS' }
+		]);
+	});
+
 	it('finds the quarterly report a monthly addendum refers to', () => {
 		const pages = pagesOf('rsu2510.txt');
 		expect(parseRsuProducts(pages)).toEqual([]);

@@ -6,6 +6,7 @@
  *   npm run bundles:import -- bundles/RSU2601.csv [more.csv ...]           # import
  *   npm run bundles:import -- --codes BROADCOM                             # software + product codes
  *   npm run bundles:import -- --set-code BROADCOM "CA 7" AL2121            # set a product code
+ *   npm run bundles:import -- --rename IBM "WebSphere Application Server" "WebSphere Application Server for z/OS"
  *
  * Output is meant to be read as is: lines starting with "!" need a decision.
  * Exit code: 0 ok, 1 errors, 2 usage.
@@ -21,7 +22,8 @@ const usage = () => {
 	console.error(
 		'Usage: npm run bundles:import -- <file.csv>... [--check] [--list]\n' +
 			'       npm run bundles:import -- --codes <VENDOR_CODE>\n' +
-			'       npm run bundles:import -- --set-code <VENDOR_CODE> "<software name>" <PRODUCT_CODE>'
+			'       npm run bundles:import -- --set-code <VENDOR_CODE> "<software name>" <PRODUCT_CODE>\n' +
+			'       npm run bundles:import -- --rename <VENDOR_CODE> "<software name>" "<new name>"'
 	);
 	process.exit(2);
 };
@@ -60,6 +62,10 @@ function useDatabaseCopy(): string {
 	}
 	const copy = join(mkdtempSync(join(tmpdir(), 'bundle-check-')), 'check.db');
 	copyFileSync(source, copy);
+	// WAL mode (db-dialect.ts): recent writes live in -wal until checkpointed
+	for (const suffix of ['-wal', '-shm']) {
+		if (existsSync(source + suffix)) copyFileSync(source + suffix, copy + suffix);
+	}
 	process.env.DATABASE_URL = `file:${copy.replace(/\\/g, '/')}${query ? `?${query}` : ''}`;
 	return copy;
 }
@@ -116,6 +122,25 @@ async function main() {
 			}
 			await db.software.update({ where: { id: matches[0].id }, data: { product_code: code.toUpperCase() } });
 			console.log(`${name}: product code ${code.toUpperCase()}`);
+			return 0;
+		}
+
+		if (flag('--rename')) {
+			const i = args.indexOf('--rename');
+			const [vendorCode, from, to] = args.slice(i + 1, i + 4);
+			if (!vendorCode || !from || !to) usage();
+			const vendorWhere = { vendors: { code: vendorCode.toUpperCase() } };
+			const match = await db.software.findMany({ where: { ...vendorWhere, name: from }, select: { id: true } });
+			if (match.length !== 1) {
+				console.error(`! ${match.length} software named "${from}" for ${vendorCode}; use the exact name from --codes.`);
+				return 1;
+			}
+			if (await db.software.findFirst({ where: { ...vendorWhere, name: to }, select: { id: true } })) {
+				console.error(`! "${to}" already exists for ${vendorCode}.`);
+				return 1;
+			}
+			await db.software.update({ where: { id: match[0].id }, data: { name: to } });
+			console.log(`Renamed "${from}" to "${to}"`);
 			return 0;
 		}
 

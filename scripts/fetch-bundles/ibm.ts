@@ -23,6 +23,9 @@ export interface RsuProduct {
 	code: string;
 }
 
+/** WAS is listed per fix pack ("- Fix pack 9.0.5.28 w/ ifixes", since RSU2609) under an unbulleted name */
+const WAS_NAME = 'WebSphere Application Server for z/OS';
+
 export function productCodeFromName(name: string): string {
 	return name.toUpperCase().replace(/[^A-Z0-9]/g, '');
 }
@@ -45,7 +48,10 @@ export function parseRsuProducts(pages: string[]): RsuProduct[] {
 	for (const rawLine of section.split('\n')) {
 		const line = rawLine.trim();
 		if (!/^[-•]\s+/.test(line) || /\bbuild\b/i.test(line)) continue; // Java build sub-lines of WAS
-		const match = /^[-•]\s+(.+?)\s+(V\d+R\d+(?:M\d+)?|V?\d+(?:\.\d+)+|V\d+)(?=\s|$)/i.exec(line);
+		const fixPack = /^[-•]\s+Fix ?pack\s+(\d+(?:\.\d+)+)/i.exec(line);
+		const match = fixPack
+			? ([line, WAS_NAME, fixPack[1]] as const)
+			: /^[-•]\s+(.+?)\s+(V\d+R\d+(?:M\d+)?|V?\d+(?:\.\d+)+|V\d+)(?=\s|$)/i.exec(line);
 		if (!match) continue;
 		const name = match[1].trim();
 		const product = { name, version: normalizeVersion(match[2]), code: productCodeFromName(name) };

@@ -102,6 +102,7 @@ npm run bundles:import -- bundles/RSU2601.csv --check   # dry run: report only, 
 npm run bundles:import -- bundles/RSU2601.csv           # import
 npm run bundles:import -- --codes BROADCOM              # software and their product codes
 npm run bundles:import -- --set-code BROADCOM "CA 7" AL2121
+npm run bundles:import -- --rename IBM "WebSphere Application Server" "WebSphere Application Server for z/OS"
 ```
 
 The report lists new products, new versions per product and carried-forward items. Lines

@@ -42,7 +42,7 @@ project root; add `-s` to npm to suppress its banner.
 
 | Line | Action |
 |---|---|
-| `new product: X - similar existing: "Y" [no code]` | Probably the same product. Ask the user once for all such lines; if it is Y, set Y's code to X's code (`--set-code`) and re-check. If genuinely new, import as is |
+| `new product: X - similar existing: "Y" [no code]` | Probably the same product. Ask the user once for all such lines; if it is Y, set Y's code to X's code (`--set-code`), rename Y to X if the user wants the vendor's name (`--rename`), and re-check. If genuinely new, import as is |
 | `new product: X - similar existing: "Y" [CODE]` | Y has another code: likely a different product or release. Import as is unless the user says otherwise |
 | `later level(s) already imported: ...` | Import order matters for carry-forward. After importing, re-import the later levels' CSVs from `bundles/` if present (same command), oldest first |
 | `notation: ...` | Version stored in another style than the product's others. Report it; fixing is done by the user in the software's version editor |
@@ -62,6 +62,7 @@ Rows are matched on `software.product_code`, then on name.
 ```
 npm run -s bundles:import -- --codes BROADCOM                  # list (code or "-", name)
 npm run -s bundles:import -- --set-code BROADCOM "CA 7" AL2121 # exact name from the list
+npm run -s bundles:import -- --rename IBM "Old name" "New name"
 ```
 
 ## Rules

@@ -36,7 +36,7 @@ npm run bundles:fetch -- broadcom CARS2510 --products AL2121,CCS150
 npm run bundles:fetch -- broadcom CARS2510                # product codes from software.product_code
 npm run bundles:import -- bundles/RSU2510.csv --check     # dry run (SQLite: on a temp copy), report + checks
 npm run bundles:import -- bundles/RSU2510.csv             # import without the UI ("!" lines need a decision)
-npm run bundles:import -- --codes BROADCOM                # list / --set-code BROADCOM "CA 7" AL2121
+npm run bundles:import -- --codes BROADCOM                # list / --set-code BROADCOM "CA 7" AL2121 / --rename
 ```
 The `import-vendor-bundle` skill (`.claude/skills/`) drives fetch -> check -> import using only these scripts.
 
