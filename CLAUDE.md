@@ -56,10 +56,16 @@ npm run agent:cost -- summary --issue 12 --post                            # act
 npm run agent:cost -- report > costs.csv                                   # all issues
 npm run agent:cost -- gate --issue 12 --max-usd 15                         # exit 2 = agent may not start
 ```
-Agent workflows (need the Claude GitHub app and `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`):
+Agent workflows run on the Claude **subscription only** (secret `CLAUDE_CODE_OAUTH_TOKEN` from
+`claude setup-token`; never add an `ANTHROPIC_API_KEY` secret):
 - `claude-estimate.yml`: label `bug` / `proposal` -> read-only estimate comment + its own cost.
 - `claude-fix.yml`: label `claude-fix` -> gate (proposals need `approved`; estimate above
   `AGENT_MAX_USD`, default $15, needs `approved`) -> fix on a branch + PR -> actual vs estimate.
+- Both require **2x headroom**: remaining % of the 5-hour and the weekly window >= 2 x the run's
+  expected use (`scripts/agent-usage.ts`, undocumented `api/oauth/usage` endpoint; fails closed).
+  Expected use = estimate $ x percent-per-$, calibrated from before/after snapshots after 3 runs
+  (until then repo vars `AGENT_PCT_PER_USD_5H` / `_7D`, defaults 4 / 0.5).
+- `agent-usage.yml` (manual): checks that the token can read the usage.
 
 ### Development
 ```bash

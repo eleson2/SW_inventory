@@ -3,7 +3,14 @@
  *
  *   npx tsx scripts/agent-cost.ts record <result.json> --issue 12 --agent fixer [--post]
  *   npx tsx scripts/agent-cost.ts summary --issue 12 [--post]
- *   npx tsx scripts/agent-cost.ts gate --issue 12 [--max-usd 15] [--post]   # exit 2: may not start
+ *   npx tsx scripts/agent-cost.ts gate --issue 12 [--max-usd 15] [--headroom] [--post]   # exit 2: may not start
+ *   npx tsx scripts/agent-cost.ts usage [--out usage.json]       # subscription 5-hour / weekly usage
+ *   npx tsx scripts/agent-cost.ts headroom --usd 1 [--issue 12 --post]   # 2x rule for a fixed budget
+ *
+ * Subscription usage needs CLAUDE_CODE_OAUTH_TOKEN in the environment (see agent-usage.ts).
+ * `record --usage-before a.json --usage-after b.json` stores how much of each window the run
+ * used; after 3 such runs the headroom rule uses those rates instead of
+ * AGENT_PCT_PER_USD_5H / AGENT_PCT_PER_USD_7D (defaults 4 and 0.5 percent per dollar).
  *   npx tsx scripts/agent-cost.ts report [--limit 200]          # CSV of all issues with agent runs
  *
  * <result.json> is the output of `claude -p ... --output-format json` (one result object),
@@ -19,8 +26,9 @@
  * With a Claude subscription instead of an API key, total_cost_usd is the API-equivalent
  * price, not what you are billed; tokens and turns are the real measure then.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { calibrate, fetchUsage, formatUsage, headroom, type Usage } from './agent-usage.ts';
 
 export interface RunCost {
 	agent: string;
@@ -34,6 +42,9 @@ export interface RunCost {
 	is_error: boolean;
 	session_id?: string;
 	at: string;
+	/** subscription usage consumed during the run, in percentage points (if measured) */
+	pct_5h?: number;
+	pct_7d?: number;
 }
 
 export interface Estimate {
@@ -161,6 +172,9 @@ export function formatRun(c: RunCost): string {
 		`**Agent run (${c.agent})**: $${c.usd.toFixed(2)} · ${fmtTokens(totalTokens(c))} tokens ` +
 		`(in ${fmtTokens(c.input_tokens)}, out ${fmtTokens(c.output_tokens)}, cache read ${fmtTokens(c.cache_read_tokens)}, ` +
 		`cache write ${fmtTokens(c.cache_write_tokens)}) · ${c.turns} turns · ${fmtMinutes(c.duration_ms)}` +
+		(c.pct_5h !== undefined || c.pct_7d !== undefined
+			? ` · subscription: 5-hour +${c.pct_5h ?? '?'}%, weekly +${c.pct_7d ?? '?'}%`
+			: '') +
 		(c.is_error ? ' · **ended with an error**' : '')
 	);
 }
@@ -198,6 +212,60 @@ function postComment(issue: number, body: string): void {
 	gh(['issue', 'comment', String(issue), '--body', body]);
 }
 
+/** Recorded runs of the most recent issues (calibration data). */
+function recentRuns(limit = 50): RunCost[] {
+	const issues = JSON.parse(gh(['issue', 'list', '--state', 'all', '--limit', String(limit), '--json', 'number'])) as {
+		number: number;
+	}[];
+	return issues.flatMap((i) => issueComments(i.number).flatMap((c) => extractBlocks<RunCost>(c, COST_TAG)));
+}
+
+function defaultRates() {
+	const n = (v: string | undefined, d: number) => (v && Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : d);
+	return { five_hour: n(process.env.AGENT_PCT_PER_USD_5H, 4), seven_day: n(process.env.AGENT_PCT_PER_USD_7D, 0.5) };
+}
+
+/** Current usage, or null (with the reason on stderr) when it cannot be read. */
+async function readUsage(): Promise<Usage | null> {
+	const token = process.env.CLAUDE_CODE_OAUTH_TOKEN;
+	if (!token) {
+		console.error('CLAUDE_CODE_OAUTH_TOKEN is not set');
+		return null;
+	}
+	try {
+		return await fetchUsage(token);
+	} catch (e) {
+		console.error(`usage: ${(e as Error).message}`);
+		return null;
+	}
+}
+
+async function checkHeadroom(usd: number): Promise<{ ok: boolean; reason: string; usage: Usage | null }> {
+	const usage = await readUsage();
+	const rate = calibrate(usage ? recentRuns() : [], defaultRates());
+	const result = headroom(usage, usd, rate);
+	if (usage?.extra_usage_enabled) {
+		result.reason += ' Warning: extra usage is ON, so work beyond the plan is billed.';
+	}
+	return { ...result, usage };
+}
+
+function readUsageFile(path: string | undefined): Usage | null {
+	if (!path) return null;
+	try {
+		return JSON.parse(readFileSync(path, 'utf8')) as Usage;
+	} catch {
+		return null;
+	}
+}
+
+/** Percentage points used between two snapshots; undefined if a window reset in between. */
+export function usageDelta(before: Usage | null, after: Usage | null): { pct_5h?: number; pct_7d?: number } {
+	const d = (a?: { used: number; resets_at: string | null } | null, b?: { used: number; resets_at: string | null } | null) =>
+		a && b && a.resets_at === b.resets_at && b.used >= a.used ? Math.round((b.used - a.used) * 100) / 100 : undefined;
+	return { pct_5h: d(before?.five_hour, after?.five_hour), pct_7d: d(before?.seven_day, after?.seven_day) };
+}
+
 // ---------------------------------------------------------------- CLI
 
 function option(args: string[], name: string): string | undefined {
@@ -211,7 +279,7 @@ function requireIssue(args: string[]): number {
 	return n;
 }
 
-function main(argv: string[]): void {
+async function main(argv: string[]): Promise<void> {
 	const [cmd, ...args] = argv;
 	const post = args.includes('--post');
 
@@ -220,6 +288,10 @@ function main(argv: string[]): void {
 		if (!file || file.startsWith('--')) throw new Error('record <result.json> --issue N --agent NAME');
 		const issue = requireIssue(args);
 		const run = parseResult(JSON.parse(readFileSync(file, 'utf8')), option(args, '--agent') ?? 'agent');
+		Object.assign(
+			run,
+			usageDelta(readUsageFile(option(args, '--usage-before')), readUsageFile(option(args, '--usage-after')))
+		);
 		const body = `${formatRun(run)}\n<!-- ${COST_TAG} ${JSON.stringify(run)} -->`;
 		console.log(formatRun(run));
 		if (post) postComment(issue, body);
@@ -240,10 +312,39 @@ function main(argv: string[]): void {
 		const labels = (
 			JSON.parse(gh(['issue', 'view', String(issue), '--json', 'labels'])) as { labels: { name: string }[] }
 		).labels.map((l) => l.name);
-		const { ok, reason } = gate(labels, summarize(issueComments(issue)).estimate, maxUsd);
+		const estimate = summarize(issueComments(issue)).estimate;
+		let { ok, reason } = gate(labels, estimate, maxUsd);
+		if (ok && args.includes('--headroom')) {
+			// Without an estimate (approved by the owner), budget for the cost limit.
+			const h = await checkHeadroom(estimate?.usd[1] ?? maxUsd);
+			ok = h.ok;
+			reason = `${reason} ${h.reason}`;
+		}
 		console.log(reason);
 		if (!ok) {
 			if (post) postComment(issue, `**Agent not started.** ${reason}`);
+			process.exit(2);
+		}
+		return;
+	}
+
+	if (cmd === 'usage') {
+		const usage = await readUsage();
+		if (!usage) process.exit(3);
+		console.log(formatUsage(usage));
+		const out = option(args, '--out');
+		if (out) writeFileSync(out, JSON.stringify(usage));
+		return;
+	}
+
+	if (cmd === 'headroom') {
+		const usd = Number(option(args, '--usd'));
+		if (!(usd > 0)) throw new Error('--usd <amount> is required');
+		const { ok, reason } = await checkHeadroom(usd);
+		console.log(reason);
+		if (!ok) {
+			const issue = Number(option(args, '--issue'));
+			if (post && issue > 0) postComment(issue, `**Agent not started.** ${reason}`);
 			process.exit(2);
 		}
 		return;
@@ -278,16 +379,18 @@ function main(argv: string[]): void {
 		return;
 	}
 
-	console.error('Usage: agent-cost.ts record <result.json> --issue N --agent NAME [--post]');
+	console.error('Usage: agent-cost.ts record <result.json> --issue N --agent NAME [--usage-before F --usage-after F] [--post]');
 	console.error('       agent-cost.ts summary --issue N [--post]');
-	console.error('       agent-cost.ts gate --issue N [--max-usd 15] [--post]');
+	console.error('       agent-cost.ts gate --issue N [--max-usd 15] [--headroom] [--post]');
+	console.error('       agent-cost.ts usage [--out usage.json]');
+	console.error('       agent-cost.ts headroom --usd X [--issue N --post]');
 	console.error('       agent-cost.ts report [--limit 200]');
 	process.exit(1);
 }
 
 if (import.meta.main) {
 	try {
-		main(process.argv.slice(2));
+		await main(process.argv.slice(2));
 	} catch (e) {
 		console.error(`error: ${(e as Error).message}`);
 		process.exit(1);
