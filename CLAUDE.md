@@ -40,6 +40,22 @@ npm run bundles:import -- --codes BROADCOM                # list / --set-code BR
 ```
 The `import-vendor-bundle` skill (`.claude/skills/`) drives fetch -> check -> import using only these scripts.
 
+### Tests & CI
+```bash
+npm run test:unit                                  # src + scripts
+TEST_DATABASE_URL=file:./test.db npm run test:integration   # needs prisma/test.db with the schema pushed
+npx playwright test --project=chromium             # e2e: own server on :5174, fresh seeded prisma/e2e.db, test login
+```
+`.github/workflows/tests.yml` runs these on every PR/push and nightly (SQLite, Node 26). The e2e
+job is non-blocking until the specs match the current UI. E2E needs a SQLite Prisma client.
+
+Agent cost metering (`scripts/agent-cost.ts`): issue comments are the ledger.
+```bash
+npm run agent:cost -- record result.json --issue 12 --agent fixer --post   # from claude -p --output-format json
+npm run agent:cost -- summary --issue 12 --post                            # actual vs <!-- cost-estimate --> block
+npm run agent:cost -- report > costs.csv                                   # all issues
+```
+
 ### Development
 ```bash
 npm run dev                   # Start dev server on http://localhost:5173
