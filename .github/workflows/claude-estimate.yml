@@ -4,7 +4,8 @@ name: claude-estimate
 # estimates the cost of fixing/building it and posts the estimate (with a hidden
 # <!-- cost-estimate {...} --> block that scripts/agent-cost.ts reads back), plus its own cost.
 # Runs on the Claude subscription only, and only with 2x headroom for ~$1 of use in both the
-# 5-hour and weekly windows (scripts/agent-usage.ts; fails closed).
+# 5-hour and weekly windows, judged from AGENT_USAGE_SNAPSHOT (scripts/agent-usage.ts;
+# fails closed without a snapshot).
 on:
   issues:
     types: [labeled]
@@ -25,7 +26,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       ISSUE: ${{ github.event.issue.number }}
-      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      AGENT_USAGE_SNAPSHOT: ${{ vars.AGENT_USAGE_SNAPSHOT }}
       AGENT_PCT_PER_USD_5H: ${{ vars.AGENT_PCT_PER_USD_5H }}
       AGENT_PCT_PER_USD_7D: ${{ vars.AGENT_PCT_PER_USD_7D }}
     steps:

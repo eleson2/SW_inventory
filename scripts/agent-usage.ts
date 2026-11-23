@@ -1,12 +1,17 @@
 /**
  * Subscription usage limits (5-hour and weekly windows) for agent runs on a Claude
- * subscription (CLAUDE_CODE_OAUTH_TOKEN), and the "at least 2x headroom" rule.
+ * subscription, and the "at least 2x headroom" rule.
  *
- * Reads GET https://api.anthropic.com/api/oauth/usage. This endpoint is NOT documented
- * by Anthropic (community status-line tools use it); it may change or refuse the token.
- * Callers must fail closed: no usage data -> no agent run.
+ * Source: a snapshot published from the owner's machine. Claude Code passes `rate_limits`
+ * to the status line; ~/.claude/usage-statusline.js saves them to
+ * ~/.claude/usage-snapshot.json and scripts/publish-usage.ts copies that to the repo
+ * variable AGENT_USAGE_SNAPSHOT. (The api/oauth/usage endpoint refuses setup-token
+ * tokens with HTTP 403, so CI cannot read usage itself.)
  *
- * The token is only sent in the Authorization header; it is never printed or stored.
+ * A snapshot is only as fresh as the owner's last Claude Code session. That is safe:
+ * without activity usage only goes down; a window whose reset time has passed counts as
+ * empty; agent runs recorded after the snapshot are added (effectiveUsage).
+ * Callers must fail closed: no snapshot -> no agent run.
  */
 
 export interface UsageWindow {
@@ -31,35 +36,66 @@ export interface PctPerUsd {
 	samples: number;
 }
 
-export const USAGE_URL = 'https://api.anthropic.com/api/oauth/usage';
 export const HEADROOM_FACTOR = 2;
 /** Calibrated figures are used once this many runs have before/after measurements. */
 export const MIN_SAMPLES = 3;
 
 function window(raw: unknown): UsageWindow | null {
 	if (!raw || typeof raw !== 'object') return null;
-	const w = raw as { utilization?: unknown; resets_at?: unknown };
-	if (typeof w.utilization !== 'number' || !Number.isFinite(w.utilization)) return null;
-	return { used: w.utilization, resets_at: typeof w.resets_at === 'string' ? w.resets_at : null };
+	const w = raw as { used?: unknown; resets_at?: unknown };
+	if (typeof w.used !== 'number' || !Number.isFinite(w.used)) return null;
+	return { used: w.used, resets_at: typeof w.resets_at === 'string' ? w.resets_at : null };
 }
 
-export function parseUsage(json: unknown, at = new Date().toISOString()): Usage {
-	const r = (json ?? {}) as Record<string, any>;
-	return {
+/** Parse a published snapshot (JSON text or object); null if missing or malformed. */
+export function parseSnapshot(raw: unknown): Usage | null {
+	let j: unknown = raw;
+	if (typeof raw === 'string') {
+		if (!raw.trim()) return null;
+		try {
+			j = JSON.parse(raw);
+		} catch {
+			return null;
+		}
+	}
+	if (!j || typeof j !== 'object') return null;
+	const r = j as Record<string, unknown>;
+	if (typeof r.at !== 'string' || Number.isNaN(Date.parse(r.at))) return null;
+	const u: Usage = {
 		five_hour: window(r.five_hour),
 		seven_day: window(r.seven_day),
-		extra_usage_enabled: r.extra_usage?.is_enabled === true,
-		at
+		extra_usage_enabled: r.extra_usage_enabled === true,
+		at: r.at
 	};
+	return u.five_hour || u.seven_day ? u : null;
 }
 
-export async function fetchUsage(token: string, timeoutMs = 10000): Promise<Usage> {
-	const res = await fetch(USAGE_URL, {
-		headers: { Authorization: `Bearer ${token}`, 'anthropic-beta': 'oauth-2025-04-20' },
-		signal: AbortSignal.timeout(timeoutMs)
-	});
-	if (res.status !== 200) throw new Error(`usage endpoint returned HTTP ${res.status}`);
-	return parseUsage(await res.json());
+/**
+ * Usage now, from an older snapshot: a window whose reset time has passed starts at 0;
+ * agent runs recorded after the snapshot (or after the reset) are added at `rate`.
+ */
+export function effectiveUsage(
+	snap: Usage,
+	runs: { usd: number; at: string }[],
+	rate: { five_hour: number; seven_day: number },
+	now = new Date()
+): Usage {
+	const adjust = (w: UsageWindow | null, perUsd: number): UsageWindow | null => {
+		if (!w) return null;
+		const reset = w.resets_at ? Date.parse(w.resets_at) : NaN;
+		const hasReset = !Number.isNaN(reset) && reset <= now.getTime();
+		const since = hasReset ? reset : Date.parse(snap.at);
+		const added = runs.filter((r) => Date.parse(r.at) > since).reduce((a, r) => a + r.usd * perUsd, 0);
+		return {
+			used: Math.min(100, (hasReset ? 0 : w.used) + added),
+			resets_at: hasReset ? null : w.resets_at
+		};
+	};
+	return {
+		...snap,
+		five_hour: adjust(snap.five_hour, rate.five_hour),
+		seven_day: adjust(snap.seven_day, rate.seven_day)
+	};
 }
 
 /**

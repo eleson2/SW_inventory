@@ -7,7 +7,8 @@
  *   npx tsx scripts/agent-cost.ts usage [--out usage.json]       # subscription 5-hour / weekly usage
  *   npx tsx scripts/agent-cost.ts headroom --usd 1 [--issue 12 --post]   # 2x rule for a fixed budget
  *
- * Subscription usage needs CLAUDE_CODE_OAUTH_TOKEN in the environment (see agent-usage.ts).
+ * Subscription usage comes from the AGENT_USAGE_SNAPSHOT environment variable (the repo
+ * variable published by scripts/publish-usage.ts; see agent-usage.ts).
  * `record --usage-before a.json --usage-after b.json` stores how much of each window the run
  * used; after 3 such runs the headroom rule uses those rates instead of
  * AGENT_PCT_PER_USD_5H / AGENT_PCT_PER_USD_7D (defaults 4 and 0.5 percent per dollar).
@@ -28,7 +29,7 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { calibrate, fetchUsage, formatUsage, headroom, type Usage } from './agent-usage.ts';
+import { calibrate, effectiveUsage, formatUsage, headroom, parseSnapshot, type Usage } from './agent-usage.ts';
 
 export interface RunCost {
 	agent: string;
@@ -225,25 +226,25 @@ function defaultRates() {
 	return { five_hour: n(process.env.AGENT_PCT_PER_USD_5H, 4), seven_day: n(process.env.AGENT_PCT_PER_USD_7D, 0.5) };
 }
 
-/** Current usage, or null (with the reason on stderr) when it cannot be read. */
-async function readUsage(): Promise<Usage | null> {
-	const token = process.env.CLAUDE_CODE_OAUTH_TOKEN;
-	if (!token) {
-		console.error('CLAUDE_CODE_OAUTH_TOKEN is not set');
-		return null;
-	}
-	try {
-		return await fetchUsage(token);
-	} catch (e) {
-		console.error(`usage: ${(e as Error).message}`);
-		return null;
-	}
+/** The published snapshot, or null (with the reason on stderr). */
+function readSnapshot(): Usage | null {
+	const snap = parseSnapshot(process.env.AGENT_USAGE_SNAPSHOT ?? '');
+	if (!snap) console.error('AGENT_USAGE_SNAPSHOT is missing or invalid (run scripts/publish-usage.ts on your machine)');
+	return snap;
+}
+
+/** Snapshot adjusted for resets and for agent runs recorded since; null if no snapshot. */
+function currentUsage(): { usage: Usage | null; rate: ReturnType<typeof calibrate> } {
+	const snap = readSnapshot();
+	const runs = snap ? recentRuns() : [];
+	const rate = calibrate(runs, defaultRates());
+	return { usage: snap ? effectiveUsage(snap, runs, rate) : null, rate };
 }
 
 async function checkHeadroom(usd: number): Promise<{ ok: boolean; reason: string; usage: Usage | null }> {
-	const usage = await readUsage();
-	const rate = calibrate(usage ? recentRuns() : [], defaultRates());
+	const { usage, rate } = currentUsage();
 	const result = headroom(usage, usd, rate);
+	if (usage) result.reason += ` Usage snapshot from ${usage.at}.`;
 	if (usage?.extra_usage_enabled) {
 		result.reason += ' Warning: extra usage is ON, so work beyond the plan is billed.';
 	}
@@ -329,9 +330,9 @@ async function main(argv: string[]): Promise<void> {
 	}
 
 	if (cmd === 'usage') {
-		const usage = await readUsage();
+		const { usage } = currentUsage();
 		if (!usage) process.exit(3);
-		console.log(formatUsage(usage));
+		console.log(`${formatUsage(usage)} · snapshot ${usage.at}`);
 		const out = option(args, '--out');
 		if (out) writeFileSync(out, JSON.stringify(usage));
 		return;
