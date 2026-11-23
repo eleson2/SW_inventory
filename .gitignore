@@ -31,3 +31,6 @@ caddy-root.crt
 
 # Vendor bundle CSVs from npm run bundles:fetch
 /bundles/
+
+# Playwright login state (tests/e2e/auth.setup.ts)
+/tests/e2e/.auth/

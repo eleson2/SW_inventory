@@ -22,6 +22,7 @@
     "db:import": "tsx scripts/db-transfer.ts import",
     "bundles:fetch": "tsx scripts/fetch-bundles/index.ts",
     "bundles:import": "tsx scripts/bundle-import.ts",
+    "agent:cost": "tsx scripts/agent-cost.ts",
     "lint": "eslint . --ext .ts,.js,.svelte",
     "test": "vitest",
     "test:unit": "vitest run src scripts",
