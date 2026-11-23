@@ -1,0 +1,25 @@
+name: agent-usage
+
+# Manual check: can the CLAUDE_CODE_OAUTH_TOKEN secret read the subscription's 5-hour and
+# weekly usage? The agent gates depend on it (they refuse to run when it cannot be read).
+# Run it from the Actions tab, or: gh workflow run agent-usage.yml
+on:
+  workflow_dispatch:
+
+jobs:
+  usage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - name: Subscription usage
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: npm run -s agent:cost -- usage | tee -a "$GITHUB_STEP_SUMMARY"

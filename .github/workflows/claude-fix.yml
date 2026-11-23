@@ -4,7 +4,10 @@ name: claude-fix
 # It starts only if scripts/agent-cost.ts `gate` allows it:
 #   - proposals need the `approved` label;
 #   - otherwise the estimate's upper bound must be within AGENT_MAX_USD (repo variable,
-#     default 15), or the issue has the `approved` label.
+#     default 15), or the issue has the `approved` label;
+#   - the subscription must have at least 2x the expected use left in both the 5-hour
+#     and the weekly window (fails closed if usage cannot be read).
+# Runs on the Claude subscription only (CLAUDE_CODE_OAUTH_TOKEN); no API key is used.
 # Claude works on a branch and opens a PR; nothing is merged without you.
 # Afterwards the run's cost is recorded on the issue and compared with the estimate.
 on:
@@ -33,6 +36,9 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       ISSUE: ${{ github.event.issue.number }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      AGENT_PCT_PER_USD_5H: ${{ vars.AGENT_PCT_PER_USD_5H }}
+      AGENT_PCT_PER_USD_7D: ${{ vars.AGENT_PCT_PER_USD_7D }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -41,10 +47,10 @@ jobs:
           cache: npm
       - run: npm ci
 
-      - name: Cost / approval gate
+      - name: Cost / approval / subscription headroom gate
         id: gate
         run: |
-          if npm run -s agent:cost -- gate --issue "$ISSUE" --max-usd "${{ vars.AGENT_MAX_USD || '15' }}" --post; then
+          if npm run -s agent:cost -- gate --issue "$ISSUE" --max-usd "${{ vars.AGENT_MAX_USD || '15' }}" --headroom --post; then
             echo "ok=true" >> "$GITHUB_OUTPUT"
           else
             echo "ok=false" >> "$GITHUB_OUTPUT"
@@ -58,12 +64,15 @@ jobs:
           npm run db:generate
           npm run db:push
 
+      - name: Subscription usage before
+        if: steps.gate.outputs.ok == 'true'
+        run: npm run -s agent:cost -- usage --out "$RUNNER_TEMP/usage-before.json" || true
+
       - name: Fix
         id: claude
         if: steps.gate.outputs.ok == 'true'
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           label_trigger: claude-fix
           claude_args: >-
@@ -74,5 +83,6 @@ jobs:
       - name: Record cost and compare with the estimate
         if: always() && steps.claude.outputs.execution_file != ''
         run: |
-          npm run -s agent:cost -- record "${{ steps.claude.outputs.execution_file }}" --issue "$ISSUE" --agent fixer --post
+          npm run -s agent:cost -- usage --out "$RUNNER_TEMP/usage-after.json" || true
+          npm run -s agent:cost -- record "${{ steps.claude.outputs.execution_file }}" --issue "$ISSUE" --agent fixer             --usage-before "$RUNNER_TEMP/usage-before.json" --usage-after "$RUNNER_TEMP/usage-after.json" --post
           npm run -s agent:cost -- summary --issue "$ISSUE" --post
