@@ -54,7 +54,12 @@ Agent cost metering (`scripts/agent-cost.ts`): issue comments are the ledger.
 npm run agent:cost -- record result.json --issue 12 --agent fixer --post   # from claude -p --output-format json
 npm run agent:cost -- summary --issue 12 --post                            # actual vs <!-- cost-estimate --> block
 npm run agent:cost -- report > costs.csv                                   # all issues
+npm run agent:cost -- gate --issue 12 --max-usd 15                         # exit 2 = agent may not start
 ```
+Agent workflows (need the Claude GitHub app and `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`):
+- `claude-estimate.yml`: label `bug` / `proposal` -> read-only estimate comment + its own cost.
+- `claude-fix.yml`: label `claude-fix` -> gate (proposals need `approved`; estimate above
+  `AGENT_MAX_USD`, default $15, needs `approved`) -> fix on a branch + PR -> actual vs estimate.
 
 ### Development
 ```bash

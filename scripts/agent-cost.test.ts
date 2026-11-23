@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseResult, extractBlocks, summarize, formatSummary, totalTokens, type RunCost } from './agent-cost.ts';
+import { parseResult, extractBlocks, summarize, formatSummary, totalTokens, gate, type RunCost } from './agent-cost.ts';
 
 const result = {
 	type: 'result',
@@ -69,5 +69,21 @@ describe('summarize', () => {
 		const s = summarize([costComment(run)]);
 		expect(s.verdict).toBeUndefined();
 		expect(formatSummary(s)).toContain('Estimate**: none');
+	});
+});
+
+describe('gate', () => {
+	const est = (hi: number) => ({ usd: [1, hi] as [number, number] });
+
+	it('blocks unapproved proposals, even with a cheap estimate', () => {
+		expect(gate(['proposal'], est(2), 15).ok).toBe(false);
+		expect(gate(['proposal', 'approved'], undefined, 15).ok).toBe(true);
+	});
+
+	it('needs an estimate within the limit unless approved', () => {
+		expect(gate(['bug'], undefined, 15).ok).toBe(false);
+		expect(gate(['bug'], est(9), 15).ok).toBe(true);
+		expect(gate(['bug'], est(20), 15)).toMatchObject({ ok: false, reason: expect.stringContaining('$20') });
+		expect(gate(['bug', 'approved'], est(20), 15).ok).toBe(true);
 	});
 });

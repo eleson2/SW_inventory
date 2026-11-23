@@ -3,6 +3,7 @@
  *
  *   npx tsx scripts/agent-cost.ts record <result.json> --issue 12 --agent fixer [--post]
  *   npx tsx scripts/agent-cost.ts summary --issue 12 [--post]
+ *   npx tsx scripts/agent-cost.ts gate --issue 12 [--max-usd 15] [--post]   # exit 2: may not start
  *   npx tsx scripts/agent-cost.ts report [--limit 200]          # CSV of all issues with agent runs
  *
  * <result.json> is the output of `claude -p ... --output-format json` (one result object),
@@ -119,6 +120,30 @@ export function summarize(comments: string[]): Summary {
 	return s;
 }
 
+/**
+ * May an agent start implementing this issue?
+ * - A proposal needs the `approved` label.
+ * - Without `approved`, there must be an estimate whose upper bound is within maxUsd.
+ */
+export function gate(labels: string[], estimate: Estimate | undefined, maxUsd: number): { ok: boolean; reason: string } {
+	const approved = labels.includes('approved');
+	if (labels.includes('proposal') && !approved) {
+		return { ok: false, reason: 'Proposal not approved yet: add the `approved` label to build it.' };
+	}
+	if (approved) return { ok: true, reason: 'Approved by the owner.' };
+	if (!estimate) {
+		return { ok: false, reason: 'No cost estimate yet: wait for the estimator, or add the `approved` label.' };
+	}
+	const hi = estimate.usd[1];
+	if (hi > maxUsd) {
+		return {
+			ok: false,
+			reason: `Estimate up to $${hi} exceeds the $${maxUsd} limit: add the \`approved\` label to proceed.`
+		};
+	}
+	return { ok: true, reason: `Estimate up to $${hi} is within the $${maxUsd} limit.` };
+}
+
 function round(n: number): number {
 	return Math.round(n * 100) / 100;
 }
@@ -209,6 +234,21 @@ function main(argv: string[]): void {
 		return;
 	}
 
+	if (cmd === 'gate') {
+		const issue = requireIssue(args);
+		const maxUsd = Number(option(args, '--max-usd') ?? '15');
+		const labels = (
+			JSON.parse(gh(['issue', 'view', String(issue), '--json', 'labels'])) as { labels: { name: string }[] }
+		).labels.map((l) => l.name);
+		const { ok, reason } = gate(labels, summarize(issueComments(issue)).estimate, maxUsd);
+		console.log(reason);
+		if (!ok) {
+			if (post) postComment(issue, `**Agent not started.** ${reason}`);
+			process.exit(2);
+		}
+		return;
+	}
+
 	if (cmd === 'report') {
 		const limit = option(args, '--limit') ?? '200';
 		const issues = JSON.parse(
@@ -240,6 +280,7 @@ function main(argv: string[]): void {
 
 	console.error('Usage: agent-cost.ts record <result.json> --issue N --agent NAME [--post]');
 	console.error('       agent-cost.ts summary --issue N [--post]');
+	console.error('       agent-cost.ts gate --issue N [--max-usd 15] [--post]');
 	console.error('       agent-cost.ts report [--limit 200]');
 	process.exit(1);
 }

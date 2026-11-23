@@ -1,0 +1,80 @@
+name: claude-estimate
+
+# Cost estimator: when an issue gets the `bug` or `proposal` label, a read-only Claude run
+# estimates the cost of fixing/building it and posts the estimate (with a hidden
+# <!-- cost-estimate {...} --> block that scripts/agent-cost.ts reads back), plus its own cost.
+on:
+  issues:
+    types: [labeled]
+
+concurrency:
+  group: claude-estimate-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  estimate:
+    if: github.event.label.name == 'bug' || github.event.label.name == 'proposal'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE: ${{ github.event.issue.number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+
+      - name: Cost history for calibration
+        run: npm run -s agent:cost -- report > "$RUNNER_TEMP/history.csv" || true
+
+      - name: Estimate
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: >-
+            --model claude-sonnet-5-5
+            --max-turns 20
+            --allowedTools Read,Glob,Grep,Write
+          prompt: |
+            Estimate what it will cost a Claude Code agent to resolve GitHub issue #${{ github.event.issue.number }}
+            in this repository (SvelteKit + Prisma; read CLAUDE.md first). Do not change any code.
+
+            Issue title: ${{ github.event.issue.title }}
+            Issue body:
+            ${{ github.event.issue.body }}
+
+            1. Find the files that would have to change, and the tests to add or update
+               (every bug fix needs a regression test; features need unit and integration tests).
+            2. Calibrate against past actual costs in ${{ runner.temp }}/history.csv
+               (columns: issue, labels, runs, usd, tokens, turns, est_size, est_usd_low/high, verdict).
+               If it has fewer than 5 rows, say the confidence is low.
+            3. Size classes: S = under $2 (one file, obvious fix), M = $2-10, L = $10-30, XL = over $30
+               (consider splitting XL into several issues).
+            4. Write the result to the file estimate.md in the repository root, exactly in this form:
+
+               **Cost estimate: <S|M|L|XL>** · ~$<low>-<high> · ~<tokens low>-<tokens high> tokens · <turns> turns
+               **Files:** <paths>
+               **Tests:** <tests to add or change>
+               **Risk:** <low|medium|high> - <why, one line>
+               **Confidence:** <low|medium|high> - <why, one line>
+               <one to three sentences on the approach>
+               <!-- cost-estimate {"size":"<S|M|L|XL>","usd":[<low>,<high>],"tokens":[<low>,<high>]} -->
+
+               The hidden block must be valid JSON with numbers, on one line.
+
+      - name: Post estimate
+        if: always() && hashFiles('estimate.md') != ''
+        run: gh issue comment "$ISSUE" --body-file estimate.md
+
+      - name: Record estimator cost
+        if: always() && steps.claude.outputs.execution_file != ''
+        run: npm run -s agent:cost -- record "${{ steps.claude.outputs.execution_file }}" --issue "$ISSUE" --agent estimator --post
