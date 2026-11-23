@@ -6,7 +6,8 @@ name: claude-fix
 #   - otherwise the estimate's upper bound must be within AGENT_MAX_USD (repo variable,
 #     default 15), or the issue has the `approved` label;
 #   - the subscription must have at least 2x the expected use left in both the 5-hour
-#     and the weekly window (fails closed if usage cannot be read).
+#     and the weekly window, judged from AGENT_USAGE_SNAPSHOT published from the owner's
+#     machine (scripts/publish-usage.ts); fails closed without a snapshot.
 # Runs on the Claude subscription only (CLAUDE_CODE_OAUTH_TOKEN); no API key is used.
 # Claude works on a branch and opens a PR; nothing is merged without you.
 # Afterwards the run's cost is recorded on the issue and compared with the estimate.
@@ -14,8 +15,10 @@ on:
   issues:
     types: [labeled]
 
+# One fixer at a time, so runs after the usage snapshot are all accounted for.
+# (GitHub keeps one pending run per group: re-add the label if a run was cancelled.)
 concurrency:
-  group: claude-fix-${{ github.event.issue.number }}
+  group: claude-fix
   cancel-in-progress: false
 
 env:
@@ -36,7 +39,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       ISSUE: ${{ github.event.issue.number }}
-      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      AGENT_USAGE_SNAPSHOT: ${{ vars.AGENT_USAGE_SNAPSHOT }}
       AGENT_PCT_PER_USD_5H: ${{ vars.AGENT_PCT_PER_USD_5H }}
       AGENT_PCT_PER_USD_7D: ${{ vars.AGENT_PCT_PER_USD_7D }}
     steps:
@@ -64,10 +67,6 @@ jobs:
           npm run db:generate
           npm run db:push
 
-      - name: Subscription usage before
-        if: steps.gate.outputs.ok == 'true'
-        run: npm run -s agent:cost -- usage --out "$RUNNER_TEMP/usage-before.json" || true
-
       - name: Fix
         id: claude
         if: steps.gate.outputs.ok == 'true'
@@ -83,6 +82,5 @@ jobs:
       - name: Record cost and compare with the estimate
         if: always() && steps.claude.outputs.execution_file != ''
         run: |
-          npm run -s agent:cost -- usage --out "$RUNNER_TEMP/usage-after.json" || true
-          npm run -s agent:cost -- record "${{ steps.claude.outputs.execution_file }}" --issue "$ISSUE" --agent fixer             --usage-before "$RUNNER_TEMP/usage-before.json" --usage-after "$RUNNER_TEMP/usage-after.json" --post
+          npm run -s agent:cost -- record "${{ steps.claude.outputs.execution_file }}" --issue "$ISSUE" --agent fixer --post
           npm run -s agent:cost -- summary --issue "$ISSUE" --post

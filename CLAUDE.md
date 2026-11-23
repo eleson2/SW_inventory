@@ -62,10 +62,14 @@ Agent workflows run on the Claude **subscription only** (secret `CLAUDE_CODE_OAU
 - `claude-fix.yml`: label `claude-fix` -> gate (proposals need `approved`; estimate above
   `AGENT_MAX_USD`, default $15, needs `approved`) -> fix on a branch + PR -> actual vs estimate.
 - Both require **2x headroom**: remaining % of the 5-hour and the weekly window >= 2 x the run's
-  expected use (`scripts/agent-usage.ts`, undocumented `api/oauth/usage` endpoint; fails closed).
-  Expected use = estimate $ x percent-per-$, calibrated from before/after snapshots after 3 runs
-  (until then repo vars `AGENT_PCT_PER_USD_5H` / `_7D`, defaults 4 / 0.5).
-- `agent-usage.yml` (manual): checks that the token can read the usage.
+  expected use (`scripts/agent-usage.ts`; fails closed). Expected use = estimate $ x percent-per-$
+  (repo vars `AGENT_PCT_PER_USD_5H` / `_7D`, defaults 4 / 0.5).
+- Usage source: repo variable `AGENT_USAGE_SNAPSHOT`, published from the owner's PC. The
+  Claude Code status line (`~/.claude/usage-statusline.js`) saves `rate_limits` to
+  `~/.claude/usage-snapshot.json`; scheduled task `SWInv-PublishUsage` (every 15 min) runs
+  `node scripts/publish-usage.ts`. Old snapshots are safe: passed resets count as empty, agent
+  runs since are added. (`api/oauth/usage` returns 403 for `setup-token` tokens.)
+- `agent-usage.yml` (manual): shows the usage the gates see.
 
 ### Development
 ```bash

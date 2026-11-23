@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseUsage, calibrate, headroom, formatUsage, type Usage } from './agent-usage.ts';
+import { parseSnapshot, effectiveUsage, calibrate, headroom, formatUsage, type Usage } from './agent-usage.ts';
 import { usageDelta } from './agent-cost.ts';
 
 const usage = (h5: number, d7: number, reset5 = 'A', reset7 = 'W'): Usage => ({
@@ -11,24 +11,62 @@ const usage = (h5: number, d7: number, reset5 = 'A', reset7 = 'W'): Usage => ({
 
 const defaults = { five_hour: 4, seven_day: 0.5 };
 
-describe('parseUsage', () => {
-	it('reads both windows and the extra-usage flag', () => {
-		const u = parseUsage({
-			five_hour: { utilization: 23, resets_at: '2026-11-24T03:00:00Z' },
-			seven_day: { utilization: 41.5, resets_at: null },
-			extra_usage: { is_enabled: true },
-			seven_day_opus: { utilization: 5 }
-		});
+describe('parseSnapshot', () => {
+	const snap = {
+		five_hour: { used: 23, resets_at: '2026-11-24T03:00:00Z' },
+		seven_day: { used: 41.5, resets_at: null },
+		extra_usage_enabled: true,
+		at: '2026-11-23T23:00:00Z'
+	};
+
+	it('reads a published snapshot (text or object)', () => {
+		const u = parseSnapshot(JSON.stringify(snap))!;
 		expect(u.five_hour).toEqual({ used: 23, resets_at: '2026-11-24T03:00:00Z' });
 		expect(u.seven_day).toEqual({ used: 41.5, resets_at: null });
-		expect(u.extra_usage_enabled).toBe(true);
 		expect(formatUsage(u)).toContain('extra usage ON');
+		expect(parseSnapshot(snap)).toEqual(u);
 	});
 
-	it('treats missing or malformed windows as unknown', () => {
-		const u = parseUsage({ five_hour: null, seven_day: { utilization: 'x' } });
-		expect(u.five_hour).toBeNull();
-		expect(u.seven_day).toBeNull();
+	it('rejects missing, malformed or empty snapshots', () => {
+		expect(parseSnapshot('')).toBeNull();
+		expect(parseSnapshot('{not json')).toBeNull();
+		expect(parseSnapshot({ ...snap, at: undefined })).toBeNull();
+		expect(parseSnapshot({ at: snap.at, five_hour: null, seven_day: { used: 'x' } })).toBeNull();
+	});
+});
+
+describe('effectiveUsage', () => {
+	const rate = { five_hour: 4, seven_day: 0.5 };
+	const snap: Usage = {
+		five_hour: { used: 30, resets_at: '2026-11-24T03:00:00Z' },
+		seven_day: { used: 50, resets_at: '2026-11-30T20:00:00Z' },
+		extra_usage_enabled: false,
+		at: '2026-11-24T00:00:00Z'
+	};
+
+	it('adds agent runs recorded after the snapshot', () => {
+		const runs = [
+			{ usd: 5, at: '2026-11-23T23:00:00Z' }, // before the snapshot: already included
+			{ usd: 2, at: '2026-11-24T01:00:00Z' }
+		];
+		const u = effectiveUsage(snap, runs, rate, new Date('2026-11-24T02:00:00Z'));
+		expect(u.five_hour!.used).toBe(38); // 30 + 2 x 4
+		expect(u.seven_day!.used).toBe(51); // 50 + 2 x 0.5
+	});
+
+	it('starts a window at 0 once its reset time has passed', () => {
+		const runs = [
+			{ usd: 2, at: '2026-11-24T01:00:00Z' }, // before the 5-hour reset
+			{ usd: 1, at: '2026-11-24T04:00:00Z' } // after it
+		];
+		const u = effectiveUsage(snap, runs, rate, new Date('2026-11-24T05:00:00Z'));
+		expect(u.five_hour).toEqual({ used: 4, resets_at: null });
+		expect(u.seven_day!.used).toBe(51.5);
+	});
+
+	it('caps at 100%', () => {
+		const u = effectiveUsage(snap, [{ usd: 100, at: '2026-11-24T01:00:00Z' }], rate, new Date('2026-11-24T02:00:00Z'));
+		expect(u.five_hour!.used).toBe(100);
 	});
 });
 
