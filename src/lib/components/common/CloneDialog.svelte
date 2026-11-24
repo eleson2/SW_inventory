@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Card from '#lib/components/ui/Card.svelte';
 	import FormField from '#lib/components/common/FormField.svelte';
@@ -35,10 +36,12 @@
 
 	// Initialize formData immediately with initial values or empty strings
 	let formData = $state<Record<string, string>>(
-		fields.reduce((acc, field) => ({
-			...acc,
-			[field.name]: initialValues[field.name] || ''
-		}), {} as Record<string, string>)
+		untrack(() =>
+			fields.reduce((acc, field) => ({
+				...acc,
+				[field.name]: initialValues[field.name] || ''
+			}), {} as Record<string, string>)
+		)
 	);
 	let errors = $state<Record<string, string>>({});
 

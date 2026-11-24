@@ -15,17 +15,17 @@
 	import { createCloneHandler } from '#lib/utils/clone-handler.ts';
 
 	let { data }: { data: PageData } = $props();
-	const { software } = data;
+	const { software } = $derived(data);
 
 	let showCloneDialog = $state(false);
 	let cloning = $state(false);
 
-	const breadcrumbItems = [
+	const breadcrumbItems = $derived([
 		{ label: 'Home', href: '/' },
 		{ label: 'Software', href: '/software' },
 		{ label: software.vendors?.name || 'Vendor', href: `/vendors/${software.vendor_id}` },
 		{ label: software.name }
-	];
+	]);
 
 	const handleClone = async (formData: Record<string, string>) => {
 		cloning = true;

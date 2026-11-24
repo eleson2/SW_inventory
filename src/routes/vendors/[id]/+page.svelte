@@ -12,13 +12,13 @@
 	import { formatDate, formatDateTime } from '#lib/utils/date-format.ts';
 
 	let { data }: { data: PageData } = $props();
-	const { vendor } = data;
+	const { vendor } = $derived(data);
 
-	const breadcrumbItems = [
+	const breadcrumbItems = $derived([
 		{ label: 'Home', href: '/' },
 		{ label: 'Vendors', href: '/vendors' },
 		{ label: vendor.name }
-	];
+	]);
 </script>
 
 <div class="space-y-6">

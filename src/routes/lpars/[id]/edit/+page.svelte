@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { PageData } from './$types';
 	import type { LparSoftwareInstallation } from '#lib/schemas/lpar.ts';
 	import { lparWithSoftwareSchema } from '#lib/schemas/lpar.ts';
@@ -18,16 +19,16 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const breadcrumbItems = [
+	const breadcrumbItems = $derived([
 		{ label: 'Home', href: '/' },
 		{ label: 'LPARs', href: '/lpars' },
 		{ label: data.lpar.customers?.name || 'Customer', href: `/customers/${data.lpar.customer_id}` },
 		{ label: data.lpar.name, href: `/lpars/${data.lpar.id}` },
 		{ label: 'Edit' }
-	];
+	]);
 
 	const { form, errors, enhance, submitting, delayed, posted, constraints, message } =
-		typedSuperForm(data.form, lparWithSoftwareSchema, {
+		typedSuperForm(untrack(() => data.form), lparWithSoftwareSchema, {
 			dataType: 'json',
 			resetForm: false
 		});

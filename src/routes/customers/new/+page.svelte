@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { PageData } from './$types';
 	import { typedSuperForm } from '#lib/utils/superforms.ts';
 	import { customerSchema } from '#lib/schemas/customer.ts';
@@ -24,7 +25,7 @@
 
 	// Initialize Superforms (validation handled server-side)
 	const { form, errors, enhance, submitting, delayed, posted, constraints, validate } =
-		typedSuperForm(data.form, customerSchema, {
+		typedSuperForm(untrack(() => data.form), customerSchema, {
 			dataType: 'json',
 			resetForm: false,
 			onResult: ({ result }: { result: any }) => {

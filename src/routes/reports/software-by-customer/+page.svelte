@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -9,7 +10,7 @@
 	let { data }: { data: PageData } = $props();
 
 	// Multi-select state for customers
-	let selectedCustomers = $state<Set<string>>(new Set(data.selectedCustomerIds));
+	let selectedCustomers = $state<Set<string>>(new Set(untrack(() => data.selectedCustomerIds)));
 	let showCustomerDropdown = $state(false);
 
 	function toggleCustomer(customerId: string) {

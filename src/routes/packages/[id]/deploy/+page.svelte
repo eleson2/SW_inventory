@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { PageData, ActionData } from './$types';
 	import { deserialize, enhance } from '$app/forms';
 	import Card from '#lib/components/ui/Card.svelte';
@@ -13,7 +14,7 @@
 
 	type LparWithStatus = (typeof data.lpars)[0];
 
-	let availableLpars = $state<LparWithStatus[]>(data.lpars);
+	let availableLpars = $state<LparWithStatus[]>(untrack(() => data.lpars));
 	let selectedLpars = $state<LparWithStatus[]>([]);
 	const lparNameById = $derived(new Map(data.lpars.map((l) => [l.id, l.name])));
 

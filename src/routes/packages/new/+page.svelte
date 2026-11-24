@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { PageData } from './$types';
 	import type { PackageItem } from '#lib/schemas/package.ts';
 	import { goto } from '$app/navigation';
@@ -28,7 +29,7 @@
 	];
 
 	// Initialize Superforms with client-side validation (typed helper)
-	const { form, errors, enhance, submitting, delayed, posted, constraints, validate } = typedSuperForm(data.form, packageWithItemsSchema, {
+	const { form, errors, enhance, submitting, delayed, posted, constraints, validate } = typedSuperForm(untrack(() => data.form), packageWithItemsSchema, {
 		dataType: 'json',
 		resetForm: false,
 		onResult: ({ result }: { result: any }) => {
@@ -46,7 +47,7 @@
 	let packageItems = $state<PackageItem[]>(
 		mergeBundlesIntoItems(
 			[],
-			data.bundles.filter((b) => data.preselectedBundleIds.includes(b.id))
+			untrack(() => data.bundles.filter((b) => data.preselectedBundleIds.includes(b.id)))
 		).items
 	);
 

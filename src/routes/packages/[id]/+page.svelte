@@ -16,26 +16,26 @@
 	import { describeItemSource } from '#lib/utils/bundle-merge.ts';
 
 	let { data }: { data: PageData } = $props();
-	const { package: pkg } = data;
+	const { package: pkg } = $derived(data);
 
 	// Vendor bundles the items were copied from
 	type SourceBundle = NonNullable<(typeof pkg.package_items)[number]['source_bundle']>;
-	const sourceBundles: SourceBundle[] = [
+	const sourceBundles: SourceBundle[] = $derived([
 		...new Map(
 			pkg.package_items.flatMap((item: (typeof pkg.package_items)[number]) =>
 				item.source_bundle ? [[item.source_bundle.id, item.source_bundle] as const] : []
 			)
 		).values()
-	];
+	]);
 
 	let showCloneDialog = $state(false);
 	let cloning = $state(false);
 
-	const breadcrumbItems = [
+	const breadcrumbItems = $derived([
 		{ label: 'Home', href: '/' },
 		{ label: 'Packages', href: '/packages' },
 		{ label: `${pkg.name} (${pkg.version})` }
-	];
+	]);
 
 	const handleClone = async (formData: Record<string, string>) => {
 		cloning = true;

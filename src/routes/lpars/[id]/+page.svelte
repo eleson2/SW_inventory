@@ -15,19 +15,19 @@
 	import { createCloneHandler } from '#lib/utils/clone-handler.ts';
 
 	let { data }: { data: PageData } = $props();
-	const { lpar, compatibility } = data;
+	const { lpar, compatibility } = $derived(data);
 
 	let showCloneDialog = $state(false);
 	let cloning = $state(false);
 	let showRollbackDialog = $state(false);
 	let selectedSoftware = $state<any>(null);
 
-	const breadcrumbItems = [
+	const breadcrumbItems = $derived([
 		{ label: 'Home', href: '/' },
 		{ label: 'LPARs', href: '/lpars' },
 		{ label: lpar.customers?.name || 'Customer', href: `/customers/${lpar.customer_id}` },
 		{ label: lpar.name }
-	];
+	]);
 
 	// Compatibility score color coding and context
 	const compatibilityInfo = $derived(() => {

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { PageData } from './$types';
 	import { typedSuperForm } from '#lib/utils/superforms.ts';
 	import { lparSchema } from '#lib/schemas/lpar.ts';
@@ -18,9 +19,9 @@
 	let { data }: { data: PageData } = $props();
 
 	// Check if we have a pre-selected customer
-	const hasPreselectedCustomer = !!data.preselectedCustomer;
+	const hasPreselectedCustomer = $derived(!!data.preselectedCustomer);
 
-	const breadcrumbItems = hasPreselectedCustomer
+	const breadcrumbItems = $derived(hasPreselectedCustomer
 		? [
 			{ label: 'Home', href: '/' },
 			{ label: 'Customers', href: '/customers' },
@@ -31,11 +32,11 @@
 			{ label: 'Home', href: '/' },
 			{ label: 'LPARs', href: '/lpars' },
 			{ label: 'New LPAR' }
-		];
+		]);
 
 	// Initialize Superforms (validation handled server-side)
 	const { form, errors, enhance, submitting, delayed, posted, constraints, validate } =
-		typedSuperForm(data.form, lparSchema, {
+		typedSuperForm(untrack(() => data.form), lparSchema, {
 			dataType: 'json',
 			resetForm: false,
 			onResult: ({ result }: { result: any }) => {

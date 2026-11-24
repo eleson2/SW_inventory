@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
 	import Card from '#lib/components/ui/Card.svelte';
@@ -22,7 +23,7 @@
 	];
 
 	// Initialize Superforms with client-side validation (typed helper)
-	const { form, errors, enhance, submitting, delayed, posted, constraints, validate } = typedSuperForm(data.form, vendorSchema, {
+	const { form, errors, enhance, submitting, delayed, posted, constraints, validate } = typedSuperForm(untrack(() => data.form), vendorSchema, {
 		dataType: 'json',
 		resetForm: false,
 		validationMethod: 'submit-only',

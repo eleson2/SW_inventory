@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { PageData } from './$types';
 	import type { BundleItem } from '#lib/schemas/bundle.ts';
 	import { bundleUpdateSchema } from '#lib/schemas/bundle.ts';
@@ -15,7 +16,7 @@
 	let { data }: { data: PageData } = $props();
 
 	const { form, errors, enhance, submitting, delayed, posted, message } = typedSuperForm(
-		data.form,
+		untrack(() => data.form),
 		bundleUpdateSchema,
 		{ dataType: 'json', resetForm: false }
 	);

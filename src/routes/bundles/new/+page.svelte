@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { PageData } from './$types';
 	import type { BundleItem } from '#lib/schemas/bundle.ts';
 	import { bundleSchema, nextBundleCode } from '#lib/schemas/bundle.ts';
@@ -16,7 +17,7 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const { form, errors, enhance, submitting, delayed, posted, message } = typedSuperForm(data.form, bundleSchema, {
+	const { form, errors, enhance, submitting, delayed, posted, message } = typedSuperForm(untrack(() => data.form), bundleSchema, {
 		dataType: 'json',
 		resetForm: false
 	});
@@ -52,7 +53,9 @@
 		}));
 	}
 
-	if (data.cloneFrom) cloneFrom(data.cloneFrom);
+	untrack(() => {
+		if (data.cloneFrom) cloneFrom(data.cloneFrom);
+	});
 </script>
 
 <div class="space-y-6 max-w-5xl">

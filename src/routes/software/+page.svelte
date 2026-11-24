@@ -18,10 +18,10 @@
 	// Table navigation utilities
 	const { handleSort: handleSortUtil, handlePageChange } = useTableNavigation();
 
-	const vendorFilterOptions = data.vendors.map(v => ({
+	const vendorFilterOptions = $derived(data.vendors.map(v => ({
 		value: v.id,
 		label: v.name
-	}));
+	})));
 
 	const columns = [
 		{

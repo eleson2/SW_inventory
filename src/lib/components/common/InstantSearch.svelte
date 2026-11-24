@@ -12,6 +12,7 @@
 	- Maintains compatibility with SearchFilter API
 -->
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import Button from '#lib/components/ui/Button.svelte';
@@ -39,12 +40,14 @@
 
 	// Initialize from URL on mount
 	const initialUrlParams = page.url.searchParams;
-	let searchValue = $state(initialUrlParams.get(searchParam) || '');
+	let searchValue = $state(initialUrlParams.get(untrack(() => searchParam)) || '');
 	let filterValues = $state<Record<string, string>>(
-		filters.reduce((acc, filter) => {
-			acc[filter.name] = initialUrlParams.get(filter.name) || '';
-			return acc;
-		}, {} as Record<string, string>)
+		untrack(() =>
+			filters.reduce((acc, filter) => {
+				acc[filter.name] = initialUrlParams.get(filter.name) || '';
+				return acc;
+			}, {} as Record<string, string>)
+		)
 	);
 	let searchInput: HTMLInputElement | undefined = $state();
 	let debounceTimeout: ReturnType<typeof setTimeout> | null = $state(null);

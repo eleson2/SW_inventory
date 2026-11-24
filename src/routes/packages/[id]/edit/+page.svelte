@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { PageData } from './$types';
 	import type { PackageItem } from '#lib/schemas/package.ts';
 	import { packageUpdateSchema } from '#lib/schemas/package.ts';
@@ -18,15 +19,15 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const breadcrumbItems = [
+	const breadcrumbItems = $derived([
 		{ label: 'Home', href: '/' },
 		{ label: 'Packages', href: '/packages' },
 		{ label: `${data.package.name} (${data.package.version})`, href: `/packages/${data.package.id}` },
 		{ label: 'Edit' }
-	];
+	]);
 
 	const { form, errors, enhance, submitting, delayed, posted, constraints, message } =
-		typedSuperForm(data.form, packageUpdateSchema, {
+		typedSuperForm(untrack(() => data.form), packageUpdateSchema, {
 			dataType: 'json',
 			resetForm: false
 		});

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { PageData } from './$types';
 	import { typedSuperForm } from '#lib/utils/superforms.ts';
 	import { softwareWithVersionsSchema } from '#lib/schemas/software.ts';
@@ -20,9 +21,9 @@
 	let { data }: { data: PageData } = $props();
 
 	// Check if we have a pre-selected vendor
-	const hasPreselectedVendor = !!data.preselectedVendor;
+	const hasPreselectedVendor = $derived(!!data.preselectedVendor);
 
-	const breadcrumbItems = hasPreselectedVendor
+	const breadcrumbItems = $derived(hasPreselectedVendor
 		? [
 			{ label: 'Home', href: '/' },
 			{ label: 'Vendors', href: '/vendors' },
@@ -33,11 +34,11 @@
 			{ label: 'Home', href: '/' },
 			{ label: 'Software', href: '/software' },
 			{ label: 'New Software' }
-		];
+		]);
 
 	// Initialize Superforms (validation handled server-side)
 	const { form, errors, enhance, submitting, delayed, posted, constraints, message } =
-		typedSuperForm(data.form, softwareWithVersionsSchema, {
+		typedSuperForm(untrack(() => data.form), softwareWithVersionsSchema, {
 			dataType: 'json',
 			resetForm: false,
 			onResult: ({ result }: { result: any }) => {

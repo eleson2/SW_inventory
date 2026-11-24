@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { PageData } from './$types';
 	import { typedSuperForm } from '#lib/utils/superforms.ts';
 	import { vendorUpdateSchema } from '#lib/schemas/vendor.ts';
@@ -14,14 +15,14 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const breadcrumbItems = [
+	const breadcrumbItems = $derived([
 		{ label: 'Home', href: '/' },
 		{ label: 'Vendors', href: '/vendors' },
 		{ label: data.vendor.name, href: `/vendors/${data.vendor.id}` },
 		{ label: 'Edit' }
-	];
+	]);
 
-	const { form, errors, enhance, message, constraints } = typedSuperForm(data.form, vendorUpdateSchema, {
+	const { form, errors, enhance, message, constraints } = typedSuperForm(untrack(() => data.form), vendorUpdateSchema, {
 		dataType: 'json',
 		resetForm: false,
 		// Redirect after successful submission

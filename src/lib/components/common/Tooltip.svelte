@@ -32,10 +32,9 @@
 	<div
 		onmouseenter={() => showTooltip = true}
 		onmouseleave={() => showTooltip = false}
-		onfocus={() => showTooltip = true}
-		onblur={() => showTooltip = false}
-		role="tooltip"
-		tabindex="0"
+		onfocusin={() => showTooltip = true}
+		onfocusout={() => showTooltip = false}
+		role="presentation"
 	>
 		{@render children()}
 	</div>
