@@ -3,7 +3,8 @@
  * The work on the server is done by deploy/remote.sh, which backs up the server data
  * before every change (kept in /opt/sw-inventory/backups).
  *
- *   npm run deploy                        # deploy the pushed HEAD commit (rolls back if it fails)
+ *   npm run deploy -- setup-sudo          # once: let the ssh user run the server script without a password
+ *   npm run deploy                        # deploy HEAD, which must be on origin/main (rolls back if it fails)
  *   npm run deploy -- status              # revision, service state, health check
  *   npm run deploy -- backup              # back up the server data now
  *   npm run deploy -- backups             # list server backups
@@ -14,7 +15,9 @@
  *
  * Settings in .env (see .env.example): DEPLOY_HOST (user@host, required),
  * DEPLOY_APP_DIR, DEPLOY_BACKUP_DIR, DEPLOY_SERVICE, DEPLOY_SSH_KEY.
- * The ssh user needs sudo; with a password it is asked once per command.
+ * The ssh user needs sudo. Until `setup-sudo` is done the sudo password is asked once per command
+ * (run from a real terminal); afterwards the installed /usr/local/sbin/sw-inventory-remote is used,
+ * which runs with the server's default settings (the DEPLOY_*_DIR / SERVICE values are ignored).
  */
 import { spawnSync, type SpawnSyncOptions } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -33,6 +36,7 @@ const REMOTE_ENV = {
 const SSH_OPTS = process.env.DEPLOY_SSH_KEY ? ['-i', process.env.DEPLOY_SSH_KEY] : [];
 const REMOTE_SCRIPT = '/tmp/sw-inventory-remote.sh';
 const REMOTE_EXPORT = '/tmp/sw-inventory-data.tgz';
+const INSTALLED = '/usr/local/sbin/sw-inventory-remote';
 
 const timestamp = () => new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '-');
 
@@ -50,8 +54,24 @@ const TMP = join(ROOT, 'backup');
 const rel = (path: string) => relative(ROOT, path).replace(/\\/g, '/');
 const scp = (from: string, to: string) => run('scp', [...SSH_OPTS, '-q', from, to]);
 
-/** Upload remote.sh (as LF) and run one of its commands as root. */
+/** May the ssh user run the installed script with sudo without a password? */
+let passwordless: boolean | undefined;
+function canRunInstalled() {
+	passwordless ??=
+		spawnSync('ssh', [...SSH_OPTS, '-o', 'BatchMode=yes', HOST, `sudo -n -l ${INSTALLED}`], { stdio: 'ignore' })
+			.status === 0;
+	return passwordless;
+}
+
+/** Run one of remote.sh's commands as root: the installed copy if allowed, else upload it and sudo with password. */
 function remote(...args: string[]) {
+	if (args[0] !== 'setup-sudo' && canRunInstalled()) {
+		run('ssh', [...SSH_OPTS, HOST, ['sudo', '-n', INSTALLED, ...args].join(' ')]);
+		return;
+	}
+	if (!process.stdin.isTTY) {
+		console.warn('No terminal: sudo cannot ask for a password here. Run `npm run deploy -- setup-sudo` once from a terminal.');
+	}
 	const script = readFileSync(join(ROOT, 'deploy/remote.sh'), 'utf8').replace(/\r\n/g, '\n');
 	mkdirSync(TMP, { recursive: true });
 	const local = join(TMP, `remote-${process.pid}.sh`);
@@ -76,9 +96,8 @@ async function confirm(question: string) {
 function deploy() {
 	output('git', ['fetch', '--quiet', 'origin']);
 	const sha = output('git', ['rev-parse', 'HEAD']);
-	const onRemote = output('git', ['branch', '-r', '--contains', sha]);
-	if (!onRemote) {
-		throw new Error(`HEAD ${sha.slice(0, 9)} is not on GitHub yet; the server pulls from there. Run git push first.`);
+	if (spawnSync('git', ['merge-base', '--is-ancestor', sha, 'origin/main'], { cwd: ROOT }).status !== 0) {
+		throw new Error(`HEAD ${sha.slice(0, 9)} is not on GitHub's main yet; the server deploys only from there. Push (or merge) first.`);
 	}
 	if (output('git', ['status', '--porcelain', '--untracked-files=no'])) {
 		console.warn('Note: you have uncommitted changes; they are NOT deployed (only the commit below).');
@@ -138,6 +157,7 @@ try {
 	if (!HOST) throw new Error('Set DEPLOY_HOST=user@your-server in .env (see .env.example)');
 	switch (command) {
 		case 'deploy': deploy(); break;
+		case 'setup-sudo': remote('setup-sudo'); break;
 		case 'status': remote('status'); break;
 		case 'backup': remote('backup', 'manual'); break;
 		case 'backups': remote('backups'); break;

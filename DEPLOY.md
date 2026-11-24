@@ -179,6 +179,18 @@ Add to the PC's `.env`:
 DEPLOY_HOST=ubuntu@demo.yourdomain.com
 ```
 
+**Optional, once: no sudo password.** From a terminal on the PC:
+
+```
+npm run deploy -- setup-sudo
+```
+
+This installs the server script as `/usr/local/sbin/sw-inventory-remote` (owned by root, refreshed
+from git on every deploy) and a sudoers rule letting the ssh user run only that script without a
+password. Afterwards the commands below need no password, also from scripts and Claude Code.
+Anyone with that ssh login can then deploy commits from `origin/main` and replace or restore the
+data, but gets no other root access. Undo: `sudo rm /etc/sudoers.d/sw-inventory-deploy /usr/local/sbin/sw-inventory-remote`.
+
 | Task | Command |
 |---|---|
 | Deploy the current commit | `git push`, then `npm run deploy` |
@@ -195,7 +207,7 @@ data is saved in `/opt/sw-inventory/backups/<time>-<reason>/` (JSON export, a co
 SQLite file, and the git revision). The newest 30 are kept.
 
 What `npm run deploy` does (`deploy/remote.sh` on the server):
-1. Refuses if the commit isn't on GitHub yet (the server pulls from there); uncommitted
+1. Refuses if the commit isn't on GitHub's `main` yet (the server pulls from there); uncommitted
    local changes are not deployed.
 2. Backs up the data, checks out exactly that commit, `npm ci`, `db:generate`, `build`.
 3. Stops the service, `db:push` (schema changes), starts it, checks `/login` answers 200.
