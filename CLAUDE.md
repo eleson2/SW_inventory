@@ -30,6 +30,12 @@ npm run db:export                                 # Dump all tables to backup/*.
 npm run db:import [-- --replace]                  # Load backup/*.json into the current database
 npm run check:portable                            # Fail on raw SQL / Postgres-only Prisma options in src/
 
+# Demo server (DEPLOY_HOST in .env; server side is deploy/remote.sh, see DEPLOY.md part 2)
+npm run deploy                                    # deploy pushed HEAD; backs up server data, rolls back on failure
+npm run deploy -- data:pull [--load]              # server data -> backup/server-<time>/ (--load: into local DB)
+npm run deploy -- data:push [--dir <export>]      # replace server data (server backed up first)
+npm run deploy -- status | backup | backups | restore <name>
+
 # Vendor bundles (fetch from vendor sites into bundles/<LEVEL>.csv, then import on /import)
 npm run bundles:fetch -- ibm RSU2510                      # IBM CST/RSU report (public)
 npm run bundles:fetch -- broadcom CARS2510 --products AL2121,CCS150

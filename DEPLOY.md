@@ -169,10 +169,47 @@ only for quick tests.
 
 ---
 
-## Part 2 – Updating to a new version
+## Part 2 – Updating and moving data (automated, from the PC)
+
+Once Part 1 is done, everything below runs **(PC)** in the project folder. It needs ssh access
+with a user that has `sudo` (key login recommended; a sudo password is asked once per command).
+Add to the PC's `.env`:
+
+```
+DEPLOY_HOST=ubuntu@demo.yourdomain.com
+```
+
+| Task | Command |
+|---|---|
+| Deploy the current commit | `git push`, then `npm run deploy` |
+| Server status + health check | `npm run deploy -- status` |
+| Copy server data to the PC | `npm run deploy -- data:pull` (saved in `backup/server-<time>/`) |
+| ...and load it into the local DB | `npm run deploy -- data:pull --load` |
+| Replace server data with local data | `npm run deploy -- data:push` (asks for confirmation) |
+| Push an earlier export | `npm run deploy -- data:push --dir backup/server-20261124-101500` |
+| Back up server data now | `npm run deploy -- backup` |
+| List / restore server backups | `npm run deploy -- backups`, `npm run deploy -- restore <name>` |
+
+**Server data is never lost silently.** Before every deploy, push and restore the server's
+data is saved in `/opt/sw-inventory/backups/<time>-<reason>/` (JSON export, a copy of the
+SQLite file, and the git revision). The newest 30 are kept.
+
+What `npm run deploy` does (`deploy/remote.sh` on the server):
+1. Refuses if the commit isn't on GitHub yet (the server pulls from there); uncommitted
+   local changes are not deployed.
+2. Backs up the data, checks out exactly that commit, `npm ci`, `db:generate`, `build`.
+3. Stops the service, `db:push` (schema changes), starts it, checks `/login` answers 200.
+4. If any step fails it goes back to the previous commit, rebuilds and restarts.
+   `db:push` refuses changes that would lose data, so the deploy fails instead.
+
+Data moves as `db:export` JSON, so the PC may use PostgreSQL and the server SQLite.
+Deploy the code before pushing data from a newer schema.
+
+### Manual update (if the script can't be used)
 
 ```bash
 cd /opt/sw-inventory/app
+sudo -u swinv npm run db:export -- --dir /opt/sw-inventory/backups/manual-$(date +%F)
 sudo -u swinv git pull
 sudo -u swinv npm ci --include=dev
 sudo -u swinv npm run db:generate

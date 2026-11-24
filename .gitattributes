@@ -1,2 +1,5 @@
 # Parser fixtures are text extracted from vendor PDFs; keep LF so tests see the same text everywhere
 scripts/fetch-bundles/__fixtures__/*.txt text eol=lf
+
+# Runs on the Linux server
+*.sh text eol=lf
