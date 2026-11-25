@@ -196,6 +196,9 @@ The system follows this entity relationship:
 - C1 `/reports/customer-statement`: customer-facing print layout, one statement per customer (page
   break), reuses `getInstalledMatrix()`; "Changes since" (`?since=`) from `lpar_software` install /
   rollback dates (`getStatementChanges()`). No rollback reasons or internal notes on it.
+- L1 `/reports/end-of-support`: installed product x release with its end-of-support date (latest date of
+  any PTF level of the release), out of support red, ending within `EOS_WARNING_MONTHS` (12) amber;
+  logic in `src/lib/utils/end-of-support.ts`, CSV one row per release x LPAR.
 - Report-specific URL params survive Apply via `<ReportFilters keep={['since']}>`. CSV via
   `toCsv()` / `csvDownload()` in `src/lib/utils/csv.ts`.
 - End of support is per release: setting it (Add version page, bundle CSV `end_of_support` column)

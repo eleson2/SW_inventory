@@ -5,6 +5,7 @@ import { db } from './db.ts';
 import { sameVersion } from '#lib/utils/version-parser.ts';
 import { buildInstalledMatrix, type InstalledMatrix } from '#lib/utils/installed-matrix.ts';
 import { buildVendorBase, type VendorBase } from '#lib/utils/vendor-base.ts';
+import { buildEosReport, type EosReport } from '#lib/utils/end-of-support.ts';
 import { lparWhere, softwareWhere, type ReportScope } from './report-scope.ts';
 
 export type SoftwareByCustomerRow = {
@@ -286,4 +287,43 @@ export async function getStatementChanges(lparIds: string[], softwareIds: string
 			};
 		})
 		.sort((a, b) => b.date.getTime() - a.date.getTime());
+}
+
+/** Report L1: installed releases with their end-of-support date. */
+export async function getEndOfSupport(scope: ReportScope): Promise<EosReport> {
+	const [lpars, software] = await Promise.all([
+		db.lpars.findMany({
+			where: lparWhere(scope),
+			select: { id: true, code: true, customers: { select: { id: true, code: true, name: true } } }
+		}),
+		db.software.findMany({
+			where: softwareWhere(scope),
+			select: {
+				id: true,
+				name: true,
+				product_code: true,
+				vendors: { select: { id: true, code: true, name: true } },
+				current_version: { select: { version: true } },
+				versions: { select: { version: true, vendor_version: true, end_of_support: true } }
+			}
+		})
+	]);
+	const installs = await db.lpar_software.findMany({
+		where: { lpar_id: { in: lpars.map((l) => l.id) }, software_id: { in: software.map((s) => s.id) } },
+		select: { lpar_id: true, software_id: true, current_version: true, current_ptf_level: true }
+	});
+	return buildEosReport({
+		lpars: lpars.map((l) => ({ id: l.id, code: l.code, customer: l.customers })),
+		software: software.map(({ vendors, current_version, ...s }) => ({
+			...s,
+			vendor: vendors,
+			current_version: current_version?.version ?? null
+		})),
+		installs: installs.map((i) => ({
+			lpar_id: i.lpar_id,
+			software_id: i.software_id,
+			version: i.current_version,
+			ptf_level: i.current_ptf_level
+		}))
+	});
 }
