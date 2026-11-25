@@ -6,6 +6,16 @@ import { sameVersion } from '#lib/utils/version-parser.ts';
 import { buildInstalledMatrix, type InstalledMatrix } from '#lib/utils/installed-matrix.ts';
 import { buildVendorBase, type VendorBase } from '#lib/utils/vendor-base.ts';
 import { buildEosReport, type EosReport } from '#lib/utils/end-of-support.ts';
+import { buildMaintenanceLevels, type MaintenanceLevels } from '#lib/utils/maintenance-level.ts';
+import {
+	auditRollback,
+	buildOpenRollbacks,
+	buildQuality,
+	mergeRollbackEvents,
+	type OpenRollback,
+	type QualityReport,
+	type RollbackEvent
+} from '#lib/utils/rollbacks.ts';
 import { lparWhere, softwareWhere, type ReportScope } from './report-scope.ts';
 
 export type SoftwareByCustomerRow = {
@@ -326,4 +336,131 @@ export async function getEndOfSupport(scope: ReportScope): Promise<EosReport> {
 			ptf_level: i.current_ptf_level
 		}))
 	});
+}
+
+/** LPARs and software in scope, in the shape the rollback and level reports use. */
+async function scopeEntities(scope: ReportScope) {
+	const [lpars, software] = await Promise.all([
+		db.lpars.findMany({
+			where: lparWhere(scope),
+			select: { id: true, code: true, name: true, customers: { select: { id: true, code: true, name: true } } }
+		}),
+		db.software.findMany({
+			where: softwareWhere(scope),
+			select: { id: true, name: true, vendors: { select: { id: true, code: true, name: true } } }
+		})
+	]);
+	return {
+		lpars: lpars.map(({ customers, ...l }) => ({ ...l, customer: customers })),
+		software: software.map(({ vendors, ...s }) => ({ ...s, vendor: vendors }))
+	};
+}
+
+/** Report L4: per LPAR and vendor, the newest vendor level every product reaches. */
+export async function getMaintenanceLevels(scope: ReportScope): Promise<MaintenanceLevels> {
+	const { lpars, software } = await scopeEntities(scope);
+	const softwareIds = software.map((s) => s.id);
+	const vendorIds = [...new Set(software.map((s) => s.vendor.id))];
+	const [bundles, installs] = await Promise.all([
+		db.vendor_bundles.findMany({
+			where: { active: true, vendor_id: { in: vendorIds } },
+			select: {
+				id: true,
+				vendor_id: true,
+				code: true,
+				release_date: true,
+				items: {
+					where: { software_id: { in: softwareIds } },
+					select: {
+						software_id: true,
+						software_version: { select: { version: true, vendor_version: true, ptf_level: true } }
+					}
+				}
+			}
+		}),
+		db.lpar_software.findMany({
+			where: { lpar_id: { in: lpars.map((l) => l.id) }, software_id: { in: softwareIds } },
+			select: { lpar_id: true, software_id: true, current_version: true, current_ptf_level: true }
+		})
+	]);
+	const vendors = new Map(software.map((s) => [s.vendor.id, s.vendor]));
+	return buildMaintenanceLevels({
+		vendors: [...vendors.values()],
+		lpars,
+		software: software.map((s) => ({ id: s.id, name: s.name, vendor_id: s.vendor.id })),
+		bundles: bundles.map((b) => ({
+			...b,
+			items: b.items.map((i) => ({ software_id: i.software_id, ...i.software_version }))
+		})),
+		installs: installs.map((i) => ({
+			lpar_id: i.lpar_id,
+			software_id: i.software_id,
+			version: i.current_version,
+			ptf_level: i.current_ptf_level
+		}))
+	});
+}
+
+/** Report V4: rollbacks per product between two dates (audit log, plus install records without one). */
+export async function getQuality(scope: ReportScope, from: Date, to: Date): Promise<QualityReport> {
+	const { lpars, software } = await scopeEntities(scope);
+	const lparIds = lpars.map((l) => l.id);
+	const softwareIds = software.map((s) => s.id);
+	const [audit, installs] = await Promise.all([
+		db.audit_log.findMany({
+			where: { action: 'rollback', entity_type: 'lpar_software', entity_id: { in: lparIds }, timestamp: { gte: from, lt: to } },
+			select: { entity_id: true, timestamp: true, changes: true }
+		}),
+		db.lpar_software.findMany({
+			where: { lpar_id: { in: lparIds }, software_id: { in: softwareIds }, rolled_back_at: { gte: from, lt: to } },
+			select: {
+				lpar_id: true,
+				software_id: true,
+				rolled_back_at: true,
+				rollback_reason: true,
+				current_version: true,
+				current_ptf_level: true,
+				previous_version: true,
+				previous_ptf_level: true
+			}
+		})
+	]);
+	const events = mergeRollbackEvents(
+		audit.map(auditRollback).filter((e): e is RollbackEvent => e !== null),
+		installs.map((i) => ({
+			lpar_id: i.lpar_id,
+			software_id: i.software_id,
+			at: i.rolled_back_at!,
+			// After a rollback, previous = the version rolled back from, current = the one restored
+			from_version: i.previous_version,
+			from_ptf: i.previous_ptf_level,
+			to_version: i.current_version,
+			to_ptf: i.current_ptf_level,
+			reason: i.rollback_reason
+		}))
+	);
+	return buildQuality({ lpars, software, events });
+}
+
+/** Report L5: installs still rolled back (not reapplied by a later deploy). */
+export async function getOpenRollbacks(scope: ReportScope): Promise<OpenRollback[]> {
+	const { lpars, software } = await scopeEntities(scope);
+	const installs = await db.lpar_software.findMany({
+		where: {
+			rolled_back: true,
+			lpar_id: { in: lpars.map((l) => l.id) },
+			software_id: { in: software.map((s) => s.id) }
+		},
+		select: {
+			lpar_id: true,
+			software_id: true,
+			current_version: true,
+			current_ptf_level: true,
+			previous_version: true,
+			previous_ptf_level: true,
+			rolled_back_at: true,
+			rollback_reason: true
+		}
+	});
+	return buildOpenRollbacks({ lpars, software, installs });
 }

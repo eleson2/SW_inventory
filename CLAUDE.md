@@ -202,6 +202,12 @@ The system follows this entity relationship:
 - L2 `/reports/package-compliance`: one row per LPAR summarising R1 (`buildCompliance()` in
   `src/lib/utils/package-compliance.ts`). Compliance = match / (package items + installed outside the
   package): software outside the package counts against it. LPARs without a package have no %.
+- L4 `/reports/maintenance-level`: per LPAR x vendor the newest vendor bundle (RSU/CARS) every product of
+  that vendor on the LPAR reaches (`reachesLevel()`: same release, else the bundle's highest), aged
+  green < 6 months, amber <= 12, red older; logic in `src/lib/utils/maintenance-level.ts`.
+- V4 `/reports/quality` (`?from=&to=`, default last 12 months) and L5 `/reports/open-rollbacks` (flagged
+  after 30 days): logic in `src/lib/utils/rollbacks.ts`. V4 counts every rollback from `audit_log`
+  (action `rollback`, `changes.software_id`), plus `lpar_software.rolled_back_at` rows without an audit entry.
 - Report-specific URL params survive Apply via `<ReportFilters keep={['since']}>`. CSV via
   `toCsv()` / `csvDownload()` in `src/lib/utils/csv.ts`.
 - End of support is per release: setting it (Add version page, bundle CSV `end_of_support` column)

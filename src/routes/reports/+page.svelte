@@ -20,14 +20,14 @@
 				{ id: 'L1', name: 'End-of-support horizon', text: 'Installed releases by end-of-support date; within 12 months highlighted', href: '/reports/end-of-support' },
 				{ id: 'L2', name: 'Package compliance', text: 'Per LPAR: matching, behind, ahead, outside and missing vs its package, with %', href: '/reports/package-compliance' },
 				{ id: 'L3', name: 'Rollout progress', text: 'Per package: LPARs done, partly done, not started' },
-				{ id: 'L4', name: 'Maintenance level per LPAR', text: 'RSU/CARS level per LPAR and vendor, and its age' },
-				{ id: 'L5', name: 'Open rollbacks', text: 'Rolled-back items not reapplied' }
+				{ id: 'L4', name: 'Maintenance level per LPAR', text: 'RSU/CARS level per LPAR and vendor, and its age', href: '/reports/maintenance-level' },
+				{ id: 'L5', name: 'Open rollbacks', text: 'Rolled-back items not reapplied, oldest first', href: '/reports/open-rollbacks' }
 			]
 		},
 		{
 			title: 'Vendors',
 			reports: [
-				{ id: 'V4', name: 'Quality record', text: 'Rollbacks per vendor and product' },
+				{ id: 'V4', name: 'Quality record', text: 'Rollbacks per vendor and product in a chosen period', href: '/reports/quality' },
 				{ id: 'V5', name: 'Support-date exposure', text: 'Installed releases near or past end of support' },
 				{ id: 'V6', name: 'Maintenance uptake', text: 'CARS/RSU levels adopted vs published' }
 			]
