@@ -13,6 +13,7 @@
 #   remote.sh backups               list backups
 #   remote.sh restore <name>        back up, then replace all data with backup <name>
 #   remote.sh status                revision, service state, health
+#   remote.sh logs [hours]          the app's log for the last <hours> (default 24, max 720); read-only
 #
 # Settings (environment, ignored by the password-less sudo): APP_DIR, BACKUP_ROOT, SERVICE, KEEP_BACKUPS
 set -euo pipefail
@@ -188,6 +189,12 @@ cmd_setup_sudo() {
 	echo "Undo: sudo rm $SUDOERS $INSTALLED"
 }
 
+cmd_logs() {
+	local hours=${1:-24}
+	[[ $hours =~ ^[0-9]+$ ]] && (( hours >= 1 && hours <= 720 )) || { echo "logs: hours must be 1-720" >&2; exit 1; }
+	journalctl -u "$SERVICE" --since "-${hours}h" --no-pager -o short-iso
+}
+
 cmd_status() {
 	echo "Revision: $(as_app 'git log -1 --format="%h %ad %s" --date=short')"
 	echo "Service:  $(systemctl is-active "$SERVICE" || true)"
@@ -205,5 +212,6 @@ case $cmd in
 	backups) cmd_backups ;;
 	restore) cmd_restore "$@" ;;
 	status) cmd_status ;;
+	logs) cmd_logs "$@" ;;
 	*) sed -n '2,19p' "$0"; exit 1 ;;
 esac

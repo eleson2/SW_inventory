@@ -6,6 +6,7 @@
  *   npm run deploy -- setup-sudo          # once: let the ssh user run the server script without a password
  *   npm run deploy                        # deploy HEAD, which must be on origin/main (rolls back if it fails)
  *   npm run deploy -- status              # revision, service state, health check
+ *   npm run deploy -- logs [hours]        # the app's server log (default last 24 h)
  *   npm run deploy -- backup              # back up the server data now
  *   npm run deploy -- backups             # list server backups
  *   npm run deploy -- restore <name>      # put a server backup back
@@ -159,6 +160,12 @@ try {
 		case 'deploy': deploy(); break;
 		case 'setup-sudo': remote('setup-sudo'); break;
 		case 'status': remote('status'); break;
+		case 'logs': {
+			const hours = rest[0] ?? '24';
+			if (!/^\d{1,3}$/.test(hours)) throw new Error('Usage: npm run deploy -- logs [hours]');
+			remote('logs', hours);
+			break;
+		}
 		case 'backup': remote('backup', 'manual'); break;
 		case 'backups': remote('backups'); break;
 		case 'restore': {

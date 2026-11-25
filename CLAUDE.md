@@ -34,7 +34,7 @@ npm run check:portable                            # Fail on raw SQL / Postgres-o
 npm run deploy                                    # deploy pushed HEAD; backs up server data, rolls back on failure
 npm run deploy -- data:pull [--load]              # server data -> backup/server-<time>/ (--load: into local DB)
 npm run deploy -- data:push [--dir <export>]      # replace server data (server backed up first)
-npm run deploy -- status | backup | backups | restore <name>
+npm run deploy -- status | logs [hours] | backup | backups | restore <name>
 npm run deploy -- setup-sudo                      # once, from a terminal: password-less sudo for the server script
 
 # Vendor bundles (fetch from vendor sites into bundles/<LEVEL>.csv, then import on /import)
