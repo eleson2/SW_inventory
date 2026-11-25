@@ -14,6 +14,11 @@ export const load: PageServerLoad = async ({ url }) => {
 	const pageData = await createPageLoader({
 		model: db.lpars,
 		dataKey: 'lpars',
+		sortMap: {
+			customer: (dir) => ({ customers: { name: dir } }),
+			currentPackage: (dir) => ({ packages: { code: dir } }),
+			lpar_software: (dir) => ({ lpar_software: { _count: dir } })
+		},
 		include: {
 			customers: {
 				select: {

@@ -14,6 +14,10 @@ export const load: PageServerLoad = async ({ url }) => {
 	const pageData = await createPageLoader({
 		model: db.software,
 		dataKey: 'software',
+		sortMap: {
+			vendor: (dir) => ({ vendors: { name: dir } }),
+			currentVersion: (dir) => ({ current_version: { version: dir } })
+		},
 		include: {
 			vendors: {
 				select: {

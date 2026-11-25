@@ -7,6 +7,9 @@ export const load: PageServerLoad = async ({ url }) => {
 	return createPageLoader({
 		model: db.packages,
 		dataKey: 'packages',
+		sortMap: {
+			package_items: (dir) => ({ package_items: { _count: dir } })
+		},
 		defaultSortField: 'release_date',
 		defaultSortDirection: 'desc',
 		include: {

@@ -25,6 +25,11 @@ export interface PageLoaderOptions<T = any, K extends string = string> {
 	filterBuilder?: (url: URL) => Record<string, any>;
 	/** Custom search builder for complex searches (e.g., searching relations) */
 	searchBuilder?: (searchTerm: string) => Record<string, any>;
+	/**
+	 * Column keys that are not scalar fields of the model (relations, counts), mapped to a
+	 * Prisma orderBy, e.g. `{ customer: (dir) => ({ customers: { name: dir } }) }`.
+	 */
+	sortMap?: Record<string, (direction: 'asc' | 'desc') => Record<string, any>>;
 }
 
 /**
@@ -69,15 +74,24 @@ export function createPageLoader<T = any, K extends string = string>(options: Pa
 		include,
 		dataKey,
 		filterBuilder,
-		searchBuilder
+		searchBuilder,
+		sortMap = {}
 	} = options;
 
 	return async (url: URL) => {
 		// Parse query parameters
 		const page = parseInt(url.searchParams.get('page') || '1');
 		const pageSize = parseInt(url.searchParams.get('pageSize') || String(defaultPageSize));
-		const sortField = url.searchParams.get('sort') || defaultSortField;
-		const sortDirection = (url.searchParams.get('direction') || defaultSortDirection) as 'asc' | 'desc';
+		const requestedSort = url.searchParams.get('sort') || defaultSortField;
+		const requestedDirection = url.searchParams.get('direction');
+		const sortDirection: 'asc' | 'desc' =
+			requestedDirection === 'asc' || requestedDirection === 'desc' ? requestedDirection : defaultSortDirection;
+		// Only sort on a mapped key or a scalar field of the model; anything else (a display-only
+		// column key, a hand-edited URL) would make Prisma throw, so fall back to the default.
+		const sortField = requestedSort in sortMap || isScalarField(model, requestedSort)
+			? requestedSort
+			: defaultSortField;
+		const orderBy = sortField in sortMap ? sortMap[sortField](sortDirection) : { [sortField]: sortDirection };
 		const search = url.searchParams.get('search') || '';
 
 		// Build where clause
@@ -115,7 +129,7 @@ export function createPageLoader<T = any, K extends string = string>(options: Pa
 			page,
 			pageSize,
 			where,
-			{ [sortField]: sortDirection },
+			orderBy,
 			include
 		);
 
@@ -127,4 +141,9 @@ export function createPageLoader<T = any, K extends string = string>(options: Pa
 		// Computed keys widen to string; restore the literal data key for the page's types
 		return { [dataKey]: data, sort } as { [P in K]: PaginatedData } & { sort: SortOptions };
 	};
+}
+
+/** True when `field` is a scalar field of the Prisma model delegate (`delegate.fields`). */
+function isScalarField(model: any, field: string): boolean {
+	return Boolean(model?.fields && Object.prototype.hasOwnProperty.call(model.fields, field));
 }
