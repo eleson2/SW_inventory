@@ -1,13 +1,14 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '#lib/server/db.ts';
+import { transactionTimeouts } from '#lib/server/db-dialect.ts';
 import { z } from 'zod';
 
 const versionSchema = z.object({
 	version: z.string().min(1, 'Version is required').max(50),
 	ptf_level: z.string().max(50),
 	release_date: z.coerce.date(),
-	end_of_support: z.coerce.date().optional().nullable(),
+	end_of_support: z.coerce.date().optional(),
 	release_notes: z.string().max(1000)
 });
 
@@ -42,7 +43,7 @@ export const actions: Actions = {
 			version: formData.get('version'),
 			ptf_level: formData.get('ptf_level') || '',
 			release_date: formData.get('release_date'),
-			end_of_support: formData.get('end_of_support') || null,
+			end_of_support: formData.get('end_of_support') || undefined,
 			release_notes: formData.get('release_notes') || ''
 		};
 
@@ -68,7 +69,7 @@ export const actions: Actions = {
 
 		try {
 			// Create new version in transaction
-			await db.$transaction(async (tx) => {
+			const endOfSupport = await db.$transaction(async (tx) => {
 				// Mark all existing versions as not current
 				await tx.software_versions.updateMany({
 					where: {
@@ -80,6 +81,24 @@ export const actions: Actions = {
 					}
 				});
 
+				// Support ends per release: a new PTF level inherits the release's date, and a
+				// date given here applies to every PTF level of the release
+				const endOfSupport =
+					result.data.end_of_support ??
+					(
+						await tx.software_versions.findFirst({
+							where: { software_id: params.id, version: result.data.version, end_of_support: { not: null } },
+							select: { end_of_support: true }
+						})
+					)?.end_of_support ??
+					null;
+				if (result.data.end_of_support) {
+					await tx.software_versions.updateMany({
+						where: { software_id: params.id, version: result.data.version },
+						data: { end_of_support: result.data.end_of_support }
+					});
+				}
+
 				// Create new version
 				const newVersion = await tx.software_versions.create({
 					data: {
@@ -87,7 +106,7 @@ export const actions: Actions = {
 						version: result.data.version,
 						ptf_level: result.data.ptf_level || null,
 						release_date: result.data.release_date,
-						end_of_support: result.data.end_of_support || null,
+						end_of_support: endOfSupport,
 						release_notes: result.data.release_notes || null,
 						is_current: true
 					}
@@ -101,17 +120,15 @@ export const actions: Actions = {
 					}
 				});
 
-				// Audit log
-				await createAuditLog(
-					'software',
-					params.id,
-					'version_update',
-					{
-						new_version: result.data.version,
-						new_ptf_level: result.data.ptf_level,
-						release_notes: result.data.release_notes
-					}
-				);
+				return endOfSupport;
+			}, transactionTimeouts());
+
+			// After the commit: createAuditLog uses its own connection, and SQLite allows one writer
+			await createAuditLog('software', params.id, 'version_update', {
+				new_version: result.data.version,
+				new_ptf_level: result.data.ptf_level,
+				end_of_support: endOfSupport,
+				release_notes: result.data.release_notes
 			});
 		} catch (err) {
 			console.error('Error creating version:', err);

@@ -93,7 +93,7 @@ describe('common helpers', () => {
 			}
 		]);
 		expect(csv.split('\r\n')[1]).toBe(
-			'IBM,RSU2510,IBM CST RSU2510,RSU,2025-11-07,CICSTS,CICS TS,6.1,RSU2510,"a, ""quoted"" note",'
+			'IBM,RSU2510,IBM CST RSU2510,RSU,2025-11-07,CICSTS,CICS TS,6.1,RSU2510,"a, ""quoted"" note",,' // empty source_url and end_of_support
 		);
 	});
 });

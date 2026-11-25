@@ -31,6 +31,7 @@ const csvRow = (overrides: Record<string, string>) => ({
 	ptf_level: 'RSU2510',
 	notes: '',
 	source_url: '',
+	end_of_support: '',
 	...overrides
 });
 
@@ -203,6 +204,23 @@ describe('Vendor bundles', () => {
 		expect(saved.versionsCreated).toBe(0);
 		const item = await testDb.vendor_bundle_items.findFirstOrThrow({ where: { bundle_id: saved.id } });
 		expect(item.software_version_id).toBe(data.versions.cicsVersion.id);
+	});
+
+	it('sets end_of_support on every PTF level of the release', async () => {
+		const { cics } = data.software; // has V5R6M0 / PTF12345
+		const result = await importBundleRows([
+			csvRow({ product_name: cics.name, version: '5.6', end_of_support: '2030-09-30' }),
+			csvRow({ product_name: cics.name, version: '5.5', ptf_level: 'RSU2510', end_of_support: 'not a date' })
+		]);
+		expect(result.supportDatesSet).toBe(1);
+		expect(result.errors).toEqual([expect.stringContaining('unreadable end_of_support')]);
+		const v56 = await testDb.software_versions.findMany({ where: { software_id: cics.id, version: 'V5R6M0' } });
+		expect(v56.length).toBeGreaterThan(1); // the seeded PTF12345 and the new RSU2510 level
+		for (const v of v56) expect(v.end_of_support?.toISOString().slice(0, 10)).toBe('2030-09-30');
+
+		// Importing the same date again changes nothing
+		const again = await importBundleRows([csvRow({ product_name: cics.name, version: '5.6', end_of_support: '2030-09-30' })]);
+		expect(again.supportDatesSet).toBe(0);
 	});
 
 	it('builds a package from two bundles and keeps the source bundle', async () => {

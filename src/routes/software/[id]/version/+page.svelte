@@ -12,6 +12,7 @@
 		version: '',
 		ptf_level: '',
 		release_date: new Date().toISOString().split('T')[0],
+		end_of_support: '',
 		release_notes: ''
 	});
 </script>
@@ -74,6 +75,16 @@
 				required
 				helperText="When this version was released"
 				error={form?.errors?.release_date?.[0]}
+			/>
+
+			<FormField
+				label="End of Support"
+				id="end_of_support"
+				name="end_of_support"
+				type="date"
+				bind:value={formData.end_of_support}
+				helperText="Optional - when the vendor ends support for this release (applies to all its PTF levels)"
+				error={form?.errors?.end_of_support?.[0]}
 			/>
 
 			<FormTextarea

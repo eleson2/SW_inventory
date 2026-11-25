@@ -229,6 +229,8 @@ export interface BundleImportResult {
 	carriedForward: number;
 	/** Products in the file that were not in the inventory and have been added */
 	softwareCreated: string[];
+	/** Releases whose end-of-support date was set from the end_of_support column */
+	supportDatesSet: number;
 	skippedProducts: string[];
 	errors: string[];
 }
@@ -282,6 +284,7 @@ export async function importBundleRows(rows: BundleCsvRow[]): Promise<BundleImpo
 		versionsCreated: 0,
 		carriedForward: 0,
 		softwareCreated: [],
+		supportDatesSet: 0,
 		skippedProducts: [],
 		errors: []
 	};
@@ -377,6 +380,8 @@ export async function importBundleRows(rows: BundleCsvRow[]): Promise<BundleImpo
 		// Every release the vendor lists becomes an item, written in the inventory's notation
 		// ("6.1" -> "V6R1M0", "12" -> "V12R1M0") so a release is not stored under two spellings
 		const items: BundleItem[] = [];
+		/** End of support per release (software_id|version), applied after the save */
+		const supportEnds = new Map<string, { software_id: string; version: string; date: Date }>();
 		for (const { software, rows: softwareRows } of candidates.values()) {
 			const known = software.versions.map((v) => v.version);
 			const seen = new Map<string, string>();
@@ -396,6 +401,11 @@ export async function importBundleRows(rows: BundleCsvRow[]): Promise<BundleImpo
 					continue;
 				}
 				seen.set(key, row.version);
+				if (row.end_of_support) {
+					const date = parseDate(row.end_of_support);
+					if (date) supportEnds.set(`${software.id}|${version}`, { software_id: software.id, version, date });
+					else result.errors.push(`${bundleCode}: ${software.name} ${row.version}: unreadable end_of_support "${row.end_of_support}"`);
+				}
 				items.push({
 					software_id: software.id,
 					new_version: version,
@@ -458,6 +468,20 @@ export async function importBundleRows(rows: BundleCsvRow[]): Promise<BundleImpo
 				existing?.id
 			);
 			result.versionsCreated += saved.versionsCreated;
+			// Support ends per release, so the date goes on every PTF level of that release
+			for (const { software_id, version, date } of supportEnds.values()) {
+				const { count } = await db.software_versions.updateMany({
+					where: { software_id, version, OR: [{ end_of_support: null }, { end_of_support: { not: date } }] },
+					data: { end_of_support: date }
+				});
+				if (count > 0) {
+					result.supportDatesSet++;
+					await createAuditLog('software', software_id, 'update', {
+						end_of_support: { version, date: date.toISOString().slice(0, 10) },
+						source: `bundle import ${bundleCode}`
+					});
+				}
+			}
 			// Newly added products: their highest release in this level becomes the current version
 			for (const created of createdHere) {
 				const releases = await db.vendor_bundle_items.findMany({
@@ -483,7 +507,8 @@ export async function importBundleRows(rows: BundleCsvRow[]): Promise<BundleImpo
 	result.message =
 		`Bundles: ${created} created, ${updated} updated. ${result.softwareCreated.length} new software product(s), ` +
 		`${result.versionsCreated} new version(s), ${result.carriedForward} unchanged product(s) carried over ` +
-		`from the previous level. ${skipped} row(s) skipped.`;
+		`from the previous level. ${skipped} row(s) skipped.` +
+		(result.supportDatesSet ? ` End of support set for ${result.supportDatesSet} release(s).` : '');
 	return result;
 }
 

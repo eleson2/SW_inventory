@@ -89,7 +89,11 @@ export const BUNDLE_CSV_COLUMNS = [
 	'version',
 	'ptf_level',
 	'notes',
-	'source_url' // optional
+	'source_url', // optional
+	'end_of_support' // optional: end of support of the release (all its PTF levels), YYYY-MM-DD
 ] as const;
 
-export type BundleCsvRow = Record<(typeof BUNDLE_CSV_COLUMNS)[number], string>;
+/** Optional columns: fetchers may leave them out */
+type OptionalBundleColumn = 'end_of_support';
+export type BundleCsvRow = Record<Exclude<(typeof BUNDLE_CSV_COLUMNS)[number], OptionalBundleColumn>, string> &
+	Partial<Record<OptionalBundleColumn, string>>;
