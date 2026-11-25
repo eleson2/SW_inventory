@@ -147,7 +147,9 @@ export const actions: Actions = {
 					{
 						...software,
 						versions_count: form.data.versions?.length || 0
-					}
+					},
+					undefined,
+					tx
 				);
 
 				return software;

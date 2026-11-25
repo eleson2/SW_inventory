@@ -91,9 +91,12 @@ export async function createAuditLog(
 	entityId: string,
 	action: 'create' | 'update' | 'delete' | 'rollback' | 'version_update',
 	changes: Record<string, any>,
-	userId?: string
+	userId?: string,
+	/** Pass the transaction client when called inside db.$transaction: SQLite has one writer,
+	 * so a write on the main connection would wait for the transaction until it times out. */
+	client: Pick<typeof db, 'audit_log'> = db
 ) {
-	return db.audit_log.create({
+	return client.audit_log.create({
 		data: {
 			entity_type: entityType,
 			entity_id: entityId,

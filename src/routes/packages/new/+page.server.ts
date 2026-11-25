@@ -145,7 +145,9 @@ export const actions: Actions = {
 					{
 						...pkg,
 						items_count: form.data.items?.length || 0
-					}
+					},
+					undefined,
+					tx
 				);
 
 				return pkg;

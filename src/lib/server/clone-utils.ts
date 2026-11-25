@@ -78,7 +78,7 @@ export async function cloneSoftware(
 			newName,
 			versionsCloned: cloneVersions ? (source.versions?.length || 0) : 0,
 			...cloned
-		}, userId);
+		}, userId, tx);
 
 		return cloned;
 	});

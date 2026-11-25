@@ -190,7 +190,9 @@ export const actions: Actions = {
 							...validated,
 							items_count: validated.items?.length || 0
 						}
-					}
+					},
+					undefined,
+					tx
 				);
 			});
 		} catch (err) {
