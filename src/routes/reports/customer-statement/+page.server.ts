@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import { getInstalledMatrix, getStatementChanges } from '#lib/server/reports.ts';
+import { getEndOfSupport, getInstalledMatrix, getStatementChanges } from '#lib/server/reports.ts';
 import { loadFilterOptions, readScope } from '#lib/server/report-scope.ts';
 
 const DAY = 86_400_000;
@@ -16,13 +16,24 @@ export const load: PageServerLoad = async ({ url }) => {
 	const scope = readScope(url);
 	const since = readSince(url);
 	const options = await loadFilterOptions();
-	if (scope.customerIds.length === 0) return { scope, options, since, matrix: null, changes: [] };
+	if (scope.customerIds.length === 0) return { scope, options, since, matrix: null, changes: [], endOfSupport: [] };
 
-	const matrix = await getInstalledMatrix(scope);
+	const [matrix, eos] = await Promise.all([getInstalledMatrix(scope), getEndOfSupport(scope)]);
+	// C4 end-of-support notice: releases out of support or ending within 12 months
+	const endOfSupport = eos.rows
+		.filter((r) => r.status === 'past' || r.status === 'soon')
+		.map((r) => ({
+			product: r.software.name,
+			release: r.release,
+			endOfSupport: r.endOfSupport!,
+			past: r.status === 'past',
+			newerRelease: r.newerRelease,
+			lpars: r.lpars.map((l) => ({ code: l.code, customerId: l.customer.id }))
+		}));
 	const changes = await getStatementChanges(
 		matrix.lpars.map((l) => l.id),
 		matrix.vendors.flatMap((v) => v.rows.map((r) => r.software.id)),
 		new Date(`${since}T00:00:00Z`)
 	);
-	return { scope, options, since, matrix, changes };
+	return { scope, options, since, matrix, changes, endOfSupport };
 };

@@ -10,8 +10,8 @@
 				{ id: 'R1', name: 'Installed software', text: 'Products × LPARs, compared with each LPAR’s package', href: '/reports/installed' },
 				{ id: '', name: 'Software by customer', text: 'Per customer: software, version, number of LPARs', href: '/reports/software-by-customer' },
 				{ id: 'R3', name: 'Vendor installed base', text: 'Per product and release: LPARs, customers, share and PTF levels; per customer on request', href: '/reports/vendor-base' },
-				{ id: 'R2', name: 'Where used', text: 'One product or release: every LPAR running it' },
-				{ id: 'R4', name: 'Version sprawl', text: 'Distinct versions per product' }
+				{ id: 'R2', name: 'Where used', text: 'One product or release: every LPAR running it', href: '/reports/where-used' },
+				{ id: 'R4', name: 'Version sprawl', text: 'Distinct releases and PTF levels per product', href: '/reports/version-sprawl' }
 			]
 		},
 		{
@@ -28,16 +28,16 @@
 			title: 'Vendors',
 			reports: [
 				{ id: 'V4', name: 'Quality record', text: 'Rollbacks per vendor and product in a chosen period', href: '/reports/quality' },
-				{ id: 'V5', name: 'Support-date exposure', text: 'Installed releases near or past end of support' },
-				{ id: 'V6', name: 'Maintenance uptake', text: 'CARS/RSU levels adopted vs published' }
+				{ id: 'V5', name: 'Support-date exposure', text: 'End-of-support horizon grouped by vendor', href: '/reports/end-of-support?group=vendor' },
+				{ id: 'V6', name: 'Maintenance uptake', text: 'Per CARS/RSU level: LPARs that reached it', href: '/reports/maintenance-uptake' }
 			]
 		},
 		{
 			title: 'Customers',
 			reports: [
 				{ id: 'C1', name: 'Customer software statement', text: 'Printable per customer: systems, versions, status and recent changes', href: '/reports/customer-statement' },
-				{ id: 'C4', name: 'End-of-support notice', text: 'Releases reaching end of support for a customer' },
-				{ id: 'C5', name: 'Currency score', text: 'Share current / behind / out of support' }
+				{ id: 'C4', name: 'End-of-support notice', text: 'Part of the customer statement: releases out of or ending support', href: '/reports/customer-statement' },
+				{ id: 'C5', name: 'Currency score', text: 'Per customer: share current with package, behind, outside, out of support', href: '/reports/currency' }
 			]
 		}
 	];

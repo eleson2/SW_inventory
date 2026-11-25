@@ -10,10 +10,25 @@
 	let { data }: { data: PageData } = $props();
 
 	let showUnknown = $state(true);
+	/** V5 support-date exposure: the same rows per vendor */
+	let byVendor = $state(page.url.searchParams.get('group') === 'vendor');
 
 	const report = $derived(data.report);
 	const rows = $derived(showUnknown ? report.rows : report.rows.filter((r) => r.status !== 'unknown'));
 	const exportUrl = $derived(`/reports/end-of-support/export${page.url.search}`);
+	const groups = $derived.by(() => {
+		if (!byVendor) return [{ vendor: null, rows, atRisk: 0 }];
+		const map = new Map<string, { vendor: (typeof rows)[number]['software']['vendor']; rows: typeof rows }>();
+		for (const row of rows) {
+			const v = row.software.vendor;
+			let g = map.get(v.id);
+			if (!g) map.set(v.id, (g = { vendor: v, rows: [] }));
+			g.rows.push(row);
+		}
+		return [...map.values()]
+			.map((g) => ({ ...g, atRisk: g.rows.filter((r) => r.status === 'past' || r.status === 'soon').length }))
+			.sort((a, b) => b.atRisk - a.atRisk || a.vendor.name.localeCompare(b.vendor.name));
+	});
 
 	const STATUS: Record<EosStatus, { label: string; tile: string; row: string; badge: string }> = {
 		past: { label: 'Out of support', tile: 'border-red-300 bg-red-50 text-red-900', row: 'bg-red-50', badge: 'bg-red-100 text-red-800' },
@@ -88,9 +103,14 @@
 		</p>
 	{/if}
 
-	<label class="flex items-center gap-1.5 text-sm print:hidden">
-		<input type="checkbox" bind:checked={showUnknown} /> Show releases without a date
-	</label>
+	<div class="flex flex-wrap gap-4 text-sm print:hidden">
+		<label class="flex items-center gap-1.5">
+			<input type="checkbox" bind:checked={showUnknown} /> Show releases without a date
+		</label>
+		<label class="flex items-center gap-1.5">
+			<input type="checkbox" bind:checked={byVendor} /> Group by vendor
+		</label>
+	</div>
 
 	{#if rows.length === 0}
 		<Card class="p-6 text-sm text-muted-foreground">No installed releases match the filters.</Card>
@@ -109,7 +129,18 @@
 					</tr>
 				</thead>
 				<tbody>
-					{#each rows as row (`${row.software.id}|${row.release}`)}
+					{#each groups as g (g.vendor?.id ?? 'all')}
+					{#if g.vendor}
+						<tr class="border-b bg-gray-100">
+							<td colspan="7" class="px-3 py-1.5 font-semibold">
+								{g.vendor.name}
+								<span class="ml-2 text-xs font-normal text-muted-foreground">
+									{g.rows.length} release{g.rows.length === 1 ? '' : 's'}{g.atRisk ? `, ${g.atRisk} out of support or ending within ${EOS_WARNING_MONTHS} months` : ''}
+								</span>
+							</td>
+						</tr>
+					{/if}
+					{#each g.rows as row (`${row.software.id}|${row.release}`)}
 						<tr class="border-b align-top {STATUS[row.status].row}">
 							<td class="px-3 py-1.5">
 								<a href="/software/{row.software.id}" class="hover:underline">{row.software.name}</a>
@@ -137,6 +168,7 @@
 							<td class="px-3 py-1.5 text-right tabular-nums">{row.customerCount}</td>
 							<td class="px-3 py-1.5 whitespace-nowrap">{row.newerRelease ?? ''}</td>
 						</tr>
+					{/each}
 					{/each}
 				</tbody>
 			</table>

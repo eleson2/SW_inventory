@@ -194,3 +194,74 @@ export function levelRecords(report: MaintenanceLevels): Record<(typeof LEVEL_CS
 		})
 	);
 }
+
+// ---------------------------------------------------------------- V6 maintenance uptake
+
+export interface UptakeRow {
+	bundle: { id: string; code: string; release_date: Date };
+	months: number;
+	/** LPARs with products of the vendor in this level */
+	lpars: number;
+	/** ... of which every product reaches the level */
+	reached: number;
+	share: number | null;
+}
+
+/** Per vendor level (newest first): how many LPARs reach it. Uses the same rule as L4. */
+export function buildUptake(
+	input: Parameters<typeof buildMaintenanceLevels>[0],
+	today = new Date()
+): (LevelVendor & { levels: UptakeRow[] })[] {
+	const vendorOf = new Map(input.software.map((s) => [s.id, s.vendor_id]));
+	const installsByLpar = new Map<string, LevelInstall[]>();
+	for (const i of input.installs) {
+		const list = installsByLpar.get(i.lpar_id) ?? [];
+		list.push(i);
+		installsByLpar.set(i.lpar_id, list);
+	}
+	return input.vendors
+		.map((vendor) => {
+			const levels = input.bundles
+				.filter((b) => b.vendor_id === vendor.id)
+				.sort((a, b) => b.release_date.getTime() - a.release_date.getTime())
+				.map((bundle) => {
+					let lpars = 0;
+					let reached = 0;
+					for (const lpar of input.lpars) {
+						const installs = (installsByLpar.get(lpar.id) ?? []).filter((i) => vendorOf.get(i.software_id) === vendor.id);
+						const results = installs.map((i) => reachesLevel(i, bundle)).filter((r) => r !== undefined);
+						if (results.length === 0) continue;
+						lpars++;
+						if (results.every(Boolean)) reached++;
+					}
+					return {
+						bundle: { id: bundle.id, code: bundle.code, release_date: bundle.release_date },
+						months: Math.max(0, monthsBetween(bundle.release_date, today)),
+						lpars,
+						reached,
+						share: lpars ? reached / lpars : null
+					};
+				});
+			return { ...vendor, levels };
+		})
+		.filter((v) => v.levels.length > 0)
+		.sort((a, b) => byText(a.name, b.name));
+}
+
+export const UPTAKE_CSV_COLUMNS = ['vendor', 'level', 'release_date', 'months_old', 'lpars_reached', 'lpars', 'share_pct'] as const;
+
+export function uptakeRecords(
+	vendors: ReturnType<typeof buildUptake>
+): Record<(typeof UPTAKE_CSV_COLUMNS)[number], string>[] {
+	return vendors.flatMap((v) =>
+		v.levels.map((l) => ({
+			vendor: v.name,
+			level: l.bundle.code,
+			release_date: l.bundle.release_date.toISOString().slice(0, 10),
+			months_old: String(l.months),
+			lpars_reached: String(l.reached),
+			lpars: String(l.lpars),
+			share_pct: l.share === null ? '' : String(Math.round(l.share * 100))
+		}))
+	);
+}

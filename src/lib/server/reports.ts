@@ -6,7 +6,16 @@ import { sameVersion } from '#lib/utils/version-parser.ts';
 import { buildInstalledMatrix, type InstalledMatrix } from '#lib/utils/installed-matrix.ts';
 import { buildVendorBase, type VendorBase } from '#lib/utils/vendor-base.ts';
 import { buildEosReport, type EosReport } from '#lib/utils/end-of-support.ts';
-import { buildMaintenanceLevels, type MaintenanceLevels } from '#lib/utils/maintenance-level.ts';
+import { buildMaintenanceLevels, buildUptake, type MaintenanceLevels } from '#lib/utils/maintenance-level.ts';
+import {
+	buildCurrency,
+	buildVersionSprawl,
+	buildWhereUsed,
+	type CurrencyReport,
+	type KnownVersions,
+	type SprawlRow,
+	type WhereUsed
+} from '#lib/utils/inventory-reports.ts';
 import {
 	auditRollback,
 	buildOpenRollbacks,
@@ -356,8 +365,8 @@ async function scopeEntities(scope: ReportScope) {
 	};
 }
 
-/** Report L4: per LPAR and vendor, the newest vendor level every product reaches. */
-export async function getMaintenanceLevels(scope: ReportScope): Promise<MaintenanceLevels> {
+/** Input of L4 and V6: LPARs, software, vendor levels and installs in scope. */
+async function loadLevelInput(scope: ReportScope) {
 	const { lpars, software } = await scopeEntities(scope);
 	const softwareIds = software.map((s) => s.id);
 	const vendorIds = [...new Set(software.map((s) => s.vendor.id))];
@@ -384,7 +393,7 @@ export async function getMaintenanceLevels(scope: ReportScope): Promise<Maintena
 		})
 	]);
 	const vendors = new Map(software.map((s) => [s.vendor.id, s.vendor]));
-	return buildMaintenanceLevels({
+	return {
 		vendors: [...vendors.values()],
 		lpars,
 		software: software.map((s) => ({ id: s.id, name: s.name, vendor_id: s.vendor.id })),
@@ -398,7 +407,49 @@ export async function getMaintenanceLevels(scope: ReportScope): Promise<Maintena
 			version: i.current_version,
 			ptf_level: i.current_ptf_level
 		}))
+	};
+}
+
+/** Report L4: per LPAR and vendor, the newest vendor level every product reaches. */
+export async function getMaintenanceLevels(scope: ReportScope): Promise<MaintenanceLevels> {
+	return buildMaintenanceLevels(await loadLevelInput(scope));
+}
+
+/** Report V6: per vendor level, how many LPARs reach it. */
+export async function getMaintenanceUptake(scope: ReportScope) {
+	return buildUptake(await loadLevelInput(scope));
+}
+
+/** Known versions (with end of support) of the given software, by software id. */
+async function knownVersions(softwareIds: string[]): Promise<KnownVersions> {
+	const rows = await db.software_versions.findMany({
+		where: { software_id: { in: softwareIds } },
+		select: { software_id: true, version: true, vendor_version: true, end_of_support: true }
 	});
+	const known: KnownVersions = {};
+	for (const { software_id, ...v } of rows) (known[software_id] ??= []).push(v);
+	return known;
+}
+const matrixSoftwareIds = (m: InstalledMatrix) => m.vendors.flatMap((v) => v.rows.map((r) => r.software.id));
+
+/** Report R2: every LPAR running the given products (optionally only the given releases). */
+export async function getWhereUsed(scope: ReportScope, softwareIds: string[], releases: string[] = []): Promise<WhereUsed> {
+	const allowed = scope.softwareIds.length ? softwareIds.filter((id) => scope.softwareIds.includes(id)) : softwareIds;
+	if (allowed.length === 0) return { rows: [], lparCount: 0, customerCount: 0, releases: [] };
+	const matrix = await getInstalledMatrix({ ...scope, softwareIds: allowed });
+	return buildWhereUsed(matrix, await knownVersions(matrixSoftwareIds(matrix)), releases);
+}
+
+/** Report R4: distinct releases and PTF levels per installed product. */
+export async function getVersionSprawl(scope: ReportScope): Promise<SprawlRow[]> {
+	const matrix = await getInstalledMatrix(scope);
+	return buildVersionSprawl(matrix, await knownVersions(matrixSoftwareIds(matrix)));
+}
+
+/** Report C5: share of installed products current with the package, behind, outside it, out of support. */
+export async function getCurrency(scope: ReportScope): Promise<CurrencyReport> {
+	const matrix = await getInstalledMatrix(scope);
+	return buildCurrency(matrix, await knownVersions(matrixSoftwareIds(matrix)));
 }
 
 /** Report V4: rollbacks per product between two dates (audit log, plus install records without one). */

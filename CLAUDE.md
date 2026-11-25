@@ -208,6 +208,13 @@ The system follows this entity relationship:
 - V4 `/reports/quality` (`?from=&to=`, default last 12 months) and L5 `/reports/open-rollbacks` (flagged
   after 30 days): logic in `src/lib/utils/rollbacks.ts`. V4 counts every rollback from `audit_log`
   (action `rollback`, `changes.software_id`), plus `lpar_software.rolled_back_at` rows without an audit entry.
+- R2 `/reports/where-used` (`?product=<id>` (a list, so several can be allowed later) `&release=`),
+  R4 `/reports/version-sprawl`, C5 `/reports/currency`: logic in `src/lib/utils/inventory-reports.ts`
+  on top of `getInstalledMatrix()`. C5 "current" = matches (or ahead of) the LPAR's package; out of
+  support (release's end of support passed) counts first; no package = outside package.
+- V6 `/reports/maintenance-uptake`: per vendor level the LPARs that reach it (`buildUptake()`, same
+  rule as L4; `loadLevelInput()` feeds both). V5 = L1 with "Group by vendor" (`?group=vendor`);
+  C4 = the "End of vendor support" section of C1.
 - Report-specific URL params survive Apply via `<ReportFilters keep={['since']}>`. CSV via
   `toCsv()` / `csvDownload()` in `src/lib/utils/csv.ts`.
 - End of support is per release: setting it (Add version page, bundle CSV `end_of_support` column)

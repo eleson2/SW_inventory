@@ -7,6 +7,7 @@
 	import Button from '#lib/components/ui/Button.svelte';
 	import ReportFilters from '#lib/components/reports/ReportFilters.svelte';
 	import type { MatrixCell, MatrixStatus } from '#lib/utils/installed-matrix.ts';
+	import { EOS_WARNING_MONTHS } from '#lib/utils/end-of-support.ts';
 
 	let { data }: { data: PageData } = $props();
 
@@ -47,7 +48,10 @@
 				}))
 				.filter((v) => v.rows.length > 0);
 			const changes = data.changes.filter((c) => ids.has(c.lpar_id));
-			return { customer, lpars, vendors, changes };
+			const ending = data.endOfSupport
+				.map((e) => ({ ...e, codes: e.lpars.filter((l) => l.customerId === customer.id).map((l) => l.code) }))
+				.filter((e) => e.codes.length > 0);
+			return { customer, lpars, vendors, changes, ending };
 		});
 	});
 
@@ -184,6 +188,41 @@
 			{:else}
 				<p class="text-muted-foreground">No software recorded for these systems.</p>
 			{/each}
+
+			<section class="break-inside-avoid-page">
+				<h3 class="mb-1 font-semibold">End of vendor support</h3>
+				{#if s.ending.length === 0}
+					<p class="text-muted-foreground">No installed release reaches end of vendor support within {EOS_WARNING_MONTHS} months.</p>
+				{:else}
+					<p class="mb-1 text-muted-foreground">
+						Releases on your systems whose vendor support has ended or ends within {EOS_WARNING_MONTHS} months.
+					</p>
+					<table class="w-full">
+						<thead class="text-left text-xs text-muted-foreground">
+							<tr>
+								<th class="py-1 pr-3">Product</th>
+								<th class="py-1 pr-3">Release</th>
+								<th class="py-1 pr-3">Support ends</th>
+								<th class="py-1 pr-3">Systems</th>
+								<th class="py-1">Newer release</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each s.ending as e (`${e.product}|${e.release}`)}
+								<tr class="border-t">
+									<td class="py-1 pr-3">{e.product}</td>
+									<td class="py-1 pr-3">{e.release}</td>
+									<td class="py-1 pr-3 font-medium {e.past ? 'text-red-800' : 'text-amber-800'}">
+										{fmtDate(e.endOfSupport)}{e.past ? ' (ended)' : ''}
+									</td>
+									<td class="py-1 pr-3">{e.codes.join(', ')}</td>
+									<td class="py-1">{e.newerRelease ?? ''}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				{/if}
+			</section>
 
 			<section class="break-inside-avoid-page">
 				<h3 class="mb-1 font-semibold">Changes since {data.since}</h3>

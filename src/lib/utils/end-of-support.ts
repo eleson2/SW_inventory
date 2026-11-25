@@ -53,7 +53,7 @@ export function eosStatus(endOfSupport: Date | null, today: Date): EosStatus {
 }
 
 /** A release's end of support: support ends per release, so any PTF level's date counts (latest wins). */
-export function releaseEndOfSupport(software: EosSoftware, release: string): Date | null {
+export function releaseEndOfSupport(software: Pick<EosSoftware, 'versions'>, release: string): Date | null {
 	const dates = software.versions
 		.filter(
 			(v) =>
