@@ -10,6 +10,7 @@
 	import Button from '#lib/components/ui/Button.svelte';
 	import MultiSelect from './MultiSelect.svelte';
 	import type { ReportFilterOptions, ReportScope } from '#lib/server/report-scope.ts';
+	import { UNCLASSIFIED } from '#lib/utils/software-category.ts';
 
 	let {
 		options,
@@ -30,6 +31,7 @@
 	);
 	let vendors = $state<string[]>(untrack(() => scope.vendorIds));
 	let software = $state<string[]>(untrack(() => scope.softwareIds));
+	let categories = $state<string[]>(untrack(() => scope.categoryIds));
 	let running = $state('');
 	let setId = $state(untrack(() => scope.setId ?? ''));
 	let saving = $state(false);
@@ -40,8 +42,13 @@
 	const softwareOptions = $derived(
 		options.software
 			.filter((s) => vendors.length === 0 || vendors.includes(s.vendor_id))
+			.filter((s) => categories.length === 0 || categories.includes(s.category_id ?? UNCLASSIFIED))
 			.map((s) => ({ id: s.id, label: s.name, hint: options.vendors.find((v) => v.id === s.vendor_id)?.code }))
 	);
+	const categoryOptions = $derived([
+		...options.categories.map((c) => ({ id: c.id, label: c.name })),
+		{ id: UNCLASSIFIED, label: 'Unclassified' }
+	]);
 	const groups = $derived(
 		options.customers
 			.filter((c) => customers.includes(c.id))
@@ -102,6 +109,7 @@
 		if (customers.length && ticked.length !== all.length) ticked.forEach((id) => params.append('lpar', id));
 		vendors.forEach((id) => params.append('vendor', id));
 		software.forEach((id) => params.append('software', id));
+		categories.forEach((id) => params.append('category', id));
 		if (matchesSet) params.set('set', setId);
 		for (const key of keep) page.url.searchParams.getAll(key).forEach((v) => params.append(key, v));
 		return params;
@@ -138,6 +146,7 @@
 			</select>
 		</label>
 		<MultiSelect label="Vendors" options={vendorOptions} bind:selected={vendors} allText="All vendors" />
+		<MultiSelect label="Categories" options={categoryOptions} bind:selected={categories} allText="All categories" />
 		<MultiSelect label="Products" options={softwareOptions} bind:selected={software} allText="All products" />
 		<label class="text-sm">
 			<span class="block text-xs font-medium text-muted-foreground mb-1">LPAR set</span>

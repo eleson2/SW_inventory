@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { SUGGESTED_CATEGORIES } from '../src/lib/utils/software-category.ts';
 
 const prisma = new PrismaClient();
 
@@ -51,6 +52,14 @@ async function main() {
 		}
 	});
 
+	// Software categories (D3)
+	console.log('Creating software categories...');
+	const category = Object.fromEntries(
+		await Promise.all(
+			SUGGESTED_CATEGORIES.map(async (name) => [name, (await prisma.software_categories.create({ data: { name } })).id])
+		)
+	) as Record<(typeof SUGGESTED_CATEGORIES)[number], string>;
+
 	// Create software products (without versions yet)
 	console.log('Creating software products...');
 	const cics = await prisma.software.create({
@@ -59,6 +68,7 @@ async function main() {
 			vendor_id: ibm.id,
 			product_code: 'CICSTS', // as in IBM RSU reports ("CICS TS")
 			description: 'Enterprise transaction processing system',
+			category_id: category['Transaction monitor'],
 			active: true,
 			created_at: new Date()
 		}
@@ -70,6 +80,7 @@ async function main() {
 			vendor_id: ibm.id,
 			product_code: 'DB2',
 			description: 'Relational database management system',
+			category_id: category['Database'],
 			active: true,
 			created_at: new Date()
 		}
@@ -80,6 +91,7 @@ async function main() {
 			name: 'Endevor',
 			vendor_id: broadcom.id,
 			description: 'Software change management system',
+			category_id: category['Change management'],
 			active: true,
 			created_at: new Date()
 		}

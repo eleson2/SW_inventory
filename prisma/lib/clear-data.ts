@@ -20,6 +20,7 @@ export async function clearAllData(db: PrismaClient): Promise<void> {
 		db.software.updateMany({ data: { current_version_id: null } }),
 		db.software_versions.deleteMany(),
 		db.software.deleteMany(),
+		db.software_categories.deleteMany(),
 		db.customers.deleteMany(),
 		db.vendors.deleteMany()
 	]);

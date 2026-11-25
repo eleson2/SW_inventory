@@ -59,6 +59,7 @@ export const softwareWithVersionsSchema = z.object({
 	vendor_id: z.string().uuid('Invalid vendor'),
 	product_code: z.string().max(50).optional().or(z.literal('')), // Vendor product id, matches bundle imports
 	description: z.string().max(FIELD_LENGTHS.description.max).optional().or(z.literal('')),
+	category_id: z.string().uuid('Invalid category').optional().or(z.literal('')), // '' = unclassified
 	active: z.boolean().default(true),
 	versions: z.array(softwareVersionDetailSchema).optional().default([]),
 	current_version_id: z.string().uuid().optional().nullable()

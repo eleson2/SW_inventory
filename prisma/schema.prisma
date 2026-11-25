@@ -149,6 +149,8 @@ model software {
   product_code       String?               @db.VarChar(50)
   description        String?
   current_version_id String?               @db.Uuid
+  /// What the product does (D3); one per product, list editable on /software/categories
+  category_id        String?               @db.Uuid
   active             Boolean               @default(true)
   deleted_at         DateTime?
   deleted_by         String?               @db.Uuid
@@ -160,13 +162,26 @@ model software {
   package_items      package_items[]
   bundle_items       vendor_bundle_items[]
   vendors            vendors               @relation(fields: [vendor_id], references: [id], onDelete: Restrict)
+  category           software_categories?  @relation(fields: [category_id], references: [id], onDelete: SetNull)
 
   @@unique([vendor_id, name])
+  @@index([category_id])
   @@index([product_code])
   @@index([active])
   @@index([name])
   @@index([vendor_id])
   @@index([current_version_id])
+}
+
+// Function of a product (Database, Scheduling, ...): groups software for reports such as V3
+// overlapping products. The list is maintained in the app.
+model software_categories {
+  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String     @unique @db.VarChar(60)
+  description String?
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+  software    software[]
 }
 
 // Version history for software products (normalized)

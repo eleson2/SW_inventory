@@ -8,6 +8,7 @@ export const load: PageServerLoad = createDetailLoader({
 	entityName: 'Software',
 	include: {
 		vendors: true,
+		category: { select: { id: true, name: true } },
 		current_version: true,
 		versions: {
 			orderBy: {

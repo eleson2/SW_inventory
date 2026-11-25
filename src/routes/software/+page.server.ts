@@ -2,20 +2,25 @@ import type { PageServerLoad } from './$types';
 import { db } from '#lib/server/db.ts';
 import { createPageLoader } from '#lib/server/page-loader.ts';
 import { textContains } from '#lib/server/db-dialect.ts';
+import { UNCLASSIFIED } from '#lib/utils/software-category.ts';
 
 export const load: PageServerLoad = async ({ url }) => {
-	// Get all vendors for filter dropdown
-	const vendors = await db.vendors.findMany({
-		where: { active: true },
-		select: { id: true, name: true },
-		orderBy: { name: 'asc' }
-	});
+	// Vendors and categories for the filter dropdowns
+	const [vendors, categories] = await Promise.all([
+		db.vendors.findMany({
+			where: { active: true },
+			select: { id: true, name: true },
+			orderBy: { name: 'asc' }
+		}),
+		db.software_categories.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } })
+	]);
 
 	const pageData = await createPageLoader({
 		model: db.software,
 		dataKey: 'software',
 		sortMap: {
 			vendor: (dir) => ({ vendors: { name: dir } }),
+			category: (dir) => ({ category: { name: dir } }),
 			currentVersion: (dir) => ({ current_version: { version: dir } })
 		},
 		include: {
@@ -26,6 +31,7 @@ export const load: PageServerLoad = async ({ url }) => {
 					code: true
 				}
 			}, // Relation field name from schema
+			category: { select: { id: true, name: true } },
 			current_version: true // Include current version details
 		},
 		searchBuilder: (searchTerm) => ({
@@ -50,10 +56,20 @@ export const load: PageServerLoad = async ({ url }) => {
 				filters.vendor_id = vendorId;
 			}
 
+			const categoryId = url.searchParams.get('category');
+			if (categoryId) {
+				filters.category_id = categoryId === UNCLASSIFIED ? null : categoryId;
+			}
+
 			// Column filters
 			const nameFilter = url.searchParams.get('col_name');
 			if (nameFilter) {
 				filters.name = textContains(nameFilter);
+			}
+
+			const categoryFilter = url.searchParams.get('col_category');
+			if (categoryFilter) {
+				filters.category = { name: textContains(categoryFilter) };
 			}
 
 			const vendorFilter = url.searchParams.get('col_vendor');
@@ -79,6 +95,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	return {
 		...pageData,
-		vendors
+		vendors,
+		categories
 	};
 };

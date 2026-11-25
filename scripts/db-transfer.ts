@@ -24,6 +24,7 @@ if (!process.env.DATABASE_URL && existsSync(join(ROOT, '.env'))) {
 const TABLES = [
 	'vendors',
 	'customers',
+	'software_categories',
 	'software',
 	'software_versions',
 	'vendor_bundles',

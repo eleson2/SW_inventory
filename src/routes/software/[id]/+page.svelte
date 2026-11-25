@@ -95,6 +95,13 @@
 					<dd class="text-sm mt-1 font-mono">{software.product_code || '-'}</dd>
 				</div>
 				<div>
+					<dt class="text-sm font-medium text-muted-foreground">Category</dt>
+					<dd class="text-sm mt-1">
+						{#if software.category}{software.category.name}{:else}<span class="text-muted-foreground">Unclassified</span>{/if}
+						<a href="/software/categories" class="ml-2 text-xs text-primary hover:underline">Categories</a>
+					</dd>
+				</div>
+				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Description</dt>
 					<dd class="text-sm mt-1">{software.description || '-'}</dd>
 				</div>

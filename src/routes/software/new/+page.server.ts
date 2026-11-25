@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		softwareWithVersionsSchema
 	);
 
-	const [vendors, allSoftware, preselectedVendor] = await Promise.all([
+	const [vendors, allSoftware, preselectedVendor, categories] = await Promise.all([
 		db.vendors.findMany({
 			where: { active: true },
 			orderBy: { name: 'asc' },
@@ -55,14 +55,16 @@ export const load: PageServerLoad = async ({ url }) => {
 				where: { id: vendorIdFromUrl },
 				select: { id: true, name: true, code: true }
 			})
-			: Promise.resolve(null)
+			: Promise.resolve(null),
+		db.software_categories.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } })
 	]);
 
 	return {
 		form,
 		vendors,
 		allSoftware,
-		preselectedVendor
+		preselectedVendor,
+		categories
 	};
 };
 
@@ -101,6 +103,7 @@ export const actions: Actions = {
 						name: form.data.name,
 						vendor_id: form.data.vendor_id,
 						product_code: form.data.product_code?.trim().toUpperCase() || null,
+						category_id: form.data.category_id || null,
 						description: form.data.description || null,
 						active: form.data.active
 					}

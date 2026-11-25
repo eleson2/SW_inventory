@@ -534,7 +534,7 @@ export async function getRolloutProgress(scope: ReportScope, packageIds: string[
 			include: { package: { select: { id: true, code: true, name: true, version: true, release_date: true } } }
 		}),
 		// Compliance is about every product, whatever the vendor/product filter says
-		getInstalledMatrix({ ...scope, vendorIds: [], softwareIds: [] })
+		getInstalledMatrix({ ...scope, vendorIds: [], softwareIds: [], categoryIds: [] })
 	]);
 	const compliance = new Map(
 		buildCompliance(matrix).rows.map((r) => [r.lpar.id, { packageId: r.lpar.package?.id ?? null, value: r.compliance }])

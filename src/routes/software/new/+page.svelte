@@ -13,6 +13,7 @@
 	import VersionManager from '#lib/components/domain/VersionManager.svelte';
 	import FormErrorMessage from '#lib/components/common/FormErrorMessage.svelte';
 	import FormTextarea from '#lib/components/common/FormTextarea.svelte';
+	import FormSelect from '#lib/components/common/FormSelect.svelte';
 	import FormValidationSummary from '#lib/components/common/FormValidationSummary.svelte';
 	import Breadcrumb from '#lib/components/common/Breadcrumb.svelte';
 	import PageHeader from '#lib/components/common/PageHeader.svelte';
@@ -213,6 +214,19 @@
 					placeholder="e.g. AL2120 (optional)"
 					helperText="Vendor's product/FMID code; used to match products when importing vendor bundles"
 					error={$errors.product_code?.[0]}
+				/>
+
+				<FormSelect
+					label="Category"
+					id="category_id"
+					name="category_id"
+					bind:value={$form.category_id as any}
+					options={data.categories}
+					valueField="id"
+					displayField="name"
+					placeholder="Unclassified"
+					helperText="What the product does; manage the list on Software → Categories"
+					error={$errors.category_id?.[0]}
 				/>
 
 				<FormTextarea

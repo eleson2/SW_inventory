@@ -4,17 +4,21 @@
  *   ?customer=<id>&customer=<id>   customers (none = all)
  *   &lpar=<id>&lpar=<id>           ticked LPARs within those customers (none = all of them)
  *   &vendor=<id>  &software=<id>   narrow the software shown (none = all)
+ *   &category=<id>|none            software of these categories (none = unclassified)
  *   &set=<id>                      the LPAR set the selection came from (label only)
  *
  * Used by every report so filters behave the same everywhere (see ReportFilters.svelte).
  */
 import { db } from './db.ts';
+import { UNCLASSIFIED } from '#lib/utils/software-category.ts';
 
 export interface ReportScope {
 	customerIds: string[];
 	lparIds: string[];
 	vendorIds: string[];
 	softwareIds: string[];
+	/** Category ids; UNCLASSIFIED ("none") = software without a category */
+	categoryIds: string[];
 	setId: string | null;
 }
 
@@ -25,6 +29,7 @@ export function readScope(url: URL): ReportScope {
 		lparIds: all('lpar'),
 		vendorIds: all('vendor'),
 		softwareIds: all('software'),
+		categoryIds: all('category'),
 		setId: url.searchParams.get('set') || null
 	};
 }
@@ -45,16 +50,24 @@ export function softwareWhere(scope: ReportScope) {
 		active: true,
 		vendors: { active: true },
 		...(scope.vendorIds.length > 0 && { vendor_id: { in: scope.vendorIds } }),
-		...(scope.softwareIds.length > 0 && { id: { in: scope.softwareIds } })
+		...(scope.softwareIds.length > 0 && { id: { in: scope.softwareIds } }),
+		...(scope.categoryIds.length > 0 && { AND: [categoryWhere(scope.categoryIds)] })
 	};
+}
+
+function categoryWhere(categoryIds: string[]) {
+	const ids = categoryIds.filter((id) => id !== UNCLASSIFIED);
+	const none = categoryIds.includes(UNCLASSIFIED);
+	if (!none) return { category_id: { in: ids } };
+	return ids.length ? { OR: [{ category_id: { in: ids } }, { category_id: null }] } : { category_id: null };
 }
 
 export type ReportFilterOptions = Awaited<ReturnType<typeof loadFilterOptions>>;
 
 /** Everything the filter bar offers: customers, their LPARs (with installed software, for
- * "Only LPARs running"), vendors, software and saved LPAR sets. */
+ * "Only LPARs running"), vendors, software, categories and saved LPAR sets. */
 export async function loadFilterOptions() {
-	const [customers, lpars, vendors, software, sets] = await Promise.all([
+	const [customers, lpars, vendors, software, sets, categories] = await Promise.all([
 		db.customers.findMany({
 			where: { active: true },
 			select: { id: true, code: true, name: true },
@@ -78,19 +91,21 @@ export async function loadFilterOptions() {
 		}),
 		db.software.findMany({
 			where: { active: true, vendors: { active: true } },
-			select: { id: true, name: true, vendor_id: true },
+			select: { id: true, name: true, vendor_id: true, category_id: true },
 			orderBy: { name: 'asc' }
 		}),
 		db.lpar_sets.findMany({
 			select: { id: true, name: true, description: true, members: { select: { lpar_id: true } } },
 			orderBy: { name: 'asc' }
-		})
+		}),
+		db.software_categories.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } })
 	]);
 	return {
 		customers,
 		lpars: lpars.map(({ lpar_software, ...l }) => ({ ...l, softwareIds: lpar_software.map((s) => s.software_id) })),
 		vendors,
 		software,
+		categories,
 		sets: sets.map(({ members, ...s }) => ({ ...s, lparIds: members.map((m) => m.lpar_id) }))
 	};
 }

@@ -12,6 +12,7 @@
 	import VersionDisplay from '#lib/components/domain/VersionDisplay.svelte';
 	import { useTableNavigation } from '#lib/utils/table-navigation.svelte.ts';
 	import { STATUS_FILTER } from '#lib/constants/filters.ts';
+	import { UNCLASSIFIED } from '#lib/utils/software-category.ts';
 
 	let { data }: { data: PageData } = $props();
 
@@ -23,6 +24,11 @@
 		label: v.name
 	})));
 
+	const categoryFilterOptions = $derived([
+		...data.categories.map((c) => ({ value: c.id, label: c.name })),
+		{ value: UNCLASSIFIED, label: 'Unclassified' }
+	]);
+
 	const columns = [
 		{
 			key: 'name',
@@ -32,6 +38,11 @@
 			key: 'vendor',
 			label: 'Vendor',
 			render: (item: Software) => item.vendors?.name || '-'
+		},
+		{
+			key: 'category',
+			label: 'Category',
+			render: (item: Software & { category?: { name: string } | null }) => item.category?.name ?? 'Unclassified'
 		},
 		{
 			key: 'currentVersion',
@@ -68,7 +79,10 @@
 		description="Manage software products with versions and PTF levels"
 	>
 		{#snippet actions()}
-			<Button onclick={() => goto('/software/new')}>Add Software</Button>
+			<span class="flex gap-2">
+				<Button href="/software/categories" variant="outline">Categories</Button>
+				<Button onclick={() => goto('/software/new')}>Add Software</Button>
+			</span>
 		{/snippet}
 	</PageHeader>
 
@@ -81,6 +95,11 @@
 						name: 'vendor',
 						label: 'Vendor',
 						options: vendorFilterOptions
+					},
+					{
+						name: 'category',
+						label: 'Category',
+						options: categoryFilterOptions
 					},
 					STATUS_FILTER
 				]}

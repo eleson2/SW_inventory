@@ -92,6 +92,19 @@
 					error={$errors.product_code?.[0]}
 				/>
 
+				<FormSelect
+					label="Category"
+					id="category_id"
+					name="category_id"
+					bind:value={$form.category_id as any}
+					options={data.categories}
+					valueField="id"
+					displayField="name"
+					placeholder="Unclassified"
+					helperText="What the product does; manage the list on Software → Categories"
+					error={$errors.category_id?.[0]}
+				/>
+
 				<FormTextarea
 					label="Description"
 					id="description"

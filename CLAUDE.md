@@ -186,7 +186,11 @@ The system follows this entity relationship:
 - `/reports` lists all reports by goal; report IDs (R1, L1, V4...) match the "Reporting Needs" doc.
 - Every report uses the shared scope: `readScope(url)` / `lparWhere` / `softwareWhere` /
   `loadFilterOptions()` in `src/lib/server/report-scope.ts` and `ReportFilters.svelte`
-  (`src/lib/components/reports/`). URL params: `customer`, `lpar`, `vendor`, `software`, `set` (ids).
+  (`src/lib/components/reports/`). URL params: `customer`, `lpar`, `vendor`, `software`, `category`
+  (`none` = unclassified), `set` (ids).
+- Software categories (D3, `software_categories`, `software.category_id`): one per product, list and bulk
+  "Classify products" on `/software/categories` (logic in `src/lib/utils/software-category.ts`). Licence
+  type/owner are deferred to D4 (licences and contracts).
 - LPAR sets (`lpar_sets`, `lpar_set_members`): saved fixed LPAR selections, `/reports/lpar-sets`.
 - R1 `/reports/installed`: pure logic in `src/lib/utils/installed-matrix.ts` (cell status vs the
   LPAR's package: match/behind/ahead/not_in_package/missing/no_package), query `getInstalledMatrix()`

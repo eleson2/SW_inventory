@@ -27,12 +27,15 @@ export const load: PageServerLoad = async ({ params }) => {
 		throw error(404, 'Software not found');
 	}
 
-	// Load vendors for dropdown
-	const vendors = await db.vendors.findMany({
-		where: { active: true },
-		orderBy: { name: 'asc' },
-		select: { id: true, name: true, code: true }
-	});
+	// Load vendors and categories for dropdowns
+	const [vendors, categories] = await Promise.all([
+		db.vendors.findMany({
+			where: { active: true },
+			orderBy: { name: 'asc' },
+			select: { id: true, name: true, code: true }
+		}),
+		db.software_categories.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } })
+	]);
 
 	// Initialize Superforms with software data (only fields matching schema)
 	const form = await serverValidate(
@@ -41,6 +44,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			vendor_id: software.vendor_id,
 			description: software.description || '',
 			product_code: software.product_code || '',
+			category_id: software.category_id || '',
 			active: software.active,
 			current_version_id: software.current_version_id || '',
 			versions: software.versions.map(v => ({
@@ -60,7 +64,8 @@ export const load: PageServerLoad = async ({ params }) => {
 	return {
 		form,
 		software,
-		vendors
+		vendors,
+		categories
 	};
 };
 
@@ -159,6 +164,7 @@ export const actions: Actions = {
 						vendor_id: validated.vendor_id,
 						description: validated.description || null,
 						product_code: validated.product_code?.trim().toUpperCase() || null,
+						category_id: validated.category_id || null,
 						active: validated.active,
 						current_version_id: currentVersionId,
 						updated_at: new Date()
