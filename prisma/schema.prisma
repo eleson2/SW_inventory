@@ -80,6 +80,7 @@ model lpars {
   created_at         DateTime        @default(now())
   updated_at         DateTime        @updatedAt
   lpar_software      lpar_software[]
+  lpar_set_members   lpar_set_members[]
   packages           packages?       @relation(fields: [current_package_id], references: [id], onDelete: SetNull)
   customers          customers       @relation(fields: [customer_id], references: [id], onDelete: Restrict)
 
@@ -254,4 +255,24 @@ model vendor_bundle_items {
   @@index([bundle_id])
   @@index([software_id])
   @@index([software_version_id])
+}
+
+// Saved, named selections of LPARs for reports (e.g. "IMS LPARs"); fixed member lists
+model lpar_sets {
+  id          String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String             @unique @db.VarChar(100)
+  description String?
+  created_at  DateTime           @default(now())
+  updated_at  DateTime           @updatedAt
+  members     lpar_set_members[]
+}
+
+model lpar_set_members {
+  set_id  String    @db.Uuid
+  lpar_id String    @db.Uuid
+  set     lpar_sets @relation(fields: [set_id], references: [id], onDelete: Cascade)
+  lpar    lpars     @relation(fields: [lpar_id], references: [id], onDelete: Cascade)
+
+  @@id([set_id, lpar_id])
+  @@index([lpar_id])
 }

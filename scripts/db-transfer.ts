@@ -32,6 +32,8 @@ const TABLES = [
 	'package_items',
 	'lpars',
 	'lpar_software',
+	'lpar_sets',
+	'lpar_set_members',
 	'audit_log'
 ] as const;
 type Table = (typeof TABLES)[number];
@@ -66,7 +68,7 @@ function reviveDates(table: Table, row: Record<string, unknown>) {
 async function exportAll() {
 	mkdirSync(dir, { recursive: true });
 	for (const table of TABLES) {
-		const rows = await model(table).findMany({ orderBy: { id: 'asc' } });
+		const rows = await model(table).findMany({ orderBy: table === 'lpar_set_members' ? [{ set_id: 'asc' }, { lpar_id: 'asc' }] : { id: 'asc' } });
 		writeFileSync(join(dir, `${table}.json`), JSON.stringify(rows, null, 1));
 		console.log(`  ${table.padEnd(18)} ${rows.length} rows`);
 	}

@@ -167,7 +167,7 @@ The system follows this entity relationship:
   IBM: report name without spaces, e.g. `CICSTS`), then the software name.
 - CSV columns (`BUNDLE_CSV_COLUMNS` in `src/lib/schemas/bundle.ts`): `vendor_code, bundle_code,
   bundle_name, bundle_type, release_date, product_code, product_name, version, ptf_level, notes,
-  source_url`. Re-importing a bundle replaces its items. Products not in the inventory are
+  source_url, end_of_support` (the last two optional). Re-importing a bundle replaces its items. Products not in the inventory are
   added under the vendor (their highest release becomes current). Every release the vendor
   lists is kept (a level may hold Db2 12 and 13), written in the inventory's notation by
   `spellLikeInventory()` ("5.6" -> "V5R6M0", "12" -> "V12R1M0", "6.3" -> "V6R3M0").
@@ -181,6 +181,27 @@ The system follows this entity relationship:
 - Fetchers in `scripts/fetch-bundles/` (run locally only; the app never contacts vendor sites).
   Parsers are tested against text fixtures from real PDFs in `__fixtures__/`; vendor PDF
   layouts are not an API, so a parser test failing on a new layout is the expected signal.
+
+### Reports
+- `/reports` lists all reports by goal; report IDs (R1, L1, V4...) match the "Reporting Needs" doc.
+- Every report uses the shared scope: `readScope(url)` / `lparWhere` / `softwareWhere` /
+  `loadFilterOptions()` in `src/lib/server/report-scope.ts` and `ReportFilters.svelte`
+  (`src/lib/components/reports/`). URL params: `customer`, `lpar`, `vendor`, `software`, `set` (ids).
+- LPAR sets (`lpar_sets`, `lpar_set_members`): saved fixed LPAR selections, `/reports/lpar-sets`.
+- R1 `/reports/installed`: pure logic in `src/lib/utils/installed-matrix.ts` (cell status vs the
+  LPAR's package: match/behind/ahead/not_in_package/missing/no_package), query `getInstalledMatrix()`
+  in `src/lib/server/reports.ts`, CSV at `/reports/installed/export` (one row per LPAR x product).
+- R3 `/reports/vendor-base`: per product x release (LPARs, customers, share, PTF range), "Per customer"
+  pivot; logic in `src/lib/utils/vendor-base.ts`, CSV one row per product x release x customer.
+- C1 `/reports/customer-statement`: customer-facing print layout, one statement per customer (page
+  break), reuses `getInstalledMatrix()`; "Changes since" (`?since=`) from `lpar_software` install /
+  rollback dates (`getStatementChanges()`). No rollback reasons or internal notes on it.
+- Report-specific URL params survive Apply via `<ReportFilters keep={['since']}>`. CSV via
+  `toCsv()` / `csvDownload()` in `src/lib/utils/csv.ts`.
+- End of support is per release: setting it (Add version page, bundle CSV `end_of_support` column)
+  updates every PTF level of that release, and new PTF levels inherit it.
+- `createAuditLog(..., userId, tx)` inside `db.$transaction`: on the main connection it waits for
+  the transaction's write lock on SQLite until the transaction times out.
 
 ### Version Management
 

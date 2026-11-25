@@ -31,7 +31,7 @@
 <svelte:window onkeydown={shortcuts.handleKeydown} />
 
 <div class="flex min-h-screen flex-col">
-	<header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+	<header class="print:hidden sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 		<div class="container flex h-14 items-center justify-between">
 			<div class="flex items-center">
 				<a href="/" class="mr-6 flex items-center space-x-2">
@@ -83,7 +83,7 @@
 						Import
 					</a>
 					<a
-						href="/reports/software-by-customer"
+						href="/reports"
 						class="transition-colors hover:text-foreground/80 {isActive('/reports') ? 'text-foreground font-semibold border-b-2 border-primary' : 'text-foreground/60'}"
 					>
 						Reports
@@ -174,7 +174,7 @@
 						Import
 					</a>
 					<a
-						href="/reports/software-by-customer"
+						href="/reports"
 						onclick={handleNavClick}
 						class="py-2 px-4 rounded-md transition-colors min-h-[44px] flex items-center {isActive('/reports') ? 'bg-accent text-foreground font-semibold' : 'text-foreground/60 hover:bg-accent/50'}"
 					>
