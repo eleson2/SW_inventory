@@ -23,6 +23,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	const endOfSupport = eos.rows
 		.filter((r) => r.status === 'past' || r.status === 'soon')
 		.map((r) => ({
+			softwareId: r.software.id,
 			product: r.software.name,
 			release: r.release,
 			endOfSupport: r.endOfSupport!,

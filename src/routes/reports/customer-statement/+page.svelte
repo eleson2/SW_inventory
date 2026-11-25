@@ -208,7 +208,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							{#each s.ending as e (`${e.product}|${e.release}`)}
+							{#each s.ending as e (`${e.softwareId}|${e.release}`)}
 								<tr class="border-t">
 									<td class="py-1 pr-3">{e.product}</td>
 									<td class="py-1 pr-3">{e.release}</td>

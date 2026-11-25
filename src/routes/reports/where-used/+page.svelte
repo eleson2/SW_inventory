@@ -92,7 +92,7 @@
 						onchange={(e) => navigate(data.products[0] ?? '', e.currentTarget.value)}
 					>
 						<option value="">All releases</option>
-						{#each report.releases as r (r.release)}
+						{#each report.releases as r (`${r.software.id}|${r.release}`)}
 							<option value={r.release}>{r.release} ({r.count})</option>
 						{/each}
 					</select>
@@ -116,7 +116,7 @@
 			<Card class="p-4 md:col-span-2">
 				<div class="mb-1 text-xs text-muted-foreground">LPARs per release and PTF level</div>
 				<div class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
-					{#each report.releases.filter((r) => !data.release || r.release === data.release) as r (r.release)}
+					{#each report.releases.filter((r) => !data.release || r.release === data.release) as r (`${r.software.id}|${r.release}`)}
 						<div>
 							<span class="font-medium">{r.release}</span>
 							<span class="tabular-nums">{r.count}</span>

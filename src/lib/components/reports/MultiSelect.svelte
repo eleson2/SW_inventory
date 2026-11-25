@@ -35,14 +35,13 @@
 			: options
 	);
 	const groups = $derived.by(() => {
-		const out: { name: string; options: Option[] }[] = [];
+		// One heading per group, even when its options are not next to each other in `options`
+		const out = new Map<string, Option[]>();
 		for (const o of visible) {
 			const name = o.group ?? '';
-			const last = out.at(-1);
-			if (last && last.name === name) last.options.push(o);
-			else out.push({ name, options: [o] });
+			out.set(name, [...(out.get(name) ?? []), o]);
 		}
-		return out;
+		return [...out].map(([name, options]) => ({ name, options }));
 	});
 	const summary = $derived.by(() => {
 		if (selected.length === 0) return allText;
