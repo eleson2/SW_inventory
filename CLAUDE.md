@@ -217,6 +217,10 @@ The system follows this entity relationship:
   C4 = the "End of vendor support" section of C1.
 - L3 `/reports/rollout` (`?package=`): rollout progress per package from `lpar_package_rollouts` (below);
   overdue = planned date passed, not installed; compliance from L2 when it is the LPAR's current package.
+- V1 `/reports/installed-base` (`?months=6|12|24&compare=1|3|12`): footprint per vendor (LPARs, customers,
+  products, releases, installs) at each month end from the package installed on each LPAR then (rollouts x
+  package items; `buildInstalledBase()` in `src/lib/utils/installed-base.ts`). Changes outside packages are
+  not in the trend (by design: updates go through packages). Deleted LPARs count until deleted.
 - Report-specific URL params survive Apply via `<ReportFilters keep={['since']}>`. CSV via
   `toCsv()` / `csvDownload()` in `src/lib/utils/csv.ts`.
 - End of support is per release: setting it (Add version page, bundle CSV `end_of_support` column)
@@ -233,6 +237,8 @@ The system follows this entity relationship:
   and the LPAR's previously installed package becomes superseded.
 - `backfillRollouts()` (called by the pages that show rollouts) records every LPAR's current package
   as installed when it has no rollout yet, so existing data needs no migration step.
+  It also runs `importAuditHistory()`: earlier packages found in the audit log (deployments, LPAR edits)
+  become superseded rollouts (`packageHistoryFromAudit()`), so L3 and V1 have history from before LCM.
 
 ### Version Management
 

@@ -10,7 +10,7 @@ vi.mock('../../src/lib/server/db.ts', async () => {
 	return { db: testDb, createAuditLog: async () => {} };
 });
 
-const { markInstalled, planRollouts, updateRollouts, backfillRollouts, RolloutError } = await import(
+const { markInstalled, planRollouts, updateRollouts, backfillRollouts, importAuditHistory, RolloutError } = await import(
 	'../../src/lib/server/rollouts.ts'
 );
 
@@ -78,5 +78,20 @@ describe('Package rollouts', () => {
 		expect(await stages(q2.id)).toEqual({ [lparB.id]: 'cancelled' });
 		expect(await planRollouts(q2.id, [lparB.id], null, null)).toEqual({ added: 1, skipped: 0 });
 		expect(await stages(q2.id)).toEqual({ [lparB.id]: 'initiated' });
+	});
+	it('imports earlier packages from the audit log as superseded, once', async () => {
+		await testDb.audit_log.createMany({
+			data: [
+				{ entity_type: 'lpar', entity_id: lparA.id, action: 'update', changes: { action: 'package_deployment', package_id: q2.id, deployed_at: '2025-05-01T00:00:00Z' }, timestamp: new Date('2025-05-01') },
+				{ entity_type: 'lpar', entity_id: lparA.id, action: 'update', changes: { before: { current_package_id: q2.id }, after: { current_package_id: q1.id } }, timestamp: new Date('2025-09-01') }
+			]
+		});
+		await backfillRollouts(); // A's current package q1 + history
+		const rows = await testDb.lpar_package_rollouts.findMany({ where: { lpar_id: lparA.id }, orderBy: { installed_at: 'asc' } });
+		expect(rows.map((r) => [r.package_id, r.stage, r.installed_at?.toISOString().slice(0, 10), r.superseded_at?.toISOString().slice(0, 10) ?? null])).toEqual([
+			[q2.id, 'superseded', '2025-05-01', '2025-09-01'],
+			[q1.id, 'installed', '2025-09-01', null]
+		]);
+		expect(await importAuditHistory()).toBe(0);
 	});
 });

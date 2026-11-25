@@ -12,7 +12,7 @@
 import type { Prisma } from '@prisma/client';
 import { db, createAuditLog } from './db.ts';
 import { transactionTimeouts } from './db-dialect.ts';
-import { OPEN_STAGES, type RolloutStage } from '#lib/utils/rollout.ts';
+import { OPEN_STAGES, packageHistoryFromAudit, type RolloutStage } from '#lib/utils/rollout.ts';
 
 type Tx = Prisma.TransactionClient;
 
@@ -79,13 +79,63 @@ export async function backfillRollouts(): Promise<number> {
 		}
 	});
 	const missing = lpars.filter((l) => !l.rollouts.some((r) => r.package_id === l.current_package_id));
-	if (missing.length === 0) return 0;
-	await db.$transaction(async (tx) => {
-		for (const l of missing) {
-			await markInstalled(tx, [l.id], l.current_package_id!, l.lpar_software[0]?.installed_date ?? l.updated_at);
-		}
-	}, transactionTimeouts());
+	if (missing.length > 0) {
+		await db.$transaction(async (tx) => {
+			for (const l of missing) {
+				await markInstalled(tx, [l.id], l.current_package_id!, l.lpar_software[0]?.installed_date ?? l.updated_at);
+			}
+		}, transactionTimeouts());
+	}
+	await importAuditHistory();
 	return missing.length;
+}
+
+/**
+ * Packages LPARs had before the rollouts existed, from the audit log: each earlier package
+ * becomes a superseded rollout, and an installed rollout gets the audit's (earlier) install date.
+ * Only adds what is missing, so it is safe to run on every call.
+ */
+export async function importAuditHistory(): Promise<number> {
+	const entries = await db.audit_log.findMany({
+		where: { entity_type: 'lpar', action: { in: ['create', 'update'] } },
+		select: { entity_id: true, action: true, changes: true, timestamp: true }
+	});
+	const periods = packageHistoryFromAudit(entries);
+	if (periods.length === 0) return 0;
+	const [rows, lpars, packages] = await Promise.all([
+		db.lpar_package_rollouts.findMany({ where: { lpar_id: { in: [...new Set(periods.map((p) => p.lparId))] } } }),
+		db.lpars.findMany({ select: { id: true } }),
+		db.packages.findMany({ select: { id: true } })
+	]);
+	const lparIds = new Set(lpars.map((l) => l.id));
+	const packageIds = new Set(packages.map((p) => p.id));
+	const work: (() => Promise<unknown>)[] = [];
+	for (const p of periods) {
+		if (!lparIds.has(p.lparId) || !packageIds.has(p.packageId)) continue;
+		const row = rows.find((r) => r.lpar_id === p.lparId && r.package_id === p.packageId);
+		if (!row) {
+			if (!p.until) continue; // still current: backfillRollouts records it
+			const data = {
+				lpar_id: p.lparId,
+				package_id: p.packageId,
+				stage: 'superseded',
+				initiated_at: p.from,
+				installed_at: p.from,
+				superseded_at: p.until,
+				notes: 'From the audit log'
+			};
+			rows.push({ ...data, id: '', planned_date: null, cancelled_at: null, created_at: p.from, updated_at: p.from });
+			work.push(async () => {
+				const created = await db.lpar_package_rollouts.create({ data });
+				await createAuditLog('lpar_package_rollout', created.id, 'create', { ...data, source: 'audit_log' });
+			});
+		} else if ((row.stage === 'installed' || row.stage === 'superseded') && row.installed_at && p.from < row.installed_at) {
+			row.installed_at = p.from;
+			work.push(() => db.lpar_package_rollouts.update({ where: { id: row.id }, data: { installed_at: p.from } }));
+		}
+	}
+	for (const w of work) await w();
+	return work.length;
 }
 
 /**

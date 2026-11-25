@@ -27,6 +27,7 @@
 		{
 			title: 'Vendors',
 			reports: [
+				{ id: 'V1', name: 'Installed base summary', text: 'Per vendor: LPARs, customers, products, releases and installs, with the trend from installed packages', href: '/reports/installed-base' },
 				{ id: 'V4', name: 'Quality record', text: 'Rollbacks per vendor and product in a chosen period', href: '/reports/quality' },
 				{ id: 'V5', name: 'Support-date exposure', text: 'End-of-support horizon grouped by vendor', href: '/reports/end-of-support?group=vendor' },
 				{ id: 'V6', name: 'Maintenance uptake', text: 'Per CARS/RSU level: LPARs that reached it', href: '/reports/maintenance-uptake' }

@@ -29,6 +29,7 @@ import { lparWhere, softwareWhere, type ReportScope } from './report-scope.ts';
 import { buildCompliance } from '#lib/utils/package-compliance.ts';
 import { buildRolloutReport, type RolloutGroup } from '#lib/utils/rollout.ts';
 import { backfillRollouts } from './rollouts.ts';
+import { buildInstalledBase, monthPoints, type BaseItem, type InstalledBase } from '#lib/utils/installed-base.ts';
 
 export type SoftwareByCustomerRow = {
 	customer_id: string;
@@ -545,4 +546,46 @@ export async function getRolloutProgress(scope: ReportScope, packageIds: string[
 		rollouts: rollouts.map(({ package: _p, ...r }) => r),
 		compliance
 	});
+}
+
+/** Report V1: footprint per vendor at the end of each of the last `months` months, from installed packages. */
+export async function getInstalledBase(scope: ReportScope, months: number, today = new Date()): Promise<InstalledBase> {
+	await backfillRollouts();
+	// Deleted LPARs count until they were deleted
+	const { active: _active, ...where } = lparWhere(scope);
+	const lpars = await db.lpars.findMany({
+		where,
+		select: { id: true, customer_id: true, active: true, deleted_at: true, updated_at: true }
+	});
+	const rollouts = await db.lpar_package_rollouts.findMany({
+		where: { lpar_id: { in: lpars.map((l) => l.id) }, stage: { in: ['installed', 'superseded'] } },
+		select: { lpar_id: true, package_id: true, installed_at: true, superseded_at: true }
+	});
+	const packageItems = await db.package_items.findMany({
+		where: { package_id: { in: [...new Set(rollouts.map((r) => r.package_id))] }, software: softwareWhere(scope) },
+		select: {
+			package_id: true,
+			software_id: true,
+			software_version: { select: { version: true } },
+			software: { select: { vendors: { select: { id: true, code: true, name: true } } } }
+		}
+	});
+	const items = new Map<string, BaseItem[]>();
+	for (const i of packageItems) {
+		const list = items.get(i.package_id) ?? [];
+		list.push({ softwareId: i.software_id, version: i.software_version.version, vendor: i.software.vendors });
+		items.set(i.package_id, list);
+	}
+	return buildInstalledBase(
+		{
+			lpars: lpars.map((l) => ({
+				id: l.id,
+				customerId: l.customer_id,
+				deletedAt: l.active ? null : (l.deleted_at ?? l.updated_at)
+			})),
+			rollouts,
+			items
+		},
+		monthPoints(months, today)
+	);
 }

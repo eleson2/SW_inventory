@@ -169,3 +169,60 @@ export function rolloutRecords(groups: RolloutGroup[]): Record<(typeof ROLLOUT_C
 		}))
 	);
 }
+
+/** An audit_log row of an LPAR (entity_type 'lpar') */
+export interface LparAuditEntry {
+	entity_id: string;
+	action: string;
+	changes: unknown;
+	timestamp: Date;
+}
+
+/** One package an LPAR had installed, from `from` until `until` (null = still installed) */
+export interface PackagePeriod {
+	lparId: string;
+	packageId: string;
+	from: Date;
+	until: Date | null;
+}
+
+const asRecord = (v: unknown): Record<string, unknown> | null =>
+	v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+const packageOf = (v: unknown): string | null => {
+	const r = asRecord(v);
+	const id = r?.current_package_id ?? r?.packageId;
+	return typeof id === 'string' && id ? id : null;
+};
+
+/**
+ * The packages each LPAR had, rebuilt from the audit log (history from before the rollouts
+ * existed). Understands package deployments ({action: 'package_deployment', package_id}),
+ * LPAR edits ({before, after} with current_package_id or packageId) and LPAR creation.
+ */
+export function packageHistoryFromAudit(entries: LparAuditEntry[]): PackagePeriod[] {
+	const events = new Map<string, { packageId: string; at: Date }[]>();
+	const add = (lparId: string, packageId: string | null, at: Date) => {
+		if (!packageId || Number.isNaN(at.getTime())) return;
+		events.set(lparId, [...(events.get(lparId) ?? []), { packageId, at }]);
+	};
+	for (const e of entries) {
+		const c = asRecord(e.changes);
+		if (!c) continue;
+		if (e.action === 'create') add(e.entity_id, packageOf(c), e.timestamp);
+		else if (e.action === 'update' && c.action === 'package_deployment' && typeof c.package_id === 'string') {
+			add(e.entity_id, c.package_id, typeof c.deployed_at === 'string' ? new Date(c.deployed_at) : e.timestamp);
+		} else if (e.action === 'update' && c.after) {
+			const after = packageOf(c.after);
+			if (after && after !== packageOf(c.before)) add(e.entity_id, after, e.timestamp);
+		}
+	}
+	const periods: PackagePeriod[] = [];
+	for (const [lparId, list] of events) {
+		list.sort((a, b) => a.at.getTime() - b.at.getTime());
+		const changes = list.filter((e, i) => i === 0 || e.packageId !== list[i - 1].packageId);
+		changes.forEach((e, i) =>
+			periods.push({ lparId, packageId: e.packageId, from: e.at, until: changes[i + 1]?.at ?? null })
+		);
+	}
+	return periods;
+}
