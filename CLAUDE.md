@@ -199,6 +199,9 @@ The system follows this entity relationship:
 - L1 `/reports/end-of-support`: installed product x release with its end-of-support date (latest date of
   any PTF level of the release), out of support red, ending within `EOS_WARNING_MONTHS` (12) amber;
   logic in `src/lib/utils/end-of-support.ts`, CSV one row per release x LPAR.
+- L2 `/reports/package-compliance`: one row per LPAR summarising R1 (`buildCompliance()` in
+  `src/lib/utils/package-compliance.ts`). Compliance = match / (package items + installed outside the
+  package): software outside the package counts against it. LPARs without a package have no %.
 - Report-specific URL params survive Apply via `<ReportFilters keep={['since']}>`. CSV via
   `toCsv()` / `csvDownload()` in `src/lib/utils/csv.ts`.
 - End of support is per release: setting it (Add version page, bundle CSV `end_of_support` column)

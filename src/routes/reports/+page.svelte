@@ -18,7 +18,7 @@
 			title: 'Lifecycle (LCM)',
 			reports: [
 				{ id: 'L1', name: 'End-of-support horizon', text: 'Installed releases by end-of-support date; within 12 months highlighted', href: '/reports/end-of-support' },
-				{ id: 'L2', name: 'Package compliance', text: 'Each LPAR against its package (partly covered by Installed software)' },
+				{ id: 'L2', name: 'Package compliance', text: 'Per LPAR: matching, behind, ahead, outside and missing vs its package, with %', href: '/reports/package-compliance' },
 				{ id: 'L3', name: 'Rollout progress', text: 'Per package: LPARs done, partly done, not started' },
 				{ id: 'L4', name: 'Maintenance level per LPAR', text: 'RSU/CARS level per LPAR and vendor, and its age' },
 				{ id: 'L5', name: 'Open rollbacks', text: 'Rolled-back items not reapplied' }
