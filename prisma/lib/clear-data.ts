@@ -7,6 +7,7 @@ import type { PrismaClient } from '@prisma/client';
 export async function clearAllData(db: PrismaClient): Promise<void> {
 	await db.$transaction([
 		db.audit_log.deleteMany(),
+		db.lpar_package_rollouts.deleteMany(),
 		db.lpar_set_members.deleteMany(),
 		db.lpar_sets.deleteMany(),
 		db.lpar_software.deleteMany(),

@@ -1,4 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
+import { markInstalled } from '#lib/server/rollouts.ts';
+import { transactionTimeouts } from '#lib/server/db-dialect.ts';
 import { lparSchema } from '#lib/schemas/index.ts';
 import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
 import { fail, redirect } from '@sveltejs/kit';
@@ -112,6 +114,11 @@ export const actions: Actions = {
 
 			// Create audit log
 			await createAuditLog('lpar', lpar.id, 'create', lpar);
+			// Lifecycle: the assigned package counts as installed
+			if (lpar.current_package_id) {
+				const packageId = lpar.current_package_id;
+				await db.$transaction((tx) => markInstalled(tx, [lpar.id], packageId), transactionTimeouts());
+			}
 		} catch (error) {
 			console.error('Error creating LPAR:', error);
 			return fail(500, { form });

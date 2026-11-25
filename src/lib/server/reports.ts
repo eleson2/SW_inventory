@@ -26,6 +26,9 @@ import {
 	type RollbackEvent
 } from '#lib/utils/rollbacks.ts';
 import { lparWhere, softwareWhere, type ReportScope } from './report-scope.ts';
+import { buildCompliance } from '#lib/utils/package-compliance.ts';
+import { buildRolloutReport, type RolloutGroup } from '#lib/utils/rollout.ts';
+import { backfillRollouts } from './rollouts.ts';
 
 export type SoftwareByCustomerRow = {
 	customer_id: string;
@@ -514,4 +517,32 @@ export async function getOpenRollbacks(scope: ReportScope): Promise<OpenRollback
 		}
 	});
 	return buildOpenRollbacks({ lpars, software, installs });
+}
+
+/** Report L3: rollout progress per package for the LPARs in scope (optionally some packages). */
+export async function getRolloutProgress(scope: ReportScope, packageIds: string[] = []): Promise<RolloutGroup[]> {
+	await backfillRollouts();
+	const lpars = await db.lpars.findMany({
+		where: lparWhere(scope),
+		select: { id: true, code: true, name: true, customers: { select: { id: true, code: true, name: true } } }
+	});
+	const lparIds = lpars.map((l) => l.id);
+	const [rollouts, matrix] = await Promise.all([
+		db.lpar_package_rollouts.findMany({
+			where: { lpar_id: { in: lparIds }, ...(packageIds.length && { package_id: { in: packageIds } }) },
+			include: { package: { select: { id: true, code: true, name: true, version: true, release_date: true } } }
+		}),
+		// Compliance is about every product, whatever the vendor/product filter says
+		getInstalledMatrix({ ...scope, vendorIds: [], softwareIds: [] })
+	]);
+	const compliance = new Map(
+		buildCompliance(matrix).rows.map((r) => [r.lpar.id, { packageId: r.lpar.package?.id ?? null, value: r.compliance }])
+	);
+	const packages = new Map(rollouts.map((r) => [r.package.id, r.package]));
+	return buildRolloutReport({
+		packages: [...packages.values()],
+		lpars: lpars.map(({ customers, ...l }) => ({ ...l, customer: customers })),
+		rollouts: rollouts.map(({ package: _p, ...r }) => r),
+		compliance
+	});
 }

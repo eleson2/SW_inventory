@@ -65,6 +65,9 @@
 			<Button onclick={() => goto(`/packages/${pkg.id}/deploy`)}>
 				Deploy Package
 			</Button>
+			<Button variant="outline" onclick={() => goto(`/packages/${pkg.id}/rollout`)}>
+				Rollout
+			</Button>
 			<Button variant="outline" onclick={() => showCloneDialog = true}>
 				Clone Package
 			</Button>

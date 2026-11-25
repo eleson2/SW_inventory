@@ -81,6 +81,7 @@ model lpars {
   updated_at         DateTime        @updatedAt
   lpar_software      lpar_software[]
   lpar_set_members   lpar_set_members[]
+  rollouts           lpar_package_rollouts[]
   packages           packages?       @relation(fields: [current_package_id], references: [id], onDelete: SetNull)
   customers          customers       @relation(fields: [customer_id], references: [id], onDelete: Restrict)
 
@@ -130,6 +131,7 @@ model packages {
   updated_at    DateTime        @updatedAt
   lpars         lpars[]
   package_items package_items[]
+  rollouts      lpar_package_rollouts[]
 
   @@unique([code, version])
   @@index([active])
@@ -275,4 +277,28 @@ model lpar_set_members {
 
   @@id([set_id, lpar_id])
   @@index([lpar_id])
+}
+
+// Lifecycle (LCM) of a package on one LPAR: initiated -> planned -> installed -> superseded,
+// or cancelled. Installed is set by deploying (or assigning) the package; superseded when a
+// later package is installed on the LPAR. One row per LPAR x package.
+model lpar_package_rollouts {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lpar_id       String    @db.Uuid
+  package_id    String    @db.Uuid
+  stage         String    @db.VarChar(20)
+  planned_date  DateTime? @db.Date
+  initiated_at  DateTime  @default(now())
+  installed_at  DateTime?
+  superseded_at DateTime?
+  cancelled_at  DateTime?
+  notes         String?   @db.VarChar(500)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  lpar          lpars     @relation(fields: [lpar_id], references: [id], onDelete: Cascade)
+  package       packages  @relation(fields: [package_id], references: [id], onDelete: Cascade)
+
+  @@unique([lpar_id, package_id])
+  @@index([package_id, stage])
+  @@index([lpar_id, stage])
 }

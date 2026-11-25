@@ -1,4 +1,5 @@
 import type { PageServerLoad, Actions } from './$types';
+import { markInstalled } from '#lib/server/rollouts.ts';
 import { db, createAuditLog } from '#lib/server/db.ts';
 import { fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -250,6 +251,9 @@ export const actions: Actions = {
 							updated_at: new Date()
 						}
 					});
+
+					// Lifecycle: installed on these LPARs, their previous package superseded
+					await markInstalled(tx, lparIds, params.id);
 				},
 				{
 					isolationLevel: Prisma.TransactionIsolationLevel.Serializable,

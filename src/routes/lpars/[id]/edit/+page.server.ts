@@ -1,4 +1,5 @@
 import type { PageServerLoad, Actions } from './$types';
+import { markInstalled } from '#lib/server/rollouts.ts';
 import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
 import { fail, redirect, error } from '@sveltejs/kit';
 import { lparWithSoftwareSchema } from '#lib/schemas/lpar.ts';
@@ -137,6 +138,10 @@ export const actions: Actions = {
 						active: validated.active
 					}
 				});
+				// Lifecycle: a newly assigned package counts as installed
+				if (validated.current_package_id && validated.current_package_id !== existingLpar.current_package_id) {
+					await markInstalled(tx, [params.id], validated.current_package_id);
+				}
 
 				// Delete installations that were removed or marked for deletion
 				if (installsToDelete.length > 0) {

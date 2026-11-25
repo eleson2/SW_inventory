@@ -215,12 +215,24 @@ The system follows this entity relationship:
 - V6 `/reports/maintenance-uptake`: per vendor level the LPARs that reach it (`buildUptake()`, same
   rule as L4; `loadLevelInput()` feeds both). V5 = L1 with "Group by vendor" (`?group=vendor`);
   C4 = the "End of vendor support" section of C1.
+- L3 `/reports/rollout` (`?package=`): rollout progress per package from `lpar_package_rollouts` (below);
+  overdue = planned date passed, not installed; compliance from L2 when it is the LPAR's current package.
 - Report-specific URL params survive Apply via `<ReportFilters keep={['since']}>`. CSV via
   `toCsv()` / `csvDownload()` in `src/lib/utils/csv.ts`.
 - End of support is per release: setting it (Add version page, bundle CSV `end_of_support` column)
   updates every PTF level of that release, and new PTF levels inherit it.
 - `createAuditLog(..., userId, tx)` inside `db.$transaction`: on the main connection it waits for
   the transaction's write lock on SQLite until the transaction times out.
+
+### Package Lifecycle (LCM) per LPAR
+- `lpar_package_rollouts`, one row per LPAR x package: `initiated` -> `planned` (has `planned_date`) ->
+  `installed` -> `superseded`, or `cancelled` (kept; planning again re-opens it). Logic in
+  `src/lib/server/rollouts.ts`, labels/L3 in `src/lib/utils/rollout.ts`.
+- Plan/date/cancel on `/packages/[id]/rollout`. `markInstalled(tx, lparIds, packageId)` runs inside the
+  deploy transaction and when an LPAR's package is set on the LPAR new/edit pages: no plan needed,
+  and the LPAR's previously installed package becomes superseded.
+- `backfillRollouts()` (called by the pages that show rollouts) records every LPAR's current package
+  as installed when it has no rollout yet, so existing data needs no migration step.
 
 ### Version Management
 
