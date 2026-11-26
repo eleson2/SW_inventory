@@ -28,6 +28,7 @@
 			title: 'Vendors',
 			reports: [
 				{ id: 'V1', name: 'Installed base summary', text: 'Per vendor: LPARs, customers, products, releases and installs, with the trend from installed packages', href: '/reports/installed-base' },
+				{ id: 'V2', name: 'Low-footprint products', text: 'Products on few LPARs (limit you set) or only on test/dev, and products installed nowhere', href: '/reports/low-footprint' },
 				{ id: 'V3', name: 'Overlapping products', text: 'Products of the same category from different vendors, and the LPARs running them side by side', href: '/reports/overlap' },
 				{ id: 'V4', name: 'Quality record', text: 'Rollbacks per vendor and product in a chosen period', href: '/reports/quality' },
 				{ id: 'V5', name: 'Support-date exposure', text: 'End-of-support horizon grouped by vendor', href: '/reports/end-of-support?group=vendor' },

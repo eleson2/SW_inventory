@@ -12,6 +12,7 @@
 	import Badge from '#lib/components/ui/Badge.svelte';
 	import { useTableNavigation } from '#lib/utils/table-navigation.svelte.ts';
 	import { STATUS_FILTER } from '#lib/constants/filters.ts';
+	import { ENVIRONMENTS, ENVIRONMENT_LABEL, NO_ENVIRONMENT } from '#lib/utils/environment.ts';
 
 	let { data }: { data: PageData } = $props();
 
@@ -36,6 +37,11 @@
 			key: 'customer',
 			label: 'Customer',
 			render: (item: Lpar) => item.customers?.name || '-'
+		},
+		{
+			key: 'environment',
+			label: 'Environment',
+			render: (item: Lpar & { environment?: string | null }) => item.environment || 'Not set'
 		},
 		{
 			key: 'currentPackage',
@@ -88,6 +94,14 @@
 						name: 'customer',
 						label: 'Customer',
 						options: customerFilterOptions
+					},
+					{
+						name: 'environment',
+						label: 'Environment',
+						options: [
+							...ENVIRONMENTS.map((e) => ({ value: e, label: `${e} – ${ENVIRONMENT_LABEL[e]}` })),
+							{ value: NO_ENVIRONMENT, label: 'Not set' }
+						]
 					},
 					STATUS_FILTER
 				]}

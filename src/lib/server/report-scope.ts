@@ -3,6 +3,7 @@
  *
  *   ?customer=<id>&customer=<id>   customers (none = all)
  *   &lpar=<id>&lpar=<id>           ticked LPARs within those customers (none = all of them)
+ *   &env=PROD&env=none             LPARs of these environments (none = not set)
  *   &vendor=<id>  &software=<id>   narrow the software shown (none = all)
  *   &category=<id>|none            software of these categories (none = unclassified)
  *   &set=<id>                      the LPAR set the selection came from (label only)
@@ -11,10 +12,13 @@
  */
 import { db } from './db.ts';
 import { UNCLASSIFIED } from '#lib/utils/software-category.ts';
+import { NO_ENVIRONMENT, isEnvironment } from '#lib/utils/environment.ts';
 
 export interface ReportScope {
 	customerIds: string[];
 	lparIds: string[];
+	/** LPAR environments (PROD/TEST/DEV/DR); NO_ENVIRONMENT ("none") = not set */
+	environments: string[];
 	vendorIds: string[];
 	softwareIds: string[];
 	/** Category ids; UNCLASSIFIED ("none") = software without a category */
@@ -27,6 +31,7 @@ export function readScope(url: URL): ReportScope {
 	return {
 		customerIds: all('customer'),
 		lparIds: all('lpar'),
+		environments: all('env').filter((e) => isEnvironment(e) || e === NO_ENVIRONMENT),
 		vendorIds: all('vendor'),
 		softwareIds: all('software'),
 		categoryIds: all('category'),
@@ -40,7 +45,8 @@ export function lparWhere(scope: ReportScope) {
 		active: true,
 		customers: { active: true },
 		...(scope.customerIds.length > 0 && { customer_id: { in: scope.customerIds } }),
-		...(scope.lparIds.length > 0 && { id: { in: scope.lparIds } })
+		...(scope.lparIds.length > 0 && { id: { in: scope.lparIds } }),
+		...(scope.environments.length > 0 && { AND: [environmentWhere(scope.environments)] })
 	};
 }
 
@@ -53,6 +59,12 @@ export function softwareWhere(scope: ReportScope) {
 		...(scope.softwareIds.length > 0 && { id: { in: scope.softwareIds } }),
 		...(scope.categoryIds.length > 0 && { AND: [categoryWhere(scope.categoryIds)] })
 	};
+}
+
+function environmentWhere(environments: string[]) {
+	const set = environments.filter((e) => e !== NO_ENVIRONMENT);
+	if (!environments.includes(NO_ENVIRONMENT)) return { environment: { in: set } };
+	return set.length ? { OR: [{ environment: { in: set } }, { environment: null }] } : { environment: null };
 }
 
 function categoryWhere(categoryIds: string[]) {
@@ -80,6 +92,7 @@ export async function loadFilterOptions() {
 				code: true,
 				name: true,
 				customer_id: true,
+				environment: true,
 				lpar_software: { select: { software_id: true } }
 			},
 			orderBy: { code: 'asc' }

@@ -3,6 +3,7 @@
  */
 import { z } from 'zod';
 import { CODE_PATTERN, CODE_ERROR_MESSAGE, FIELD_LENGTHS } from '#lib/constants/validation.ts';
+import { ENVIRONMENTS } from '#lib/utils/environment.ts';
 
 // Schema for individual LPAR software installation (detail entity)
 export const lparSoftwareInstallationSchema = z.object({
@@ -33,6 +34,7 @@ export const lparSchema = z.object({
 		.regex(CODE_PATTERN, CODE_ERROR_MESSAGE),
 	customer_id: z.string().uuid('Invalid customer'),
 	description: z.string().max(FIELD_LENGTHS.description.max).optional(),
+	environment: z.enum(ENVIRONMENTS).optional().or(z.literal('')), // '' = not set
 	current_package_id: z.string().uuid('Invalid package').optional().or(z.literal('')), // '' = no package
 	active: z.boolean().default(true)
 });

@@ -143,6 +143,10 @@
 					<dd class="text-sm mt-1">{lpar.description || '-'}</dd>
 				</div>
 				<div>
+					<dt class="text-sm font-medium text-muted-foreground">Environment</dt>
+					<dd class="text-sm mt-1">{lpar.environment ?? 'Not set'}</dd>
+				</div>
+				<div>
 					<dt class="text-sm font-medium text-muted-foreground">Status</dt>
 					<dd class="mt-1">
 						<StatusBadge active={lpar.active} />

@@ -2,6 +2,7 @@ import type { PageServerLoad } from './$types';
 import { db } from '#lib/server/db.ts';
 import { createPageLoader } from '#lib/server/page-loader.ts';
 import { textContains } from '#lib/server/db-dialect.ts';
+import { NO_ENVIRONMENT } from '#lib/utils/environment.ts';
 
 export const load: PageServerLoad = async ({ url }) => {
 	// Get all customers for filter dropdown
@@ -75,6 +76,16 @@ export const load: PageServerLoad = async ({ url }) => {
 			const customerId = url.searchParams.get('customer');
 			if (customerId) {
 				filters.customer_id = customerId;
+			}
+
+			const environment = url.searchParams.get('environment');
+			if (environment) {
+				filters.environment = environment === NO_ENVIRONMENT ? null : environment;
+			}
+
+			const envFilter = url.searchParams.get('col_environment');
+			if (envFilter) {
+				filters.environment = textContains(envFilter);
 			}
 
 			return filters;

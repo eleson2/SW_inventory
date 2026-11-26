@@ -186,8 +186,9 @@ The system follows this entity relationship:
 - `/reports` lists all reports by goal; report IDs (R1, L1, V4...) match the "Reporting Needs" doc.
 - Every report uses the shared scope: `readScope(url)` / `lparWhere` / `softwareWhere` /
   `loadFilterOptions()` in `src/lib/server/report-scope.ts` and `ReportFilters.svelte`
-  (`src/lib/components/reports/`). URL params: `customer`, `lpar`, `vendor`, `software`, `category`
-  (`none` = unclassified), `set` (ids).
+  (`src/lib/components/reports/`). URL params: `customer`, `lpar`, `env` (LPAR environment,
+  `none` = not set), `vendor`, `software`, `category` (`none` = unclassified), `set` (ids).
+- LPAR environment (part of D1): `lpars.environment` PROD/TEST/DEV/DR or empty (`src/lib/utils/environment.ts`).
 - Software categories (D3, `software_categories`, `software.category_id`): one per product, list and bulk
   "Classify products" on `/software/categories` (logic in `src/lib/utils/software-category.ts`). Licence
   type/owner are deferred to D4 (licences and contracts).
@@ -228,6 +229,9 @@ The system follows this entity relationship:
 - V3 `/reports/overlap` (`?same=1` also same-vendor pairs, `?view=lpar` LPAR x product ticks): installed
   products of one category from different vendors anywhere in scope (portfolio level); LPARs running two
   side by side are counted; unclassified products are left out. Logic in `src/lib/utils/overlap.ts`.
+- V2 `/reports/low-footprint` (`?max=` few-LPARs limit, default 2): installed products on at most `max` LPARs
+  or only on TEST/DEV LPARs, marked when also in V3; plus active products installed nowhere in scope
+  (with the number of active packages holding them). Logic in `src/lib/utils/low-footprint.ts`.
 - Report-specific URL params survive Apply via `<ReportFilters keep={['since']}>`. CSV via
   `toCsv()` / `csvDownload()` in `src/lib/utils/csv.ts`.
 - End of support is per release: setting it (Add version page, bundle CSV `end_of_support` column)

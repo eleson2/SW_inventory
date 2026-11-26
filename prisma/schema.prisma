@@ -73,6 +73,8 @@ model lpars {
   code               String          @unique @db.VarChar(20)
   customer_id        String          @db.Uuid
   description        String?
+  /// PROD / TEST / DEV / DR (D1); optional
+  environment        String?         @db.VarChar(10)
   current_package_id String?         @db.Uuid
   active             Boolean         @default(true)
   deleted_at         DateTime?

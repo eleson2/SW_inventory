@@ -31,6 +31,7 @@ import { buildRolloutReport, type RolloutGroup } from '#lib/utils/rollout.ts';
 import { backfillRollouts } from './rollouts.ts';
 import { buildInstalledBase, monthPoints, type BaseItem, type InstalledBase } from '#lib/utils/installed-base.ts';
 import { buildOverlap, type OverlapReport } from '#lib/utils/overlap.ts';
+import { buildLowFootprint, type LowFootprint } from '#lib/utils/low-footprint.ts';
 
 export type SoftwareByCustomerRow = {
 	customer_id: string;
@@ -593,10 +594,23 @@ export async function getInstalledBase(scope: ReportScope, months: number, today
 
 /** Report V3: installed products of the same category from different vendors (or also the same vendor). */
 export async function getOverlap(scope: ReportScope, sameVendor = false): Promise<OverlapReport> {
+	const { lpars, software, installs } = await loadInstalledProducts(scope);
+	return buildOverlap({ lpars, software, installs }, sameVendor);
+}
+
+/** LPARs, software (with vendor and category) and installs in scope, for V2 and V3 */
+async function loadInstalledProducts(scope: ReportScope) {
 	const [lpars, software] = await Promise.all([
 		db.lpars.findMany({
 			where: lparWhere(scope),
-			select: { id: true, code: true, name: true, customers: { select: { id: true, code: true, name: true } } }
+			select: {
+				id: true,
+				code: true,
+				name: true,
+				customer_id: true,
+				environment: true,
+				customers: { select: { id: true, code: true, name: true } }
+			}
 		}),
 		db.software.findMany({
 			where: softwareWhere(scope),
@@ -610,14 +624,31 @@ export async function getOverlap(scope: ReportScope, sameVendor = false): Promis
 	]);
 	const installs = await db.lpar_software.findMany({
 		where: { lpar_id: { in: lpars.map((l) => l.id) }, software_id: { in: software.map((s) => s.id) } },
-		select: { lpar_id: true, software_id: true }
+		select: { lpar_id: true, software_id: true, installed_date: true, rolled_back_at: true }
 	});
-	return buildOverlap(
-		{
-			lpars: lpars.map(({ customers, ...l }) => ({ ...l, customer: customers })),
-			software: software.map(({ vendors, ...s }) => ({ ...s, vendor: vendors })),
-			installs
-		},
-		sameVendor
-	);
+	return {
+		lpars: lpars.map(({ customers, ...l }) => ({ ...l, customer: customers })),
+		software: software.map(({ vendors, ...s }) => ({ ...s, vendor: vendors })),
+		installs
+	};
+}
+
+/** Report V2: products on at most `maxLpars` LPARs or only on test/dev, and products installed nowhere. */
+export async function getLowFootprint(scope: ReportScope, maxLpars: number): Promise<LowFootprint> {
+	const { lpars, software, installs } = await loadInstalledProducts(scope);
+	const items = await db.package_items.findMany({
+		where: { software_id: { in: software.map((s) => s.id) }, packages: { active: true } },
+		select: { software_id: true, package_id: true }
+	});
+	const packages = new Map<string, Set<string>>();
+	for (const i of items) packages.set(i.software_id, (packages.get(i.software_id) ?? new Set()).add(i.package_id));
+	const overlap = buildOverlap({ lpars, software, installs });
+	return buildLowFootprint({
+		lpars,
+		software,
+		installs,
+		packages: new Map([...packages].map(([id, set]) => [id, set.size])),
+		overlapping: new Set(overlap.categories.flatMap((c) => c.products.map((p) => p.software.id))),
+		maxLpars
+	});
 }

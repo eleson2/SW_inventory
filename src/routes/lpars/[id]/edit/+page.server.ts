@@ -67,6 +67,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			code: lpar.code,
 			customer_id: lpar.customer_id,
 			description: lpar.description || '',
+			environment: (lpar.environment ?? '') as never,
 			current_package_id: lpar.current_package_id || '',
 			active: lpar.active,
 			software_installations: lpar.lpar_software.map(ls => ({
@@ -134,6 +135,7 @@ export const actions: Actions = {
 						code: validated.code,
 						customer_id: validated.customer_id,
 						description: validated.description || null,
+						environment: validated.environment || null,
 						current_package_id: validated.current_package_id || null,
 						active: validated.active
 					}

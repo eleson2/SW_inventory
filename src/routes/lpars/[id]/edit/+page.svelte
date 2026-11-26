@@ -6,6 +6,7 @@
 	import { typedSuperForm } from '#lib/utils/superforms.ts';
 	import Card from '#lib/components/ui/Card.svelte';
 	import Label from '#lib/components/ui/Label.svelte';
+	import { ENVIRONMENTS, ENVIRONMENT_LABEL } from '#lib/utils/environment.ts';
 	import FormField from '#lib/components/common/FormField.svelte';
 	import FormCheckbox from '#lib/components/common/FormCheckbox.svelte';
 	import FormButtons from '#lib/components/common/FormButtons.svelte';
@@ -116,6 +117,19 @@
 					{#if $errors.current_package_id?.[0]}
 						<p class="text-sm text-destructive">{$errors.current_package_id[0]}</p>
 					{/if}
+				</div>
+
+				<div class="space-y-2">
+					<Label for="environment">Environment</Label>
+					<select
+						id="environment"
+						name="environment"
+						bind:value={$form.environment}
+						class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+					>
+						<option value="">Not set</option>
+						{#each ENVIRONMENTS as env (env)}<option value={env}>{env} – {ENVIRONMENT_LABEL[env]}</option>{/each}
+					</select>
 				</div>
 
 				<FormTextarea

@@ -15,6 +15,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	const form = await serverValidate(
 		{
 			description: '',
+			environment: '',
 			current_package_id: '',
 			active: true,
 			customer_id: customerIdFromUrl || ''
@@ -107,6 +108,7 @@ export const actions: Actions = {
 					code: form.data.code,
 					customer_id: form.data.customer_id,
 					description: form.data.description || null,
+					environment: form.data.environment || null,
 					current_package_id: form.data.current_package_id || null,
 					active: form.data.active
 				}

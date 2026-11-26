@@ -11,6 +11,7 @@
 	import MultiSelect from './MultiSelect.svelte';
 	import type { ReportFilterOptions, ReportScope } from '#lib/server/report-scope.ts';
 	import { UNCLASSIFIED } from '#lib/utils/software-category.ts';
+	import { ENVIRONMENTS, ENVIRONMENT_LABEL, NO_ENVIRONMENT } from '#lib/utils/environment.ts';
 
 	let {
 		options,
@@ -32,6 +33,11 @@
 	let vendors = $state<string[]>(untrack(() => scope.vendorIds));
 	let software = $state<string[]>(untrack(() => scope.softwareIds));
 	let categories = $state<string[]>(untrack(() => scope.categoryIds));
+	let environments = $state<string[]>(untrack(() => scope.environments));
+	const environmentOptions = [
+		...ENVIRONMENTS.map((e) => ({ id: e, label: e, hint: ENVIRONMENT_LABEL[e] })),
+		{ id: NO_ENVIRONMENT, label: 'Not set' }
+	];
 	let running = $state('');
 	let setId = $state(untrack(() => scope.setId ?? ''));
 	let saving = $state(false);
@@ -110,6 +116,7 @@
 		vendors.forEach((id) => params.append('vendor', id));
 		software.forEach((id) => params.append('software', id));
 		categories.forEach((id) => params.append('category', id));
+		environments.forEach((e) => params.append('env', e));
 		if (matchesSet) params.set('set', setId);
 		for (const key of keep) page.url.searchParams.getAll(key).forEach((v) => params.append(key, v));
 		return params;
@@ -145,6 +152,7 @@
 				{#each options.software as s (s.id)}<option value={s.id}>{s.name}</option>{/each}
 			</select>
 		</label>
+		<MultiSelect label="Environments" options={environmentOptions} bind:selected={environments} allText="All environments" />
 		<MultiSelect label="Vendors" options={vendorOptions} bind:selected={vendors} allText="All vendors" />
 		<MultiSelect label="Categories" options={categoryOptions} bind:selected={categories} allText="All categories" />
 		<MultiSelect label="Products" options={softwareOptions} bind:selected={software} allText="All products" />
@@ -187,6 +195,9 @@
 				</span>
 			{/each}
 			<span class="text-muted-foreground">· {ticked.length} LPAR{ticked.length === 1 ? '' : 's'}</span>
+		{/if}
+		{#if environments.length}
+			<span class="text-muted-foreground">· only {environments.map((e) => (e === NO_ENVIRONMENT ? 'not set' : e)).join(', ')}</span>
 		{/if}
 		{#if empty}
 			<span class="text-xs text-red-700 print:hidden">Pick at least one LPAR</span>
