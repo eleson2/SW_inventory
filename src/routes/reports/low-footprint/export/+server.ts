@@ -7,5 +7,5 @@ import { csvDownload, toCsv } from '#lib/utils/csv.ts';
 /** CSV of low-footprint products: one row per listed product, then the products installed nowhere. */
 export const GET: RequestHandler = async ({ url }) => {
 	const report = await getLowFootprint(readScope(url), readMaxLpars(url.searchParams.get('max')));
-	return csvDownload('low-footprint', toCsv(FOOTPRINT_CSV_COLUMNS, footprintRecords(report)));
+	return csvDownload('low-footprint', toCsv(FOOTPRINT_CSV_COLUMNS, footprintRecords(report)), readScope(url).asOf);
 };

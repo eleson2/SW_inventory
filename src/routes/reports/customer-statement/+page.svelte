@@ -25,6 +25,7 @@
 	};
 
 	const today = new Date().toISOString().slice(0, 10);
+	const asOf = $derived(data.scope.asOf ? new Date(data.scope.asOf).toISOString().slice(0, 10) : null);
 	const fmtDate = (d: Date | string | null) => (d ? new Date(d).toISOString().slice(0, 10) : '');
 	const ver = (v: { version: string; ptf_level: string | null } | null) =>
 		v ? [v.version, v.ptf_level].filter(Boolean).join(' ') : '';
@@ -88,7 +89,7 @@
 		</PageHeader>
 
 		<Card class="p-4">
-			<ReportFilters options={data.options} scope={data.scope} keep={['since']} />
+			<ReportFilters asOf options={data.options} scope={data.scope} keep={['since']} />
 		</Card>
 
 		<div class="flex flex-wrap items-end gap-2 text-sm">
@@ -123,7 +124,12 @@
 					<h2 class="text-xl font-semibold">{s.customer.name}</h2>
 				</div>
 				<div class="text-right text-xs text-muted-foreground">
-					<div>Date: {today}</div>
+					{#if asOf}
+						<div class="font-medium text-foreground">Statement as of {asOf}</div>
+						<div>Printed: {today}</div>
+					{:else}
+						<div>Date: {today}</div>
+					{/if}
 					<div>Customer: {s.customer.code}</div>
 				</div>
 			</header>
@@ -225,7 +231,7 @@
 			</section>
 
 			<section class="break-inside-avoid-page">
-				<h3 class="mb-1 font-semibold">Changes since {data.since}</h3>
+				<h3 class="mb-1 font-semibold">Changes since {data.since}{asOf ? ` up to ${asOf}` : ''}</h3>
 				{#if s.changes.length === 0}
 					<p class="text-muted-foreground">No changes in this period.</p>
 				{:else}

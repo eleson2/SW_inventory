@@ -7,5 +7,5 @@ import { csvDownload, toCsv } from '#lib/utils/csv.ts';
 /** CSV of the end-of-support horizon: one row per product x release x LPAR. */
 export const GET: RequestHandler = async ({ url }) => {
 	const report = await getEndOfSupport(readScope(url));
-	return csvDownload('end-of-support', toCsv(EOS_CSV_COLUMNS, eosRecords(report)));
+	return csvDownload('end-of-support', toCsv(EOS_CSV_COLUMNS, eosRecords(report)), readScope(url).asOf);
 };

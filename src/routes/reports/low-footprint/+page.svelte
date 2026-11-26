@@ -66,7 +66,7 @@
 			</label>
 			<Button type="submit" variant="outline" disabled={!max || max === report.maxLpars}>Set</Button>
 		</form>
-		<ReportFilters options={data.options} scope={data.scope} keep={['max']} />
+		<ReportFilters asOf options={data.options} scope={data.scope} keep={['max']} />
 	</Card>
 
 	<div class="grid grid-cols-1 gap-3 sm:grid-cols-3">

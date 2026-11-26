@@ -7,5 +7,5 @@ import { csvDownload, toCsv } from '#lib/utils/csv.ts';
 /** CSV of the installed software matrix: one row per LPAR x product, same filters as the page. */
 export const GET: RequestHandler = async ({ url }) => {
 	const matrix = await getInstalledMatrix(readScope(url));
-	return csvDownload('installed-software', toCsv(MATRIX_CSV_COLUMNS, matrixRecords(matrix)));
+	return csvDownload('installed-software', toCsv(MATRIX_CSV_COLUMNS, matrixRecords(matrix)), readScope(url).asOf);
 };

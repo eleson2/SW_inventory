@@ -10,7 +10,7 @@ vi.mock('../../src/lib/server/db.ts', async () => {
 	return { db: testDb, createAuditLog: async () => {} };
 });
 
-const { markInstalled, planRollouts, updateRollouts, backfillRollouts, importAuditHistory, RolloutError } = await import(
+const { markInstalled, planRollouts, updateRollouts, backfillRollouts, importAuditHistory, packagesAt, RolloutError } = await import(
 	'../../src/lib/server/rollouts.ts'
 );
 
@@ -93,5 +93,15 @@ describe('Package rollouts', () => {
 			[q1.id, 'installed', '2025-09-01', null]
 		]);
 		expect(await importAuditHistory()).toBe(0);
+	});
+
+	it('knows the package each LPAR had on a date', async () => {
+		await testDb.$transaction((tx) => markInstalled(tx, [lparB.id], q1.id, new Date('2026-01-10')));
+		await testDb.$transaction((tx) => markInstalled(tx, [lparB.id], q2.id, new Date('2026-04-10')));
+		// LPAR B has no current package, so the backfill leaves it alone
+		const at = async (d: string) => Object.fromEntries(await packagesAt([lparB.id], new Date(d)));
+		expect(await at('2026-01-01')).toEqual({});
+		expect(await at('2026-02-01')).toEqual({ [lparB.id]: q1.id });
+		expect(await at('2026-05-01')).toEqual({ [lparB.id]: q2.id });
 	});
 });

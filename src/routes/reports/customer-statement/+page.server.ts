@@ -34,7 +34,8 @@ export const load: PageServerLoad = async ({ url }) => {
 	const changes = await getStatementChanges(
 		matrix.lpars.map((l) => l.id),
 		matrix.vendors.flatMap((v) => v.rows.map((r) => r.software.id)),
-		new Date(`${since}T00:00:00Z`)
+		new Date(`${since}T00:00:00Z`),
+		scope.asOf
 	);
 	return { scope, options, since, matrix, changes, endOfSupport };
 };

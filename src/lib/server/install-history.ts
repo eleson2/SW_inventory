@@ -9,11 +9,13 @@ import { db } from './db.ts';
 import { auditRollback } from '#lib/utils/rollbacks.ts';
 import {
 	classifyChange,
+	installsAt,
 	pairKey,
 	reconstructEvents,
 	type AuditRollback,
 	type CurrentInstall,
 	type HistorySource,
+	type InstallAt,
 	type VersionPair
 } from '#lib/utils/install-history.ts';
 
@@ -134,4 +136,30 @@ export async function backfillInstallHistory(): Promise<number> {
 	const missing = installs.filter((i) => !have.has(pairKey(i.lpar_id, i.software_id)));
 	if (missing.length === 0) return 0;
 	return (await writeReconstructed(db, missing)).size;
+}
+
+/**
+ * Installs on these LPARs (optionally only these products): the current state, or as of a date
+ * replayed from the history. Same shape either way, so reports need not care.
+ */
+export async function loadInstalls(lparIds: string[], softwareIds: string[] | null, asOf: Date | null): Promise<InstallAt[]> {
+	const where = { lpar_id: { in: lparIds }, ...(softwareIds && { software_id: { in: softwareIds } }) };
+	if (!asOf) {
+		return db.lpar_software.findMany({
+			where,
+			select: {
+				lpar_id: true,
+				software_id: true,
+				current_version: true,
+				current_ptf_level: true,
+				installed_date: true,
+				rolled_back: true,
+				rolled_back_at: true,
+				rollback_reason: true
+			}
+		});
+	}
+	await backfillInstallHistory();
+	const events = await db.lpar_software_history.findMany({ where: { ...where, occurred_at: { lte: asOf } } });
+	return installsAt(events, asOf);
 }

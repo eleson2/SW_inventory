@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { classifyChange, reconstructEvents, stateAt, pairKey, type CurrentInstall, type HistoryRow } from './install-history.ts';
+import { classifyChange, endOfDay, installsAt, reconstructEvents, stateAt, pairKey, type CurrentInstall, type HistoryRow } from './install-history.ts';
 
 const d = (s: string) => new Date(`${s}T00:00:00Z`);
 const v = (version: string, ptf_level: string | null = null) => ({ version, ptf_level });
@@ -87,5 +87,44 @@ describe('install history (D2)', () => {
 		const events = replay(row({}), audit as never);
 		expect(events.map((e) => e.event)).toEqual(['rollback', 'install']);
 		expect(stateAt(events).get(pairKey('L', 'S'))).toEqual(v('V6R1M0', 'UI2'));
+	});
+});
+
+describe('installs at a date', () => {
+	const ev = (event: string, at: string, to: string | null, reason: string | null = null): HistoryRow => ({
+		lpar_id: 'L',
+		software_id: 'S',
+		event,
+		from_version: null,
+		from_ptf_level: null,
+		to_version: to,
+		to_ptf_level: null,
+		occurred_at: d(at),
+		source: 'deploy',
+		package_id: null,
+		reason,
+		reconstructed: false
+	});
+	const events = [
+		ev('install', '2025-01-01', 'V1'),
+		ev('upgrade', '2025-03-01', 'V2'),
+		ev('rollback', '2025-03-05', 'V1', 'Abends'),
+		ev('remove', '2025-06-01', null)
+	];
+	it('replays version, install date and rollback state', () => {
+		expect(installsAt(events, d('2024-12-01'))).toEqual([]);
+		expect(installsAt(events, d('2025-03-02'))[0]).toMatchObject({ current_version: 'V2', installed_date: d('2025-03-01'), rolled_back: false });
+		expect(installsAt(events, d('2025-04-01'))[0]).toMatchObject({
+			current_version: 'V1',
+			installed_date: d('2025-03-01'),
+			rolled_back: true,
+			rolled_back_at: d('2025-03-05'),
+			rollback_reason: 'Abends'
+		});
+		expect(installsAt(events, d('2025-07-01'))).toEqual([]);
+	});
+	it('reads an as-of date as the end of that day', () => {
+		expect(endOfDay('2025-06-30')?.toISOString()).toBe('2025-06-30T23:59:59.999Z');
+		expect([endOfDay(''), endOfDay('2025-02-30'), endOfDay('30/06/2025'), endOfDay(null)]).toEqual([null, null, null, null]);
 	});
 });

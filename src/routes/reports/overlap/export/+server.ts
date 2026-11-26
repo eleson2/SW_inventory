@@ -7,5 +7,5 @@ import { csvDownload, toCsv } from '#lib/utils/csv.ts';
 /** CSV of overlapping products: one row per category x product x LPAR. */
 export const GET: RequestHandler = async ({ url }) => {
 	const report = await getOverlap(readScope(url), url.searchParams.get('same') === '1');
-	return csvDownload('overlapping-products', toCsv(OVERLAP_CSV_COLUMNS, overlapRecords(report)));
+	return csvDownload('overlapping-products', toCsv(OVERLAP_CSV_COLUMNS, overlapRecords(report)), readScope(url).asOf);
 };

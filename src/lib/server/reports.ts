@@ -28,7 +28,8 @@ import {
 import { lparWhere, softwareWhere, type ReportScope } from './report-scope.ts';
 import { buildCompliance } from '#lib/utils/package-compliance.ts';
 import { buildRolloutReport, type RolloutGroup } from '#lib/utils/rollout.ts';
-import { backfillRollouts } from './rollouts.ts';
+import { backfillRollouts, packagesAt } from './rollouts.ts';
+import { backfillInstallHistory, loadInstalls } from './install-history.ts';
 import { buildInstalledBase, monthPoints, type BaseItem, type InstalledBase } from '#lib/utils/installed-base.ts';
 import { buildOverlap, type OverlapReport } from '#lib/utils/overlap.ts';
 import { buildLowFootprint, type LowFootprint } from '#lib/utils/low-footprint.ts';
@@ -171,20 +172,21 @@ export async function getInstalledMatrix(scope: ReportScope): Promise<InstalledM
 		})
 	]);
 	const lparIds = lpars.map((l) => l.id);
-	const packageIds = [...new Set(lpars.flatMap((l) => (l.packages?.active ? [l.packages.id] : [])))];
+	// As of a date: the package each LPAR had then (from the package lifecycle)
+	type Pkg = { id: string; code: string; name: string; version: string; active: boolean };
+	let packageOf = new Map<string, Pkg | null>(lpars.map((l) => [l.id, l.packages]));
+	if (scope.asOf) {
+		const then = await packagesAt(lparIds, scope.asOf);
+		const pkgs = await db.packages.findMany({
+			where: { id: { in: [...new Set(then.values())] } },
+			select: { id: true, code: true, name: true, version: true, active: true }
+		});
+		const byId = new Map(pkgs.map((p) => [p.id, p]));
+		packageOf = new Map(lpars.map((l) => [l.id, byId.get(then.get(l.id) ?? '') ?? null]));
+	}
+	const packageIds = [...new Set([...packageOf.values()].flatMap((p) => (p?.active ? [p.id] : [])))];
 	const [installs, packageItems] = await Promise.all([
-		db.lpar_software.findMany({
-			where: { lpar_id: { in: lparIds } },
-			select: {
-				lpar_id: true,
-				software_id: true,
-				current_version: true,
-				current_ptf_level: true,
-				installed_date: true,
-				rolled_back: true,
-				rollback_reason: true
-			}
-		}),
+		loadInstalls(lparIds, null, scope.asOf),
 		db.package_items.findMany({
 			where: { package_id: { in: packageIds } },
 			select: {
@@ -196,15 +198,16 @@ export async function getInstalledMatrix(scope: ReportScope): Promise<InstalledM
 	]);
 
 	return buildInstalledMatrix({
-		lpars: lpars.map((l) => ({
-			id: l.id,
-			code: l.code,
-			name: l.name,
-			customer: l.customers,
-			package: l.packages?.active
-				? { id: l.packages.id, code: l.packages.code, name: l.packages.name, version: l.packages.version }
-				: null
-		})),
+		lpars: lpars.map((l) => {
+			const p = packageOf.get(l.id);
+			return {
+				id: l.id,
+				code: l.code,
+				name: l.name,
+				customer: l.customers,
+				package: p?.active ? { id: p.id, code: p.code, name: p.name, version: p.version } : null
+			};
+		}),
 		software: software.map(({ vendors, ...s }) => ({ ...s, vendor: vendors })),
 		installs: installs.map((i) => ({
 			lpar_id: i.lpar_id,
@@ -242,10 +245,11 @@ export async function getVendorBase(scope: ReportScope): Promise<VendorBase> {
 			}
 		})
 	]);
-	const installs = await db.lpar_software.findMany({
-		where: { lpar_id: { in: lpars.map((l) => l.id) }, software_id: { in: software.map((s) => s.id) } },
-		select: { lpar_id: true, software_id: true, current_version: true, current_ptf_level: true }
-	});
+	const installs = await loadInstalls(
+		lpars.map((l) => l.id),
+		software.map((s) => s.id),
+		scope.asOf
+	);
 	return buildVendorBase({
 		lpars: lpars.map((l) => ({ id: l.id, code: l.code, customer: l.customers })),
 		software: software.map(({ vendors, current_version, ...s }) => ({
@@ -274,44 +278,36 @@ export interface StatementChange {
 }
 
 /**
- * Report C1 "Changes since": installs and rollbacks on these LPARs on or after `since`, newest
- * first. Read from lpar_software (the latest change per LPAR and product), so a product
- * changed twice in the period shows its latest change only.
+ * Report C1 "Changes since": installs, upgrades, PTF changes and rollbacks on these LPARs from
+ * `since` up to `until` (default now), newest first, from the install history. Removals are
+ * left out (the statement lists what is installed).
  */
-export async function getStatementChanges(lparIds: string[], softwareIds: string[], since: Date): Promise<StatementChange[]> {
-	const rows = await db.lpar_software.findMany({
+export async function getStatementChanges(
+	lparIds: string[],
+	softwareIds: string[],
+	since: Date,
+	until: Date | null = null
+): Promise<StatementChange[]> {
+	await backfillInstallHistory();
+	const events = await db.lpar_software_history.findMany({
 		where: {
 			lpar_id: { in: lparIds },
 			software_id: { in: softwareIds },
-			OR: [{ installed_date: { gte: since } }, { rolled_back_at: { gte: since } }]
+			occurred_at: { gte: since, ...(until && { lte: until }) },
+			to_version: { not: null }
 		},
-		select: {
-			lpar_id: true,
-			software_id: true,
-			current_version: true,
-			current_ptf_level: true,
-			previous_version: true,
-			previous_ptf_level: true,
-			installed_date: true,
-			rolled_back: true,
-			rolled_back_at: true
-		}
+		orderBy: { occurred_at: 'desc' }
 	});
-	return rows
-		.map((r): StatementChange => {
-			const rolledBack = r.rolled_back && !!r.rolled_back_at && r.rolled_back_at >= since;
-			return {
-				lpar_id: r.lpar_id,
-				software_id: r.software_id,
-				kind: rolledBack ? 'rolled_back' : 'installed',
-				date: rolledBack ? r.rolled_back_at! : r.installed_date,
-				version: r.current_version,
-				ptf_level: r.current_ptf_level,
-				previous_version: r.previous_version,
-				previous_ptf_level: r.previous_ptf_level
-			};
-		})
-		.sort((a, b) => b.date.getTime() - a.date.getTime());
+	return events.map((e) => ({
+		lpar_id: e.lpar_id,
+		software_id: e.software_id,
+		kind: e.event === 'rollback' ? 'rolled_back' : 'installed',
+		date: e.occurred_at,
+		version: e.to_version!,
+		ptf_level: e.to_ptf_level,
+		previous_version: e.from_version,
+		previous_ptf_level: e.from_ptf_level
+	}));
 }
 
 /** Report L1: installed releases with their end-of-support date. */
@@ -333,24 +329,28 @@ export async function getEndOfSupport(scope: ReportScope): Promise<EosReport> {
 			}
 		})
 	]);
-	const installs = await db.lpar_software.findMany({
-		where: { lpar_id: { in: lpars.map((l) => l.id) }, software_id: { in: software.map((s) => s.id) } },
-		select: { lpar_id: true, software_id: true, current_version: true, current_ptf_level: true }
-	});
-	return buildEosReport({
-		lpars: lpars.map((l) => ({ id: l.id, code: l.code, customer: l.customers })),
-		software: software.map(({ vendors, current_version, ...s }) => ({
-			...s,
-			vendor: vendors,
-			current_version: current_version?.version ?? null
-		})),
-		installs: installs.map((i) => ({
-			lpar_id: i.lpar_id,
-			software_id: i.software_id,
-			version: i.current_version,
-			ptf_level: i.current_ptf_level
-		}))
-	});
+	const installs = await loadInstalls(
+		lpars.map((l) => l.id),
+		software.map((s) => s.id),
+		scope.asOf
+	);
+	return buildEosReport(
+		{
+			lpars: lpars.map((l) => ({ id: l.id, code: l.code, customer: l.customers })),
+			software: software.map(({ vendors, current_version, ...s }) => ({
+				...s,
+				vendor: vendors,
+				current_version: current_version?.version ?? null
+			})),
+			installs: installs.map((i) => ({
+				lpar_id: i.lpar_id,
+				software_id: i.software_id,
+				version: i.current_version,
+				ptf_level: i.current_ptf_level
+			}))
+		},
+		scope.asOf ?? new Date()
+	);
 }
 
 /** LPARs and software in scope, in the shape the rollback and level reports use. */
@@ -378,7 +378,12 @@ async function loadLevelInput(scope: ReportScope) {
 	const vendorIds = [...new Set(software.map((s) => s.vendor.id))];
 	const [bundles, installs] = await Promise.all([
 		db.vendor_bundles.findMany({
-			where: { active: true, vendor_id: { in: vendorIds } },
+			where: {
+				active: true,
+				vendor_id: { in: vendorIds },
+				// As of a date: only levels released by then
+				...(scope.asOf && { release_date: { lte: scope.asOf } })
+			},
 			select: {
 				id: true,
 				vendor_id: true,
@@ -393,10 +398,11 @@ async function loadLevelInput(scope: ReportScope) {
 				}
 			}
 		}),
-		db.lpar_software.findMany({
-			where: { lpar_id: { in: lpars.map((l) => l.id) }, software_id: { in: softwareIds } },
-			select: { lpar_id: true, software_id: true, current_version: true, current_ptf_level: true }
-		})
+		loadInstalls(
+			lpars.map((l) => l.id),
+			softwareIds,
+			scope.asOf
+		)
 	]);
 	const vendors = new Map(software.map((s) => [s.vendor.id, s.vendor]));
 	return {
@@ -418,12 +424,12 @@ async function loadLevelInput(scope: ReportScope) {
 
 /** Report L4: per LPAR and vendor, the newest vendor level every product reaches. */
 export async function getMaintenanceLevels(scope: ReportScope): Promise<MaintenanceLevels> {
-	return buildMaintenanceLevels(await loadLevelInput(scope));
+	return buildMaintenanceLevels(await loadLevelInput(scope), scope.asOf ?? new Date());
 }
 
 /** Report V6: per vendor level, how many LPARs reach it. */
 export async function getMaintenanceUptake(scope: ReportScope) {
-	return buildUptake(await loadLevelInput(scope));
+	return buildUptake(await loadLevelInput(scope), scope.asOf ?? new Date());
 }
 
 /** Known versions (with end of support) of the given software, by software id. */
@@ -455,11 +461,12 @@ export async function getVersionSprawl(scope: ReportScope): Promise<SprawlRow[]>
 /** Report C5: share of installed products current with the package, behind, outside it, out of support. */
 export async function getCurrency(scope: ReportScope): Promise<CurrencyReport> {
 	const matrix = await getInstalledMatrix(scope);
-	return buildCurrency(matrix, await knownVersions(matrixSoftwareIds(matrix)));
+	return buildCurrency(matrix, await knownVersions(matrixSoftwareIds(matrix)), scope.asOf ?? new Date());
 }
 
 /** Report V4: rollbacks per product between two dates (audit log, plus install records without one). */
 export async function getQuality(scope: ReportScope, from: Date, to: Date): Promise<QualityReport> {
+	scope = { ...scope, asOf: null }; // about today or a period, not one past state
 	const { lpars, software } = await scopeEntities(scope);
 	const lparIds = lpars.map((l) => l.id);
 	const softwareIds = software.map((s) => s.id);
@@ -501,6 +508,7 @@ export async function getQuality(scope: ReportScope, from: Date, to: Date): Prom
 
 /** Report L5: installs still rolled back (not reapplied by a later deploy). */
 export async function getOpenRollbacks(scope: ReportScope): Promise<OpenRollback[]> {
+	scope = { ...scope, asOf: null }; // about today or a period, not one past state
 	const { lpars, software } = await scopeEntities(scope);
 	const installs = await db.lpar_software.findMany({
 		where: {
@@ -524,6 +532,7 @@ export async function getOpenRollbacks(scope: ReportScope): Promise<OpenRollback
 
 /** Report L3: rollout progress per package for the LPARs in scope (optionally some packages). */
 export async function getRolloutProgress(scope: ReportScope, packageIds: string[] = []): Promise<RolloutGroup[]> {
+	scope = { ...scope, asOf: null }; // about today or a period, not one past state
 	await backfillRollouts();
 	const lpars = await db.lpars.findMany({
 		where: lparWhere(scope),
@@ -552,9 +561,10 @@ export async function getRolloutProgress(scope: ReportScope, packageIds: string[
 
 /** Report V1: footprint per vendor at the end of each of the last `months` months, from installed packages. */
 export async function getInstalledBase(scope: ReportScope, months: number, today = new Date()): Promise<InstalledBase> {
+	scope = { ...scope, asOf: null }; // about today or a period, not one past state
 	await backfillRollouts();
 	// Deleted LPARs count until they were deleted
-	const { active: _active, ...where } = lparWhere(scope);
+	const { active: _active, ...where } = lparWhere(scope) as ReturnType<typeof lparWhere> & { active?: boolean };
 	const lpars = await db.lpars.findMany({
 		where,
 		select: { id: true, customer_id: true, active: true, deleted_at: true, updated_at: true }
@@ -622,10 +632,11 @@ async function loadInstalledProducts(scope: ReportScope) {
 			}
 		})
 	]);
-	const installs = await db.lpar_software.findMany({
-		where: { lpar_id: { in: lpars.map((l) => l.id) }, software_id: { in: software.map((s) => s.id) } },
-		select: { lpar_id: true, software_id: true, installed_date: true, rolled_back_at: true }
-	});
+	const installs = await loadInstalls(
+		lpars.map((l) => l.id),
+		software.map((s) => s.id),
+		scope.asOf
+	);
 	return {
 		lpars: lpars.map(({ customers, ...l }) => ({ ...l, customer: customers })),
 		software: software.map(({ vendors, ...s }) => ({ ...s, vendor: vendors })),

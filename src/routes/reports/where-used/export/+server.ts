@@ -12,5 +12,5 @@ export const GET: RequestHandler = async ({ url }) => {
 		url.searchParams.getAll('product').filter(Boolean),
 		release ? [release] : []
 	);
-	return csvDownload('where-used', toCsv(WHERE_USED_CSV_COLUMNS, whereUsedRecords(report)));
+	return csvDownload('where-used', toCsv(WHERE_USED_CSV_COLUMNS, whereUsedRecords(report)), readScope(url).asOf);
 };

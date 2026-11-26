@@ -60,7 +60,7 @@
 	</PageHeader>
 
 	<Card class="p-4 print:border-0 print:p-0 print:shadow-none">
-		<ReportFilters options={data.options} scope={data.scope} />
+		<ReportFilters asOf options={data.options} scope={data.scope} />
 	</Card>
 
 	<div class="grid grid-cols-2 gap-3 md:grid-cols-4">

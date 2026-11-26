@@ -47,7 +47,7 @@
 	</PageHeader>
 
 	<Card class="p-4 print:border-0 print:p-0 print:shadow-none">
-		<ReportFilters options={data.options} scope={data.scope} />
+		<ReportFilters asOf options={data.options} scope={data.scope} />
 	</Card>
 
 	{#if report.vendors.length === 0}

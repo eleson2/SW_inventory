@@ -202,3 +202,54 @@ export function reconstructEvents(row: CurrentInstall, auditRollbacks: AuditRoll
 export function versionText(version: string | null, ptfLevel: string | null): string {
 	return version ? [version, ptfLevel].filter(Boolean).join(' ') : '';
 }
+
+/** An install as the reports read it (the lpar_software columns they use) */
+export interface InstallAt {
+	lpar_id: string;
+	software_id: string;
+	current_version: string;
+	current_ptf_level: string | null;
+	installed_date: Date;
+	rolled_back: boolean;
+	rolled_back_at: Date | null;
+	rollback_reason: string | null;
+}
+
+/**
+ * The installs at `at` replayed from the history, shaped like lpar_software rows: the version
+ * of the last event per LPAR x product, installed when the last non-rollback event happened,
+ * rolled back when the last event is a rollback. Removed products are left out.
+ */
+export function installsAt(events: HistoryRow[], at: Date): InstallAt[] {
+	const byPair = new Map<string, HistoryRow[]>();
+	for (const e of [...events].sort(byTime)) {
+		if (e.occurred_at > at) continue;
+		const key = pairKey(e.lpar_id, e.software_id);
+		byPair.set(key, [...(byPair.get(key) ?? []), e]);
+	}
+	const result: InstallAt[] = [];
+	for (const list of byPair.values()) {
+		const last = list[list.length - 1];
+		if (!last.to_version) continue;
+		const rolledBack = last.event === 'rollback';
+		const installed = [...list].reverse().find((e) => e.event !== 'rollback') ?? last;
+		result.push({
+			lpar_id: last.lpar_id,
+			software_id: last.software_id,
+			current_version: last.to_version,
+			current_ptf_level: ptf(last.to_ptf_level),
+			installed_date: installed.occurred_at,
+			rolled_back: rolledBack,
+			rolled_back_at: rolledBack ? last.occurred_at : null,
+			rollback_reason: rolledBack ? last.reason : null
+		});
+	}
+	return result;
+}
+
+/** End of the given day (UTC) for an as-of date "YYYY-MM-DD"; null when not a valid date */
+export function endOfDay(value: string | null | undefined): Date | null {
+	if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+	const d = new Date(`${value}T23:59:59.999Z`);
+	return Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== value ? null : d;
+}

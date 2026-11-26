@@ -3,6 +3,8 @@
 	import PageHeader from '#lib/components/common/PageHeader.svelte';
 	import Card from '#lib/components/ui/Card.svelte';
 	import Button from '#lib/components/ui/Button.svelte';
+	import { goto } from '$app/navigation';
+	import { untrack } from 'svelte';
 	import {
 		EVENT_LABEL,
 		SOURCE_LABEL,
@@ -14,6 +16,11 @@
 	let { data }: { data: PageData } = $props();
 
 	let product = $state('');
+	let on = $state(untrack(() => data.on));
+	const today = new Date().toISOString().slice(0, 10);
+	function showOn() {
+		goto(on ? `?on=${on}` : '?');
+	}
 	let hidePtf = $state(false);
 
 	const products = $derived(
@@ -48,6 +55,58 @@
 			</span>
 		{/snippet}
 	</PageHeader>
+
+	<Card class="p-4 text-sm">
+		<form
+			class="flex flex-wrap items-end gap-2 print:hidden"
+			onsubmit={(e) => {
+				e.preventDefault();
+				showOn();
+			}}
+		>
+			<label>
+				<span class="mb-1 block text-xs font-medium text-muted-foreground">Show what was installed on</span>
+				<input type="date" max={today} bind:value={on} class="h-9 rounded-md border border-input px-2" />
+			</label>
+			<Button type="submit" variant="outline" disabled={on === data.on}>Show</Button>
+			{#if data.on}
+				<Button variant="ghost" onclick={() => ((on = ''), showOn())}>Clear</Button>
+				<a href="/reports/installed?lpar={data.lpar.id}&asof={data.on}" class="ml-auto self-center text-primary hover:underline">
+					Open in Installed software (R1) as of {data.on}
+				</a>
+			{/if}
+		</form>
+		{#if data.installedOn}
+			<h2 class="mt-3 mb-1 font-semibold">Installed on {data.on} (end of day)</h2>
+			{#if data.installedOn.length === 0}
+				<p class="text-muted-foreground">Nothing recorded as installed on this LPAR then.</p>
+			{:else}
+				<table class="w-full">
+					<thead class="text-left text-xs text-muted-foreground">
+						<tr class="border-b">
+							<th class="py-1 pr-3">Product</th>
+							<th class="py-1 pr-3">Vendor</th>
+							<th class="py-1 pr-3">Version</th>
+							<th class="py-1">Installed</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each data.installedOn as i (i.software.id)}
+							<tr class="border-b last:border-b-0">
+								<td class="py-1 pr-3 font-medium">{i.software.name}</td>
+								<td class="py-1 pr-3">{i.software.vendor}</td>
+								<td class="py-1 pr-3 whitespace-nowrap">
+									{versionText(i.version, i.ptf_level)}
+									{#if i.rolledBack}<span class="ml-1 rounded bg-red-100 px-1.5 text-xs text-red-900">rolled back</span>{/if}
+								</td>
+								<td class="py-1 tabular-nums">{fmt(i.installed).slice(0, 10)}</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			{/if}
+		{/if}
+	</Card>
 
 	<Card class="flex flex-wrap items-end gap-5 p-4 text-sm print:hidden">
 		<label>

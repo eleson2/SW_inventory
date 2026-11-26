@@ -11,8 +11,8 @@ export function toCsv<K extends string>(columns: readonly K[], records: Record<K
 }
 
 /** A CSV download named `<name>-<YYYY-MM-DD>.csv`, with a BOM so Excel reads it as UTF-8. */
-export function csvDownload(name: string, csv: string): Response {
-	const date = new Date().toISOString().slice(0, 10);
+export function csvDownload(name: string, csv: string, asOf: Date | null = null): Response {
+	const date = asOf ? `asof-${asOf.toISOString().slice(0, 10)}` : new Date().toISOString().slice(0, 10);
 	return new Response('﻿' + csv, {
 		headers: {
 			'Content-Type': 'text/csv; charset=utf-8',

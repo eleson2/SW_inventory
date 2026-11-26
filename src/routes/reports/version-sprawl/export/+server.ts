@@ -7,5 +7,5 @@ import { csvDownload, toCsv } from '#lib/utils/csv.ts';
 /** CSV of version sprawl: one row per product x release + PTF level. */
 export const GET: RequestHandler = async ({ url }) => {
 	const rows = await getVersionSprawl(readScope(url));
-	return csvDownload('version-sprawl', toCsv(SPRAWL_CSV_COLUMNS, sprawlRecords(rows)));
+	return csvDownload('version-sprawl', toCsv(SPRAWL_CSV_COLUMNS, sprawlRecords(rows)), readScope(url).asOf);
 };

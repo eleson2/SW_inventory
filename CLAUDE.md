@@ -232,6 +232,14 @@ The system follows this entity relationship:
 - V2 `/reports/low-footprint` (`?max=` few-LPARs limit, default 2): installed products on at most `max` LPARs
   or only on TEST/DEV LPARs, marked when also in V3; plus active products installed nowhere in scope
   (with the number of active packages holding them). Logic in `src/lib/utils/low-footprint.ts`.
+- As-of date (`?asof=YYYY-MM-DD`, end of that day UTC; `scope.asOf`, null = today): `<ReportFilters asOf>` shows
+  the date field and banner on R1, R2, R3, R4, V2, V3, C5, L2, L4, V6, L1 and C1. Report queries read installs
+  via `loadInstalls(lparIds, softwareIds, asOf)` (`src/lib/server/install-history.ts`: lpar_software today,
+  else `installsAt()` replay), the LPAR's package then via `packagesAt()` (`rollouts.ts`), LPARs that existed
+  then via `lparWhere` (created by then, active or deleted later), vendor levels released by then, and pass
+  `asOf` as "today" to the builders. Not historized (today's values): package contents, names, categories,
+  LPAR environment/customer, end of support. V1, V4, L3, L5 ignore as-of. CSV names get `-asof-<date>`.
+  X5 point in time = R1 as of a date, plus `?on=` on `/lpars/[id]/history`. C1 changes come from the history.
 - Report-specific URL params survive Apply via `<ReportFilters keep={['since']}>`. CSV via
   `toCsv()` / `csvDownload()` in `src/lib/utils/csv.ts`.
 - End of support is per release: setting it (Add version page, bundle CSV `end_of_support` column)

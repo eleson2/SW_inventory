@@ -86,7 +86,7 @@
 	</PageHeader>
 
 	<Card class="p-4 print:border-0 print:p-0 print:shadow-none">
-		<ReportFilters options={data.options} scope={data.scope} />
+		<ReportFilters asOf options={data.options} scope={data.scope} />
 	</Card>
 
 	<div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">

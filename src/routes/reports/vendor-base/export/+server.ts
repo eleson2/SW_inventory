@@ -7,5 +7,5 @@ import { csvDownload, toCsv } from '#lib/utils/csv.ts';
 /** CSV of the vendor installed base: one row per product x release x customer. */
 export const GET: RequestHandler = async ({ url }) => {
 	const base = await getVendorBase(readScope(url));
-	return csvDownload('vendor-installed-base', toCsv(VENDOR_BASE_CSV_COLUMNS, vendorBaseRecords(base)));
+	return csvDownload('vendor-installed-base', toCsv(VENDOR_BASE_CSV_COLUMNS, vendorBaseRecords(base)), readScope(url).asOf);
 };

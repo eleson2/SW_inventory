@@ -13,15 +13,22 @@
 	import { UNCLASSIFIED } from '#lib/utils/software-category.ts';
 	import { ENVIRONMENTS, ENVIRONMENT_LABEL, NO_ENVIRONMENT } from '#lib/utils/environment.ts';
 
+	const isoDay = (d: Date | string) => new Date(d).toISOString().slice(0, 10);
+	const longDay = (d: Date | string) =>
+		new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+
 	let {
 		options,
 		scope,
-		keep = []
+		keep = [],
+		asOf: allowAsOf = false
 	}: {
 		options: ReportFilterOptions;
 		scope: ReportScope;
 		/** Report-specific URL params that Apply keeps (e.g. "since"); Reset drops them */
 		keep?: string[];
+		/** The report can show a past state: offer the "As of" date (?asof=) */
+		asOf?: boolean;
 	} = $props();
 
 	const lparsOf = (customerIds: string[]) => options.lpars.filter((l) => customerIds.includes(l.customer_id));
@@ -34,6 +41,10 @@
 	let software = $state<string[]>(untrack(() => scope.softwareIds));
 	let categories = $state<string[]>(untrack(() => scope.categoryIds));
 	let environments = $state<string[]>(untrack(() => scope.environments));
+	let asof = $state(untrack(() => (allowAsOf && scope.asOf ? isoDay(scope.asOf) : '')));
+	const today = isoDay(new Date());
+	const asOfDate = $derived(allowAsOf && scope.asOf ? new Date(scope.asOf) : null);
+	const rebuilt = $derived(!!asOfDate && !!options.historyStart && asOfDate < new Date(options.historyStart));
 	const environmentOptions = [
 		...ENVIRONMENTS.map((e) => ({ id: e, label: e, hint: ENVIRONMENT_LABEL[e] })),
 		{ id: NO_ENVIRONMENT, label: 'Not set' }
@@ -117,6 +128,7 @@
 		software.forEach((id) => params.append('software', id));
 		categories.forEach((id) => params.append('category', id));
 		environments.forEach((e) => params.append('env', e));
+		if (allowAsOf && asof && asof < today) params.set('asof', asof);
 		if (matchesSet) params.set('set', setId);
 		for (const key of keep) page.url.searchParams.getAll(key).forEach((v) => params.append(key, v));
 		return params;
@@ -163,11 +175,37 @@
 				{#each options.sets as s (s.id)}<option value={s.id}>{s.name} ({s.lparIds.length})</option>{/each}
 			</select>
 		</label>
+		{#if allowAsOf}
+			<label class="text-sm">
+				<span class="block text-xs font-medium text-muted-foreground mb-1">As of</span>
+				<input
+					type="date"
+					max={today}
+					bind:value={asof}
+					title="Show the state at the end of this day; empty = today"
+					class="h-9 rounded-md border border-input bg-background px-2 text-sm"
+				/>
+			</label>
+		{/if}
 		<div class="flex gap-2">
 			<Button onclick={apply} disabled={empty} class={dirty && !empty ? 'ring-2 ring-amber-400 ring-offset-1' : ''}>Apply</Button>
 			<Button variant="outline" onclick={reset}>Reset</Button>
 		</div>
 	</div>
+
+	{#if asOfDate}
+		<div class="rounded-md border border-sky-300 bg-sky-50 px-3 py-2 text-sm text-sky-950">
+			<span class="font-semibold">As of {longDay(asOfDate)}</span> (end of day): installed software, packages and
+			LPARs as they were then.
+			<span class="block text-xs text-sky-900">
+				Today's values are used for package contents, product names and categories, LPAR environment and customer,
+				and end-of-support dates.
+				{#if rebuilt}
+					Install history before {longDay(options.historyStart!)} is rebuilt from earlier records and may be incomplete.
+				{/if}
+			</span>
+		</div>
+	{/if}
 
 	<!-- Scope line: always shows exactly which LPARs the report covers -->
 	<div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">

@@ -99,7 +99,7 @@
 				</label>
 			{/if}
 		</div>
-		<ReportFilters options={data.options} scope={data.scope} keep={['product', 'release']} />
+		<ReportFilters asOf options={data.options} scope={data.scope} keep={['product', 'release']} />
 	</Card>
 
 	{#if data.products.length === 0}

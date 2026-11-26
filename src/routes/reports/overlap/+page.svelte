@@ -62,7 +62,7 @@
 				Per LPAR
 			</label>
 		</div>
-		<ReportFilters options={data.options} scope={data.scope} keep={['same', 'view']} />
+		<ReportFilters asOf options={data.options} scope={data.scope} keep={['same', 'view']} />
 	</Card>
 
 	<div class="grid grid-cols-1 gap-3 sm:grid-cols-3">

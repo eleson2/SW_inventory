@@ -7,12 +7,14 @@
  *   &vendor=<id>  &software=<id>   narrow the software shown (none = all)
  *   &category=<id>|none            software of these categories (none = unclassified)
  *   &set=<id>                      the LPAR set the selection came from (label only)
+ *   &asof=YYYY-MM-DD               state at the end of that day (install history), empty = today
  *
  * Used by every report so filters behave the same everywhere (see ReportFilters.svelte).
  */
 import { db } from './db.ts';
 import { UNCLASSIFIED } from '#lib/utils/software-category.ts';
 import { NO_ENVIRONMENT, isEnvironment } from '#lib/utils/environment.ts';
+import { endOfDay } from '#lib/utils/install-history.ts';
 
 export interface ReportScope {
 	customerIds: string[];
@@ -24,6 +26,8 @@ export interface ReportScope {
 	/** Category ids; UNCLASSIFIED ("none") = software without a category */
 	categoryIds: string[];
 	setId: string | null;
+	/** End of the as-of day; null = today (current state) */
+	asOf: Date | null;
 }
 
 export function readScope(url: URL): ReportScope {
@@ -35,14 +39,20 @@ export function readScope(url: URL): ReportScope {
 		vendorIds: all('vendor'),
 		softwareIds: all('software'),
 		categoryIds: all('category'),
-		setId: url.searchParams.get('set') || null
+		setId: url.searchParams.get('set') || null,
+		asOf: endOfDay(url.searchParams.get('asof'))
 	};
 }
 
-/** Prisma `where` for the LPARs in scope (active LPARs of active customers). */
+/**
+ * Prisma `where` for the LPARs in scope (active LPARs of active customers). As of a date: the
+ * LPARs that existed then (created by then, and active or deleted only later).
+ */
 export function lparWhere(scope: ReportScope) {
 	return {
-		active: true,
+		...(scope.asOf
+			? { created_at: { lte: scope.asOf }, OR: [{ active: true }, { deleted_at: { gt: scope.asOf } }] }
+			: { active: true }),
 		customers: { active: true },
 		...(scope.customerIds.length > 0 && { customer_id: { in: scope.customerIds } }),
 		...(scope.lparIds.length > 0 && { id: { in: scope.lparIds } }),
@@ -79,7 +89,7 @@ export type ReportFilterOptions = Awaited<ReturnType<typeof loadFilterOptions>>;
 /** Everything the filter bar offers: customers, their LPARs (with installed software, for
  * "Only LPARs running"), vendors, software, categories and saved LPAR sets. */
 export async function loadFilterOptions() {
-	const [customers, lpars, vendors, software, sets, categories] = await Promise.all([
+	const [customers, lpars, vendors, software, sets, categories, history] = await Promise.all([
 		db.customers.findMany({
 			where: { active: true },
 			select: { id: true, code: true, name: true },
@@ -111,7 +121,8 @@ export async function loadFilterOptions() {
 			select: { id: true, name: true, description: true, members: { select: { lpar_id: true } } },
 			orderBy: { name: 'asc' }
 		}),
-		db.software_categories.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } })
+		db.software_categories.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } }),
+		db.lpar_software_history.aggregate({ _min: { created_at: true } })
 	]);
 	return {
 		customers,
@@ -119,6 +130,8 @@ export async function loadFilterOptions() {
 		vendors,
 		software,
 		categories,
-		sets: sets.map(({ members, ...s }) => ({ ...s, lparIds: members.map((m) => m.lpar_id) }))
+		sets: sets.map(({ members, ...s }) => ({ ...s, lparIds: members.map((m) => m.lpar_id) })),
+		/** When the install history started recording; before it, as-of results rest on rebuilt history */
+		historyStart: history._min.created_at
 	};
 }

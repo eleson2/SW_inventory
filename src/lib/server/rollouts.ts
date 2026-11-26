@@ -216,3 +216,21 @@ export async function updateRollouts(
 		return open.length;
 	}, transactionTimeouts());
 }
+
+/**
+ * The package installed on each LPAR at `at`: the rollout installed by then and not superseded
+ * by then (the latest such if several). LPARs without one are left out.
+ */
+export async function packagesAt(lparIds: string[], at: Date): Promise<Map<string, string>> {
+	await backfillRollouts();
+	const rows = await db.lpar_package_rollouts.findMany({
+		where: {
+			lpar_id: { in: lparIds },
+			installed_at: { lte: at },
+			OR: [{ superseded_at: null }, { superseded_at: { gt: at } }]
+		},
+		select: { lpar_id: true, package_id: true, installed_at: true },
+		orderBy: { installed_at: 'asc' }
+	});
+	return new Map(rows.map((r) => [r.lpar_id, r.package_id]));
+}

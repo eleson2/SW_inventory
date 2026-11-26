@@ -7,5 +7,5 @@ import { csvDownload, toCsv } from '#lib/utils/csv.ts';
 /** CSV of the currency score: one row per LPAR. */
 export const GET: RequestHandler = async ({ url }) => {
 	const report = await getCurrency(readScope(url));
-	return csvDownload('currency', toCsv(CURRENCY_CSV_COLUMNS, currencyRecords(report)));
+	return csvDownload('currency', toCsv(CURRENCY_CSV_COLUMNS, currencyRecords(report)), readScope(url).asOf);
 };
