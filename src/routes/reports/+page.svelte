@@ -40,7 +40,15 @@
 			reports: [
 				{ id: 'C1', name: 'Customer software statement', text: 'Printable per customer: systems, versions, status and recent changes', href: '/reports/customer-statement' },
 				{ id: 'C4', name: 'End-of-support notice', text: 'Part of the customer statement: releases out of or ending support', href: '/reports/customer-statement' },
+				{ id: 'C2', name: 'Change history', text: 'Changes per customer and LPAR in a period (default last month); customer view for service reports', href: '/reports/changes' },
 				{ id: 'C5', name: 'Currency score', text: 'Per customer: share current with package, behind, outside, out of support', href: '/reports/currency' }
+			]
+		},
+		{
+			title: 'Audit and history',
+			reports: [
+				{ id: 'X2', name: 'Vendor audit defence', text: 'Per vendor and product: every LPAR it is on, release, and since when; removed installs', href: '/reports/audit-defence' },
+				{ id: 'X5', name: 'Point in time', text: 'Installed software on a past date: Installed software (R1) with an As of date', href: '/reports/installed' }
 			]
 		}
 	];

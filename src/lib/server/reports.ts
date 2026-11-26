@@ -33,6 +33,8 @@ import { backfillInstallHistory, loadInstalls } from './install-history.ts';
 import { buildInstalledBase, monthPoints, type BaseItem, type InstalledBase } from '#lib/utils/installed-base.ts';
 import { buildOverlap, type OverlapReport } from '#lib/utils/overlap.ts';
 import { buildLowFootprint, type LowFootprint } from '#lib/utils/low-footprint.ts';
+import { buildChangeHistory, type ChangeHistory } from '#lib/utils/change-history.ts';
+import { buildAuditDefence, type AuditDefence } from '#lib/utils/audit-defence.ts';
 
 export type SoftwareByCustomerRow = {
 	customer_id: string;
@@ -661,5 +663,76 @@ export async function getLowFootprint(scope: ReportScope, maxLpars: number): Pro
 		packages: new Map([...packages].map(([id, set]) => [id, set.size])),
 		overlapping: new Set(overlap.categories.flatMap((c) => c.products.map((p) => p.software.id))),
 		maxLpars
+	});
+}
+
+/** Report C2: changes on the LPARs in scope from `start` (inclusive) to `end` (exclusive). */
+export async function getChangeHistory(scope: ReportScope, start: Date, end: Date, hidePtf = false): Promise<ChangeHistory> {
+	await backfillInstallHistory();
+	// LPARs that existed at some point in the period (deleted ones count until deleted)
+	const { active: _active, ...where } = lparWhere({ ...scope, asOf: null }) as ReturnType<typeof lparWhere> & { active?: boolean };
+	const [lpars, software] = await Promise.all([
+		db.lpars.findMany({
+			where: { ...where, created_at: { lt: end }, OR: [{ active: true }, { deleted_at: { gte: start } }] },
+			select: { id: true }
+		}),
+		db.software.findMany({ where: softwareWhere(scope), select: { id: true } })
+	]);
+	const events = await db.lpar_software_history.findMany({
+		where: {
+			lpar_id: { in: lpars.map((l) => l.id) },
+			software_id: { in: software.map((s) => s.id) },
+			occurred_at: { gte: start, lt: end }
+		},
+		select: {
+			id: true,
+			occurred_at: true,
+			event: true,
+			from_version: true,
+			from_ptf_level: true,
+			to_version: true,
+			to_ptf_level: true,
+			source: true,
+			reason: true,
+			reconstructed: true,
+			lpar: { select: { id: true, code: true, name: true, customers: { select: { id: true, code: true, name: true } } } },
+			software: { select: { id: true, name: true, vendors: { select: { id: true, code: true, name: true } } } },
+			package: { select: { id: true, code: true, version: true } }
+		}
+	});
+	return buildChangeHistory(
+		events.map(({ lpar: { customers, ...lpar }, software: { vendors, ...sw }, ...e }) => ({
+			...e,
+			lpar: { ...lpar, customer: customers },
+			software: { ...sw, vendor: vendors }
+		})),
+		{ hidePtf }
+	);
+}
+
+/** Report X2: where each product is installed and since when (as of the scope's date), and removed installs. */
+export async function getAuditDefence(scope: ReportScope): Promise<AuditDefence> {
+	await backfillInstallHistory();
+	const [lpars, software] = await Promise.all([
+		db.lpars.findMany({
+			where: lparWhere(scope),
+			select: { id: true, code: true, name: true, environment: true, customers: { select: { id: true, code: true, name: true } } }
+		}),
+		db.software.findMany({
+			where: softwareWhere(scope),
+			select: { id: true, name: true, product_code: true, vendors: { select: { id: true, code: true, name: true } } }
+		})
+	]);
+	const events = await db.lpar_software_history.findMany({
+		where: {
+			lpar_id: { in: lpars.map((l) => l.id) },
+			software_id: { in: software.map((s) => s.id) },
+			occurred_at: { lte: scope.asOf ?? new Date() }
+		}
+	});
+	return buildAuditDefence({
+		lpars: lpars.map(({ customers, ...l }) => ({ ...l, customer: customers })),
+		software: software.map(({ vendors, ...s }) => ({ ...s, vendor: vendors })),
+		events
 	});
 }

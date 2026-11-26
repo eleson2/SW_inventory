@@ -240,6 +240,12 @@ The system follows this entity relationship:
   `asOf` as "today" to the builders. Not historized (today's values): package contents, names, categories,
   LPAR environment/customer, end of support. V1, V4, L3, L5 ignore as-of. CSV names get `-asof-<date>`.
   X5 point in time = R1 as of a date, plus `?on=` on `/lpars/[id]/history`. C1 changes come from the history.
+- C2 `/reports/changes` (`?from=&to=`, default the previous calendar month; `?ptf=0` hides PTF-only changes;
+  `?view=customer` = customer wording, no reasons/sources, page break per customer): events from
+  `lpar_software_history` per customer x LPAR; LPARs that existed in the period. Logic in `src/lib/utils/change-history.ts`.
+- X2 `/reports/audit-defence` (as-of, `?removed=0` hides removed installs): per vendor x product every LPAR with
+  release/PTF, installed continuously since, on this release since, last change, plus earlier removed installs;
+  rebuilt dates mean "at least since". Logic in `src/lib/utils/audit-defence.ts`. Entitlements come with D4.
 - Report-specific URL params survive Apply via `<ReportFilters keep={['since']}>`. CSV via
   `toCsv()` / `csvDownload()` in `src/lib/utils/csv.ts`.
 - End of support is per release: setting it (Add version page, bundle CSV `end_of_support` column)
