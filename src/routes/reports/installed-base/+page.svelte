@@ -100,7 +100,7 @@
 
 	<p class="text-xs text-muted-foreground">
 		Counts follow the packages installed on the LPARs (rollouts, and the audit log before them). Rollbacks and changes
-		outside packages are not included; see the Installed software report (R1) for the actual state.
+		outside packages are not included; see <a href="/reports/trends" class="text-primary hover:underline">Trends (X4)</a> for the trend from the install history, or the Installed software report (R1) for the actual state.
 		Compared: {month(now.at)} with end of {month(then.at)}.
 	</p>
 

@@ -238,7 +238,7 @@ The system follows this entity relationship:
   else `installsAt()` replay), the LPAR's package then via `packagesAt()` (`rollouts.ts`), LPARs that existed
   then via `lparWhere` (created by then, active or deleted later), vendor levels released by then, and pass
   `asOf` as "today" to the builders. Not historized (today's values): package contents, names, categories,
-  LPAR environment/customer, end of support. V1, V4, L3, L5 ignore as-of. CSV names get `-asof-<date>`.
+  LPAR environment/customer, end of support. V1, V4, L3, L5, C2, X4 ignore as-of. CSV names get `-asof-<date>`.
   X5 point in time = R1 as of a date, plus `?on=` on `/lpars/[id]/history`. C1 changes come from the history.
 - C2 `/reports/changes` (`?from=&to=`, default the previous calendar month; `?ptf=0` hides PTF-only changes;
   `?view=customer` = customer wording, no reasons/sources, page break per customer): events from
@@ -246,6 +246,10 @@ The system follows this entity relationship:
 - X2 `/reports/audit-defence` (as-of, `?removed=0` hides removed installs): per vendor x product every LPAR with
   release/PTF, installed continuously since, on this release since, last change, plus earlier removed installs;
   rebuilt dates mean "at least since". Logic in `src/lib/utils/audit-defence.ts`. Entitlements come with D4.
+- X4 `/reports/trends` (`?months=6|12|24`, `?group=total|vendor|customer`): installed base, currency (C5 rules) and
+  sprawl (R4 rules) at each month end, each point = `getInstalledMatrix()` as of that date (`getTrends()`); months
+  before the history started are shaded. Logic in `src/lib/utils/trends.ts`, charts `TrendLine` / `CurrencyBars`
+  in `src/lib/components/reports/`. Unlike V1 it includes rollbacks and changes outside packages.
 - Report-specific URL params survive Apply via `<ReportFilters keep={['since']}>`. CSV via
   `toCsv()` / `csvDownload()` in `src/lib/utils/csv.ts`.
 - End of support is per release: setting it (Add version page, bundle CSV `end_of_support` column)

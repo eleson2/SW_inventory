@@ -48,6 +48,7 @@
 			title: 'Audit and history',
 			reports: [
 				{ id: 'X2', name: 'Vendor audit defence', text: 'Per vendor and product: every LPAR it is on, release, and since when; removed installs', href: '/reports/audit-defence' },
+				{ id: 'X4', name: 'Trends', text: 'Installed base, currency and version sprawl at each month end; total, per vendor or per customer', href: '/reports/trends' },
 				{ id: 'X5', name: 'Point in time', text: 'Installed software on a past date: Installed software (R1) with an As of date', href: '/reports/installed' }
 			]
 		}

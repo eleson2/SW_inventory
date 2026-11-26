@@ -35,6 +35,7 @@ import { buildOverlap, type OverlapReport } from '#lib/utils/overlap.ts';
 import { buildLowFootprint, type LowFootprint } from '#lib/utils/low-footprint.ts';
 import { buildChangeHistory, type ChangeHistory } from '#lib/utils/change-history.ts';
 import { buildAuditDefence, type AuditDefence } from '#lib/utils/audit-defence.ts';
+import { buildTrends, measurePoint, type Trends } from '#lib/utils/trends.ts';
 
 export type SoftwareByCustomerRow = {
 	customer_id: string;
@@ -735,4 +736,25 @@ export async function getAuditDefence(scope: ReportScope): Promise<AuditDefence>
 		software: software.map(({ vendors, ...s }) => ({ ...s, vendor: vendors })),
 		events
 	});
+}
+
+/**
+ * Report X4: installed base, currency and version sprawl at the end of each of the last `months`
+ * months, each from the installed matrix as of that date (install history replay).
+ */
+export async function getTrends(scope: ReportScope, months: number, today = new Date()): Promise<Trends> {
+	await backfillInstallHistory();
+	const [software, history] = await Promise.all([
+		db.software.findMany({ where: softwareWhere(scope), select: { id: true } }),
+		db.lpar_software_history.aggregate({ _min: { created_at: true } })
+	]);
+	const known = await knownVersions(software.map((s) => s.id));
+	const points = monthPoints(months, today);
+	const measured: { at: Date; point: ReturnType<typeof measurePoint> }[] = [];
+	for (const [i, at] of points.entries()) {
+		const isNow = i === points.length - 1;
+		const matrix = await getInstalledMatrix({ ...scope, asOf: isNow ? null : at });
+		measured.push({ at, point: measurePoint(matrix, known, at) });
+	}
+	return buildTrends(measured, history._min.created_at);
 }
