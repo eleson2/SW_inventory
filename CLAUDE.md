@@ -225,6 +225,9 @@ The system follows this entity relationship:
   products, releases, installs) at each month end from the package installed on each LPAR then (rollouts x
   package items; `buildInstalledBase()` in `src/lib/utils/installed-base.ts`). Changes outside packages are
   not in the trend (by design: updates go through packages). Deleted LPARs count until deleted.
+- V3 `/reports/overlap` (`?same=1` also same-vendor pairs, `?view=lpar` LPAR x product ticks): installed
+  products of one category from different vendors anywhere in scope (portfolio level); LPARs running two
+  side by side are counted; unclassified products are left out. Logic in `src/lib/utils/overlap.ts`.
 - Report-specific URL params survive Apply via `<ReportFilters keep={['since']}>`. CSV via
   `toCsv()` / `csvDownload()` in `src/lib/utils/csv.ts`.
 - End of support is per release: setting it (Add version page, bundle CSV `end_of_support` column)

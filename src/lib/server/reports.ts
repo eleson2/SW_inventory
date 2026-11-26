@@ -30,6 +30,7 @@ import { buildCompliance } from '#lib/utils/package-compliance.ts';
 import { buildRolloutReport, type RolloutGroup } from '#lib/utils/rollout.ts';
 import { backfillRollouts } from './rollouts.ts';
 import { buildInstalledBase, monthPoints, type BaseItem, type InstalledBase } from '#lib/utils/installed-base.ts';
+import { buildOverlap, type OverlapReport } from '#lib/utils/overlap.ts';
 
 export type SoftwareByCustomerRow = {
 	customer_id: string;
@@ -587,5 +588,36 @@ export async function getInstalledBase(scope: ReportScope, months: number, today
 			items
 		},
 		monthPoints(months, today)
+	);
+}
+
+/** Report V3: installed products of the same category from different vendors (or also the same vendor). */
+export async function getOverlap(scope: ReportScope, sameVendor = false): Promise<OverlapReport> {
+	const [lpars, software] = await Promise.all([
+		db.lpars.findMany({
+			where: lparWhere(scope),
+			select: { id: true, code: true, name: true, customers: { select: { id: true, code: true, name: true } } }
+		}),
+		db.software.findMany({
+			where: softwareWhere(scope),
+			select: {
+				id: true,
+				name: true,
+				vendors: { select: { id: true, code: true, name: true } },
+				category: { select: { id: true, name: true } }
+			}
+		})
+	]);
+	const installs = await db.lpar_software.findMany({
+		where: { lpar_id: { in: lpars.map((l) => l.id) }, software_id: { in: software.map((s) => s.id) } },
+		select: { lpar_id: true, software_id: true }
+	});
+	return buildOverlap(
+		{
+			lpars: lpars.map(({ customers, ...l }) => ({ ...l, customer: customers })),
+			software: software.map(({ vendors, ...s }) => ({ ...s, vendor: vendors })),
+			installs
+		},
+		sameVendor
 	);
 }
