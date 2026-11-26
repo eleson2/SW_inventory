@@ -3,6 +3,7 @@
  * Provides functions to duplicate entities with all their relationships
  */
 import { db, createAuditLog } from './db';
+import { recordInstallChanges } from './install-history.ts';
 
 /**
  * Clone a software product with optional version cloning
@@ -221,7 +222,17 @@ ${source.description || ''}`.trim(),
 			}
 		});
 
-		// Clone all installed software
+		// Clone all installed software (each an install on the new LPAR)
+		await recordInstallChanges(
+			tx,
+			source.lpar_software.map((sw) => ({
+				lpar_id: newLpar.id,
+				software_id: sw.software_id,
+				before: null,
+				to: { version: sw.current_version, ptf_level: sw.current_ptf_level }
+			})),
+			'clone'
+		);
 		for (const sw of source.lpar_software) {
 			await tx.lpar_software.create({
 				data: {

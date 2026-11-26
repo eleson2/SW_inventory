@@ -1,6 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
 import { calculateCompatibilityScore } from '#lib/services/package-service.ts';
 import { db } from '#lib/server/db.ts';
+import { recordInstallChanges } from '#lib/server/install-history.ts';
+import { transactionTimeouts } from '#lib/server/db-dialect.ts';
 import { error, fail, redirect } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -165,23 +167,41 @@ export const actions: Actions = {
 			const currentVersion = installation.current_version;
 			const currentPtfLevel = installation.current_ptf_level;
 
-			await db.lpar_software.update({
-				where: {
-					lpar_id_software_id: {
-						lpar_id: lparId,
-						software_id: softwareId
+			const rolledBackAt = new Date();
+			await db.$transaction(async (tx) => {
+				await tx.lpar_software.update({
+					where: {
+						lpar_id_software_id: {
+							lpar_id: lparId,
+							software_id: softwareId
+						}
+					},
+					data: {
+						current_version: targetVersion.version,
+						current_ptf_level: targetVersion.ptf_level,
+						previous_version: currentVersion,
+						previous_ptf_level: currentPtfLevel,
+						rolled_back: true,
+						rolled_back_at: rolledBackAt,
+						rollback_reason: reason
 					}
-				},
-				data: {
-					current_version: targetVersion.version,
-					current_ptf_level: targetVersion.ptf_level,
-					previous_version: currentVersion,
-					previous_ptf_level: currentPtfLevel,
-					rolled_back: true,
-					rolled_back_at: new Date(),
-					rollback_reason: reason
-				}
-			});
+				});
+				await recordInstallChanges(
+					tx,
+					[
+						{
+							lpar_id: lparId,
+							software_id: softwareId,
+							before: installation,
+							to: { version: targetVersion.version, ptf_level: targetVersion.ptf_level },
+							at: rolledBackAt,
+							rollback: true,
+							reason
+						}
+					],
+					'rollback'
+				);
+			}, transactionTimeouts());
 
 			// Create audit log
 			await db.audit_log.create({

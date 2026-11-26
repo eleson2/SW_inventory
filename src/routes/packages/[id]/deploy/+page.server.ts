@@ -1,5 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { markInstalled } from '#lib/server/rollouts.ts';
+import { recordInstallChanges, type InstallChange } from '#lib/server/install-history.ts';
 import { db, createAuditLog } from '#lib/server/db.ts';
 import { fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -176,12 +177,19 @@ export const actions: Actions = {
 			// Step 4: Prepare batch updates and creates
 			const updates: any[] = [];
 			const creates: any[] = [];
+			const history: InstallChange[] = [];
 
 			console.time('Prepare Batch Operations');
 			for (const lparId of lparIds) {
 				for (const item of packageItems) {
 					const key = `${lparId}-${item.software_id}`;
 					const currentInstall = installationMap.get(key);
+					history.push({
+						lpar_id: lparId,
+						software_id: item.software_id,
+						before: currentInstall ?? null,
+						to: { version: item.software_version.version, ptf_level: item.software_version.ptf_level || null }
+					});
 
 					if (currentInstall) {
 						// Update existing installation
@@ -254,6 +262,8 @@ export const actions: Actions = {
 
 					// Lifecycle: installed on these LPARs, their previous package superseded
 					await markInstalled(tx, lparIds, params.id);
+					// Install history (D2): one event per product whose version changed
+					await recordInstallChanges(tx, history, 'deploy', params.id);
 				},
 				{
 					isolationLevel: Prisma.TransactionIsolationLevel.Serializable,

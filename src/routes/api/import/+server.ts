@@ -1,6 +1,8 @@
 import type { RequestHandler } from './$types';
 import XLSX from 'xlsx';
 import { db } from '#lib/server/db.ts';
+import { recordInstallChanges } from '#lib/server/install-history.ts';
+import { transactionTimeouts } from '#lib/server/db-dialect.ts';
 import { importBundleRows, parseBundleRows } from '#lib/server/bundles.ts';
 
 interface ImportResult {
@@ -339,14 +341,21 @@ async function importLpars(data: any[][]): Promise<ImportResult> {
         });
 
         if (!existing) {
-          await db.lpar_software.create({
-            data: {
-              lpar_id: lparRecord.id,
-              software_id: software.id,
-              current_version: version,
-              installed_date: new Date()
-            }
-          });
+          await db.$transaction(async (tx) => {
+            await tx.lpar_software.create({
+              data: {
+                lpar_id: lparRecord.id,
+                software_id: software.id,
+                current_version: version,
+                installed_date: new Date()
+              }
+            });
+            await recordInstallChanges(
+              tx,
+              [{ lpar_id: lparRecord.id, software_id: software.id, before: null, to: { version, ptf_level: null } }],
+              'import'
+            );
+          }, transactionTimeouts());
           softwareAssigned++;
         }
       }

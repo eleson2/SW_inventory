@@ -251,6 +251,19 @@ The system follows this entity relationship:
   It also runs `importAuditHistory()`: earlier packages found in the audit log (deployments, LPAR edits)
   become superseded rollouts (`packageHistoryFromAudit()`), so L3 and V1 have history from before LCM.
 
+### Install history (D2)
+- `lpar_software_history`: append-only, one row per change of an LPAR's installed software (event
+  install/upgrade/downgrade/ptf/rollback/remove, from/to version+PTF, `occurred_at`, source
+  deploy/rollback/lpar_edit/import/clone/backfill, package, reason). `lpar_software` stays the current state.
+- **Every write to `lpar_software` must call `recordInstallChanges(tx, changes, source, packageId?)`**
+  (`src/lib/server/install-history.ts`) in the same transaction, passing each row as it was before.
+  No-op changes are skipped; an event is never dated before the pair's last event.
+- Installs from before D2 are rebuilt (`reconstructed = true`, shown with `*`) from install date, previous
+  version, rollback state and audit-log rollbacks (`reconstructEvents()`): on their first change, or by
+  `backfillInstallHistory()` (called by pages that show history). Read-only; no editing of history yet.
+- `stateAt(events, date)` (`src/lib/utils/install-history.ts`) replays what each LPAR had at a date; the
+  integration test checks that replaying to now equals `lpar_software`. Page: `/lpars/[id]/history`.
+
 ### Version Management
 
 **Critical**: Software versions are now **normalized** in the `software_versions` table:

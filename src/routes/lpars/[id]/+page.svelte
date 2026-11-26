@@ -223,9 +223,12 @@
 	<Card class="p-6">
 		<div class="flex items-center justify-between mb-4">
 			<h2 class="text-xl font-semibold">Installed Software</h2>
-			<Button size="sm" onclick={() => goto(`/lpars/${lpar.id}/edit`)}>
-				Manage Software
-			</Button>
+			<span class="flex gap-2">
+				<Button size="sm" variant="outline" href="/lpars/{lpar.id}/history">Install history</Button>
+				<Button size="sm" onclick={() => goto(`/lpars/${lpar.id}/edit`)}>
+					Manage Software
+				</Button>
+			</span>
 		</div>
 
 		{#if lpar.lpar_software.length === 0}

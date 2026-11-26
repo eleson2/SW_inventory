@@ -36,6 +36,7 @@ const TABLES = [
 	'lpar_sets',
 	'lpar_set_members',
 	'lpar_package_rollouts',
+	'lpar_software_history',
 	'audit_log'
 ] as const;
 type Table = (typeof TABLES)[number];

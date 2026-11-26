@@ -84,6 +84,7 @@ model lpars {
   lpar_software      lpar_software[]
   lpar_set_members   lpar_set_members[]
   rollouts           lpar_package_rollouts[]
+  install_history    lpar_software_history[]
   packages           packages?       @relation(fields: [current_package_id], references: [id], onDelete: SetNull)
   customers          customers       @relation(fields: [customer_id], references: [id], onDelete: Restrict)
 
@@ -134,6 +135,7 @@ model packages {
   lpars         lpars[]
   package_items package_items[]
   rollouts      lpar_package_rollouts[]
+  install_history lpar_software_history[]
 
   @@unique([code, version])
   @@index([active])
@@ -161,6 +163,7 @@ model software {
   current_version    software_versions?    @relation("CurrentVersion", fields: [current_version_id], references: [id], onDelete: SetNull)
   versions           software_versions[]   @relation("AllVersions")
   lpar_software      lpar_software[]
+  install_history    lpar_software_history[]
   package_items      package_items[]
   bundle_items       vendor_bundle_items[]
   vendors            vendors               @relation(fields: [vendor_id], references: [id], onDelete: Restrict)
@@ -318,4 +321,33 @@ model lpar_package_rollouts {
   @@unique([lpar_id, package_id])
   @@index([package_id, stage])
   @@index([lpar_id, stage])
+}
+
+// Install history (D2): append-only, one row per change of what an LPAR has installed.
+// lpar_software is the current state; replaying these events up to a date gives the state then.
+// event: install / upgrade / downgrade / ptf (same release) / rollback / remove
+// source: deploy / rollback / lpar_edit / import / clone / backfill
+// reconstructed: rebuilt from data recorded before the history existed (dates may be approximate)
+model lpar_software_history {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lpar_id        String    @db.Uuid
+  software_id    String    @db.Uuid
+  event          String    @db.VarChar(20)
+  from_version   String?   @db.VarChar(50)
+  from_ptf_level String?   @db.VarChar(50)
+  to_version     String?   @db.VarChar(50)
+  to_ptf_level   String?   @db.VarChar(50)
+  occurred_at    DateTime
+  source         String    @db.VarChar(20)
+  package_id     String?   @db.Uuid
+  reason         String?   @db.VarChar(500)
+  reconstructed  Boolean   @default(false)
+  created_at     DateTime  @default(now())
+  lpar           lpars     @relation(fields: [lpar_id], references: [id], onDelete: Cascade)
+  software       software  @relation(fields: [software_id], references: [id], onDelete: Cascade)
+  package        packages? @relation(fields: [package_id], references: [id], onDelete: SetNull)
+
+  @@index([lpar_id, software_id, occurred_at])
+  @@index([software_id, occurred_at])
+  @@index([occurred_at])
 }

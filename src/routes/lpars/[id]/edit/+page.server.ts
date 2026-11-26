@@ -1,5 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { markInstalled } from '#lib/server/rollouts.ts';
+import { recordInstallChanges, type InstallChange } from '#lib/server/install-history.ts';
 import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
 import { fail, redirect, error } from '@sveltejs/kit';
 import { lparWithSoftwareSchema } from '#lib/schemas/lpar.ts';
@@ -145,6 +146,11 @@ export const actions: Actions = {
 					await markInstalled(tx, [params.id], validated.current_package_id);
 				}
 
+				const history: InstallChange[] = installsToDelete.map((id) => {
+					const before = existingById.get(id)!;
+					return { lpar_id: params.id, software_id: before.software_id, before, to: null };
+				});
+
 				// Delete installations that were removed or marked for deletion
 				if (installsToDelete.length > 0) {
 					await tx.lpar_software.deleteMany({
@@ -182,7 +188,16 @@ export const actions: Actions = {
 					} else {
 						await tx.lpar_software.create({ data: installData });
 					}
+					history.push({
+						lpar_id: params.id,
+						software_id: installation.software_id,
+						before: existing ?? null,
+						to: { version: version.version, ptf_level: version.ptf_level },
+						// A new install takes the date entered; a version change happens now
+						at: existing ? null : installation.installed_date
+					});
 				}
+				await recordInstallChanges(tx, history, 'lpar_edit');
 			});
 
 			await createAuditLog('lpar', params.id, 'update', {
