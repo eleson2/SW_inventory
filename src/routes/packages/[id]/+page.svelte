@@ -2,6 +2,7 @@
 	import { versionName } from '#lib/utils/version-parser.ts';
 	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
+	import { can } from '#lib/utils/permissions.ts';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Card from '#lib/components/ui/Card.svelte';
 	import Badge from '#lib/components/ui/Badge.svelte';
@@ -68,9 +69,11 @@
 			<Button variant="outline" onclick={() => goto(`/packages/${pkg.id}/rollout`)}>
 				Rollout
 			</Button>
-			<Button variant="outline" onclick={() => showCloneDialog = true}>
-				Clone Package
-			</Button>
+			{#if can(data.user, 'create_package')}
+				<Button variant="outline" onclick={() => showCloneDialog = true}>
+					Clone Package
+				</Button>
+			{/if}
 			<Button variant="outline" onclick={() => goto(`/packages/${pkg.id}/edit`)}>
 				Edit
 			</Button>

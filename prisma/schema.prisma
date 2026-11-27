@@ -31,6 +31,8 @@ model users {
   email               String?   @db.VarChar(200)
   // scrypt hash (src/lib/server/passwords.ts); null = cannot log in with a password
   password_hash       String?   @db.VarChar(200)
+  // Legacy (roles phase 1): moved to user_roles by migrateLegacyRoles() on startup, then false.
+  // Kept so older databases and backups convert; drop once every database has been converted.
   is_admin            Boolean   @default(false)
   can_create_packages Boolean   @default(false)
   active              Boolean   @default(true)
@@ -39,8 +41,29 @@ model users {
   last_login_at       DateTime?
   created_at          DateTime  @default(now())
   updated_at          DateTime  @updatedAt
+  roles               user_roles[]
 
   @@index([active])
+}
+
+/// What a user may do (role) and where (scope): a global role has no scope; a scoped role applies
+/// to one customer, vendor or package. Role names and their actions are defined in code
+/// (src/lib/utils/permissions.ts). A user holds a role on a scope at most once (kept in code:
+/// NULL scopes are never equal in a unique index).
+model user_roles {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String   @db.Uuid
+  role       String   @db.VarChar(30)
+  // null = global, else customer | vendor | package
+  scope_type String?  @db.VarChar(20)
+  scope_id   String?  @db.Uuid
+  // The responsible person for that scope
+  is_contact Boolean  @default(false)
+  created_at DateTime @default(now())
+  user       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([scope_type, scope_id])
 }
 
 // Multi-tenant customer management

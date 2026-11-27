@@ -4,9 +4,11 @@ import { fail, redirect } from '@sveltejs/kit';
 import { packageWithItemsSchema } from '#lib/schemas/package.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
 import { loadBundlesForPackages } from '#lib/server/bundles.ts';
+import { requirePermission } from '#lib/server/permissions.ts';
 
 // Load all packages for clone dropdown and all software for PackageItemsManager
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
+	requirePermission(locals, 'create_package');
 	// Initialize Superforms with default values
 	const form = await serverValidate(
 		{ description: '', active: true, items: [] },
@@ -69,6 +71,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 export const actions: Actions = {
 	default: async (event) => {
+		requirePermission(event.locals, 'create_package');
 	// Use Superforms to validate form data
 	const form = await serverValidate(event, packageWithItemsSchema);
 

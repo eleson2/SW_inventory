@@ -5,6 +5,7 @@
 	import PageHeader from '#lib/components/common/PageHeader.svelte';
 	import Card from '#lib/components/ui/Card.svelte';
 	import Button from '#lib/components/ui/Button.svelte';
+	import { GLOBAL_ROLES, ROLES, hasGlobalRole } from '#lib/utils/permissions.ts';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	const user = $derived(page.data.user);
@@ -19,8 +20,9 @@
 	<Card class="p-6 space-y-2 text-sm">
 		<h2 class="font-semibold">Rights</h2>
 		<ul class="list-disc pl-5">
-			{#if user?.is_admin}<li>Administrator: can change everything, including users</li>{/if}
-			{#if user?.can_create_packages}<li>Can create packages</li>{/if}
+			{#each GLOBAL_ROLES.filter((r) => user && hasGlobalRole(user, r)) as role (role)}
+				<li>{ROLES[role].label}: {ROLES[role].description}</li>
+			{/each}
 			<li>Can see every page and report</li>
 		</ul>
 	</Card>

@@ -5,6 +5,7 @@
 	import Badge from '#lib/components/ui/Badge.svelte';
 	import Button from '#lib/components/ui/Button.svelte';
 	import { formatDistanceToNow } from 'date-fns';
+	import { ROLES } from '#lib/utils/permissions.ts';
 
 	let { data }: { data: PageData } = $props();
 </script>
@@ -40,8 +41,9 @@
 						<td class="px-4 py-2">{user.email ?? ''}</td>
 						<td class="px-4 py-2 space-x-1">
 							{#if !user.active}<Badge variant="secondary">Inactive</Badge>{/if}
-							{#if user.is_admin}<Badge>Admin</Badge>{/if}
-							{#if user.can_create_packages}<Badge variant="outline">Creates packages</Badge>{/if}
+							{#each user.roles as role (role)}
+								<Badge variant={role === 'admin' ? 'default' : 'outline'}>{ROLES[role].label}</Badge>
+							{/each}
 						</td>
 						<td class="px-4 py-2" title={user.last_login_at ? new Date(user.last_login_at).toLocaleString() : ''}>
 							{user.last_login_at ? formatDistanceToNow(new Date(user.last_login_at), { addSuffix: true }) : 'never'}

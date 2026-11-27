@@ -1,6 +1,7 @@
 import type { RequestHandler } from './$types';
 import { cloneSoftware, clonePackage, cloneLpar, cloneCustomer, cloneVendor, getClonePreview } from '#lib/server/clone-utils.ts';
 import { z } from 'zod';
+import { can } from '#lib/utils/permissions.ts';
 
 // Clone request schema
 const cloneRequestSchema = z.object({
@@ -9,7 +10,7 @@ const cloneRequestSchema = z.object({
 	data: z.record(z.string(), z.string())
 });
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
 		const body = await request.json();
 		const { entityType, sourceId, data } = cloneRequestSchema.parse(body);
@@ -25,6 +26,9 @@ export const POST: RequestHandler = async ({ request }) => {
 				break;
 
 			case 'package':
+				if (!can(locals.user, 'create_package')) {
+					return Response.json({ error: 'You are not allowed to create packages' }, { status: 403 });
+				}
 				if (!data.name || !data.code || !data.version) {
 					return Response.json({ error: 'Name, code, and version are required' }, { status: 400 });
 				}

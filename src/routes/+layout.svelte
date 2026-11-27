@@ -2,6 +2,7 @@
 	import '../app.css';
 	import { page } from '$app/state';
 	import { enhance } from '$app/forms';
+	import { can } from '#lib/utils/permissions.ts';
 	import Toast from '#lib/components/ui/Toast.svelte';
 	import KeyboardShortcutsHelp from '#lib/components/common/KeyboardShortcutsHelp.svelte';
 	import { useKeyboardShortcuts } from '#lib/utils/keyboard-shortcuts.svelte.ts';
@@ -94,7 +95,7 @@
 
 			{#if data.user}
 			<form method="POST" action="/logout" use:enhance class="hidden md:flex items-center gap-3 text-sm">
-				{#if data.user.is_admin}
+				{#if can(data.user, 'manage_users')}
 					<a href="/admin/users" class="transition-colors hover:text-foreground/80 {isActive('/admin') ? 'text-foreground font-semibold' : 'text-foreground/60'}">Users</a>
 				{/if}
 				<a href="/account" class="text-foreground/60 hover:text-foreground/80" title="My account ({data.user.username})">{data.user.display_name}</a>
@@ -183,7 +184,7 @@
 					>
 						Reports
 					</a>
-					{#if data.user.is_admin}
+					{#if can(data.user, 'manage_users')}
 						<a
 							href="/admin/users"
 							onclick={handleNavClick}

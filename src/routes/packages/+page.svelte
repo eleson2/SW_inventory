@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import type { Package } from '#lib/types/index.ts';
 	import { goto } from '$app/navigation';
+	import { can } from '#lib/utils/permissions.ts';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Card from '#lib/components/ui/Card.svelte';
 	import DataTable from '#lib/components/common/DataTable.svelte';
@@ -64,7 +65,9 @@
 		description="Manage software packages for coordinated deployments"
 	>
 		{#snippet actions()}
-			<Button onclick={() => goto('/packages/new')}>Create Package</Button>
+			{#if can(data.user, 'create_package')}
+				<Button onclick={() => goto('/packages/new')}>Create Package</Button>
+			{/if}
 		{/snippet}
 	</PageHeader>
 
@@ -105,10 +108,12 @@
 						></path>
 					</svg>
 					<h3 class="mt-2 text-sm font-semibold">No packages found</h3>
-					<p class="mt-1 text-sm text-muted-foreground">Get started by creating a new package.</p>
-					<div class="mt-6">
-						<Button onclick={() => goto('/packages/new')}>Create Package</Button>
-					</div>
+					{#if can(data.user, 'create_package')}
+						<p class="mt-1 text-sm text-muted-foreground">Get started by creating a new package.</p>
+						<div class="mt-6">
+							<Button onclick={() => goto('/packages/new')}>Create Package</Button>
+						</div>
+					{/if}
 				</div>
 			{/snippet}
 		</DataTable>

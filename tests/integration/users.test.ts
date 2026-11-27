@@ -13,14 +13,26 @@ vi.mock('../../src/lib/server/db.ts', async () => {
 	};
 });
 
-const { authenticate, loadSessionUser, createUser, updateUser, setPassword, changeOwnPassword, readUserForm, UserError } =
-	await import('../../src/lib/server/users.ts');
+const {
+	authenticate,
+	loadSessionUser,
+	createUser,
+	updateUser,
+	setPassword,
+	changeOwnPassword,
+	readUserForm,
+	globalRoles,
+	migrateLegacyRoles,
+	UserError
+} = await import('../../src/lib/server/users.ts');
+const { can } = await import('../../src/lib/utils/permissions.ts');
 
 const envAdmin = { username: 'Admin', password: 'env-password' };
 
-const form = (fields: Record<string, string>) => {
+const form = (fields: Record<string, string>, roles: string[] = []) => {
 	const f = new FormData();
 	for (const [k, v] of Object.entries(fields)) f.set(k, v);
+	for (const role of roles) f.append('role', role);
 	return f;
 };
 
@@ -36,22 +48,31 @@ describe('users', () => {
 	it('logs in the .env user as an admin and adds it to users', async () => {
 		expect(await authenticate('admin', 'wrong', envAdmin)).toBeNull();
 		const login = await authenticate(' ADMIN ', 'env-password', envAdmin);
-		expect(login?.user).toMatchObject({ username: 'admin', is_admin: true, is_env_user: true });
+		expect(login?.user).toMatchObject({ username: 'admin', is_env_user: true });
+		expect(can(login!.user, 'manage_users')).toBe(true);
 		expect(await testDb.users.count()).toBe(1);
 		// A second login reuses the row
 		await authenticate('admin', 'env-password', envAdmin);
 		expect(await testDb.users.count()).toBe(1);
+		expect(await testDb.user_roles.count()).toBe(1);
+
+		// Its admin role comes back even if removed from the database
+		await testDb.user_roles.deleteMany();
+		expect(can((await authenticate('admin', 'env-password', envAdmin))!.user, 'manage_users')).toBe(true);
 	});
 
 	it('logs in a created user, but not when inactive', async () => {
 		const admin = (await authenticate('admin', 'env-password', envAdmin))!.user;
-		const input = readUserForm(form({ username: 'Bo.Berg', display_name: 'Bo Berg', can_create_packages: 'on' }));
+		const input = readUserForm(form({ username: 'Bo.Berg', display_name: 'Bo Berg' }, ['package_creator', 'nonsense']));
 		const bo = await createUser(input, 'bo-password', envAdmin, admin.id);
-		expect(bo).toMatchObject({ username: 'bo.berg', is_admin: false, can_create_packages: true, active: true });
+		expect(bo).toMatchObject({ username: 'bo.berg', active: true });
+		expect(globalRoles(bo)).toEqual(['package_creator']);
 
 		expect(await authenticate('bo.berg', 'nope', envAdmin)).toBeNull();
 		const login = await authenticate('bo.berg', 'bo-password', envAdmin);
-		expect(login?.user).toMatchObject({ id: bo.id, is_admin: false, is_env_user: false });
+		expect(login?.user).toMatchObject({ id: bo.id, is_env_user: false });
+		expect(can(login!.user, 'create_package')).toBe(true);
+		expect(can(login!.user, 'manage_users')).toBe(false);
 		expect(await loadSessionUser(bo.id, login!.sessionVersion, envAdmin)).not.toBeNull();
 
 		// Deactivating ends the session and blocks login
@@ -88,11 +109,12 @@ describe('users', () => {
 		// The .env user stays an active admin whatever the form says
 		const demoted = readUserForm(form({ username: 'renamed', display_name: 'Boss', active_present: '1' }));
 		const kept = await updateUser(admin.id, demoted, envAdmin, 'someone-else');
-		expect(kept).toMatchObject({ username: 'admin', display_name: 'Boss', is_admin: true, active: true });
+		expect(kept).toMatchObject({ username: 'admin', display_name: 'Boss', active: true });
+		expect(globalRoles(kept)).toEqual(['admin']);
 		await expect(setPassword(admin.id, 'password1', envAdmin, admin.id)).rejects.toThrow(/AUTH_PASSWORD/);
 
 		const anna = await createUser(
-			readUserForm(form({ username: 'anna', display_name: 'Anna', is_admin: 'on' })),
+			readUserForm(form({ username: 'anna', display_name: 'Anna' }, ['admin'])),
 			'anna-password',
 			envAdmin,
 			admin.id
@@ -113,6 +135,34 @@ describe('users', () => {
 		await expect(
 			createUser(readUserForm(form({ username: 'cy', display_name: 'Cy' })), 'short', envAdmin, admin.id)
 		).rejects.toThrow(/at least 8/);
+	});
+
+	it('replaces global roles on edit and keeps scoped ones', async () => {
+		const admin = (await authenticate('admin', 'env-password', envAdmin))!.user;
+		const bo = await createUser(readUserForm(form({ username: 'bo', display_name: 'Bo' }, ['admin'])), 'bo-password', envAdmin, admin.id);
+		const customerId = crypto.randomUUID();
+		await testDb.user_roles.create({ data: { user_id: bo.id, role: 'editor', scope_type: 'customer', scope_id: customerId, is_contact: true } });
+
+		const edited = await updateUser(bo.id, readUserForm(form({ username: 'bo', display_name: 'Bo', active_present: '1', active: 'on' }, ['package_creator'])), envAdmin, admin.id);
+		expect(globalRoles(edited)).toEqual(['package_creator']);
+		expect(edited.roles.filter((r) => r.scope_type === 'customer')).toMatchObject([{ scope_id: customerId, is_contact: true }]);
+
+		const audit = await testDb.audit_log.findFirst({ where: { entity_id: bo.id, action: 'update' } });
+		expect(audit?.changes).toMatchObject({ before: { roles: ['admin'] }, after: { roles: ['package_creator'] } });
+	});
+
+	it('converts the phase-1 flags into roles once', async () => {
+		const old = await testDb.users.create({ data: { username: 'old', display_name: 'Old', is_admin: true, can_create_packages: true } });
+		const half = await testDb.users.create({
+			data: { username: 'half', display_name: 'Half', can_create_packages: true, roles: { create: { role: 'package_creator' } } }
+		});
+		expect(await migrateLegacyRoles()).toBe(2);
+		expect(await migrateLegacyRoles()).toBe(0);
+
+		const roles = async (id: string) => globalRoles(await testDb.users.findUniqueOrThrow({ where: { id }, include: { roles: true } }));
+		expect(await roles(old.id)).toEqual(['admin', 'package_creator']);
+		expect(await roles(half.id)).toEqual(['package_creator']);
+		expect(await testDb.users.count({ where: { OR: [{ is_admin: true }, { can_create_packages: true }] } })).toBe(0);
 	});
 
 	it('ignores cookies from before user accounts', async () => {

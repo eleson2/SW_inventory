@@ -2,6 +2,7 @@
 	import { versionName } from '#lib/utils/version-parser.ts';
 	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
+	import { can } from '#lib/utils/permissions.ts';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Card from '#lib/components/ui/Card.svelte';
 	import Badge from '#lib/components/ui/Badge.svelte';
@@ -20,9 +21,11 @@
 
 	<PageHeader title="{bundle.code} – {bundle.name}" description="{bundle.vendors.name} maintenance bundle">
 		{#snippet actions()}
-			<Button onclick={() => goto(`/packages/new?bundles=${bundle.id}`)} disabled={bundle.items.length === 0}>
-				Create Package
-			</Button>
+			{#if can(data.user, 'create_package')}
+				<Button onclick={() => goto(`/packages/new?bundles=${bundle.id}`)} disabled={bundle.items.length === 0}>
+					Create Package
+				</Button>
+			{/if}
 			<Button variant="outline" onclick={() => goto(`/bundles/new?clone=${bundle.id}`)}>Clone as Next Level</Button>
 			<Button variant="outline" onclick={() => goto(`/bundles/${bundle.id}/edit`)}>Edit</Button>
 			<DeleteButton entityName="Bundle" entityId={bundle.id} entityLabel={bundle.code} variant="destructive" />

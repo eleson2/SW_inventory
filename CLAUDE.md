@@ -122,15 +122,24 @@ the always-working admin login (added to `users` on its first login, never locka
 .env); `AUTH_SECRET` signs cookies (declared in `src/env.ts`, read via `$app/env/private`; the app
 refuses to start without them).
 - `users` (`src/lib/server/users.ts`): username (lowercase), display name, scrypt `password_hash`
-  (`passwords.ts`), `is_admin`, `can_create_packages`, `active`, `session_version`. `locals.user` is a
-  `SessionUser`, reloaded every request. The cookie (`auth.ts`) holds user id + session version;
+  (`passwords.ts`), `active`, `session_version`. `locals.user` is a `SessionUser` (with its role
+  assignments), reloaded every request. The cookie (`auth.ts`) holds user id + session version;
   deactivating or setting a password raises the version and ends that user's sessions.
-- Pages: `/admin/users` (list, new, edit, set password; admins cannot demote/deactivate themselves),
-  `/account` (own rights, change password). `requireUser` / `requireAdmin` in `src/lib/server/permissions.ts`.
-- Planned next: editor lists per customer / vendor / package (with a "contact" marker), enforced in
-  every form action, and the acting user recorded in audit log and install history.
-- `db:export` includes `users` (password hashes too); `deploy -- data:push` therefore replaces the
-  server's users.
+- Rights = `user_roles` rows: role + optional scope (`scope_type` customer/vendor/package + `scope_id`,
+  null = global) + `is_contact` (the responsible person). Roles and their actions are defined in code
+  (`ROLES` in `src/lib/utils/permissions.ts`: `admin` = all, `package_creator` = `create_package`).
+  **Check rights only with `can(user, action, target)`** (target = the scopes the thing belongs to, e.g.
+  `{ customer }` for an LPAR); server: `requirePermission(locals, action, target)` / `requireAdmin` in
+  `src/lib/server/permissions.ts` (403). Pages use `can(data.user, ...)` only to hide buttons.
+  New right: add an `Action`, list it in a role, enforce it in load + action.
+- `users.is_admin` / `can_create_packages` are legacy (phase 1): `migrateLegacyRoles()` turns them into
+  global roles once per server start (hooks) and clears them, so old databases/backups convert themselves.
+- Pages: `/admin/users` (list, new, edit global roles, set password; admins cannot demote/deactivate
+  themselves; editing keeps scoped roles), `/account` (own rights, change password).
+- Planned next: scoped `editor` role per customer / vendor / package with contact, assigned on those
+  pages, enforced in every form action; the acting user recorded in audit log and install history.
+- `db:export` includes `users` (password hashes too) and `user_roles`; `deploy -- data:push` therefore
+  replaces the server's users.
 
 Built with `@sveltejs/adapter-node`: `npm run build`, then `node build` on the server with
 `DATABASE_URL`, the `AUTH_*` vars and `ORIGIN=https://your.host` set (see `.env.example`).

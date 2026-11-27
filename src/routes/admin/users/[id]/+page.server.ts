@@ -3,7 +3,7 @@ import { error, fail } from '@sveltejs/kit';
 import { db } from '#lib/server/db.ts';
 import { envAdmin } from '#lib/server/auth.ts';
 import { requireAdmin } from '#lib/server/permissions.ts';
-import { normalizeUsername, readUserForm, setPassword, updateUser, UserError } from '#lib/server/users.ts';
+import { globalRoles, normalizeUsername, readUserForm, setPassword, updateUser, UserError } from '#lib/server/users.ts';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const user = await db.users.findUnique({
@@ -13,8 +13,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			username: true,
 			display_name: true,
 			email: true,
-			is_admin: true,
-			can_create_packages: true,
+			roles: { select: { role: true, scope_type: true } },
 			active: true,
 			password_hash: true,
 			last_login_at: true,
@@ -22,9 +21,9 @@ export const load: PageServerLoad = async ({ params }) => {
 		}
 	});
 	if (!user) error(404, 'User not found');
-	const { password_hash, ...rest } = user;
+	const { password_hash, roles, ...rest } = user;
 	return {
-		user: { ...rest, has_password: !!password_hash },
+		user: { ...rest, roles: globalRoles({ roles }), has_password: !!password_hash },
 		isEnvUser: user.username === normalizeUsername(envAdmin.username)
 	};
 };

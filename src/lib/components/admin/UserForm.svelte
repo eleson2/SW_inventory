@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import Button from '#lib/components/ui/Button.svelte';
+	import { GLOBAL_ROLES, ROLES, type RoleName } from '#lib/utils/permissions.ts';
 
 	interface UserValues {
 		username?: string;
 		display_name?: string;
 		email?: string | null;
-		is_admin?: boolean;
-		can_create_packages?: boolean;
+		/** Global roles */
+		roles?: RoleName[];
 		active?: boolean;
 	}
 
@@ -61,28 +62,32 @@
 		{/if}
 	</div>
 
-	<fieldset class="space-y-2 text-sm" disabled={envUser}>
+	<fieldset class="space-y-2 text-sm">
 		<legend class="mb-1 font-medium">Rights</legend>
-		<label class="flex items-start gap-2">
-			<input type="checkbox" name="is_admin" checked={envUser || (values.is_admin ?? false)} class="mt-0.5" />
-			<span>Administrator <span class="text-muted-foreground">— can change everything, including users</span></span>
-		</label>
-		<label class="flex items-start gap-2">
-			<input type="checkbox" name="can_create_packages" checked={values.can_create_packages ?? false} class="mt-0.5" />
-			<span>Can create packages <span class="text-muted-foreground">— and becomes an editor of the packages they create</span></span>
-		</label>
+		{#each GLOBAL_ROLES as role (role)}
+			<label class="flex items-start gap-2">
+				<input
+					type="checkbox"
+					name="role"
+					value={role}
+					checked={(envUser && role === 'admin') || (values.roles ?? []).includes(role)}
+					disabled={envUser && role === 'admin'}
+					class="mt-0.5"
+				/>
+				<span>{ROLES[role].label} <span class="text-muted-foreground">— {ROLES[role].description}</span></span>
+			</label>
+		{/each}
 		{#if !isNew}
 			<label class="flex items-start gap-2">
-				<input type="checkbox" name="active" checked={envUser || (values.active ?? true)} class="mt-0.5" />
+				<input type="checkbox" name="active" checked={envUser || (values.active ?? true)} disabled={envUser} class="mt-0.5" />
 				<span>Active <span class="text-muted-foreground">— inactive users cannot log in; their sessions end at once</span></span>
 			</label>
 		{/if}
 	</fieldset>
 	{#if envUser}
-		<!-- disabled fields are not submitted; the server keeps the .env user's rights anyway -->
-		<input type="hidden" name="is_admin" value="on" />
+		<!-- disabled fields are not submitted; the server keeps the .env user an active admin anyway -->
+		<input type="hidden" name="role" value="admin" />
 		<input type="hidden" name="active" value="on" />
-		{#if values.can_create_packages}<input type="hidden" name="can_create_packages" value="on" />{/if}
 		<p class="text-xs text-muted-foreground">This is the login from .env (AUTH_USERNAME): always an active administrator.</p>
 	{:else if !isNew}
 		<!-- marks that the form has the Active checkbox, so unticking it means inactive -->

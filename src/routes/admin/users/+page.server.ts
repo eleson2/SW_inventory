@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { db } from '#lib/server/db.ts';
 import { envAdmin } from '#lib/server/auth.ts';
-import { normalizeUsername } from '#lib/server/users.ts';
+import { globalRoles, normalizeUsername } from '#lib/server/users.ts';
 
 export const load: PageServerLoad = async () => {
 	const users = await db.users.findMany({
@@ -11,11 +11,13 @@ export const load: PageServerLoad = async () => {
 			username: true,
 			display_name: true,
 			email: true,
-			is_admin: true,
-			can_create_packages: true,
+			roles: { select: { role: true, scope_type: true } },
 			active: true,
 			last_login_at: true
 		}
 	});
-	return { users, envUsername: normalizeUsername(envAdmin.username) };
+	return {
+		users: users.map(({ roles, ...user }) => ({ ...user, roles: globalRoles({ roles }) })),
+		envUsername: normalizeUsername(envAdmin.username)
+	};
 };
