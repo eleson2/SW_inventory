@@ -1,19 +1,20 @@
 /**
- * Minimal single-user authentication for demo deployments.
+ * Login sessions.
  *
- * Credentials come from AUTH_USERNAME / AUTH_PASSWORD (see src/env.ts). A successful login
- * sets an HMAC-signed, httpOnly session cookie; no session table is needed. Changing
- * AUTH_SECRET invalidates every outstanding session.
+ * A successful login sets an HMAC-signed, httpOnly session cookie holding the user id and the
+ * user's session version; no session table is needed. Each request reloads the user
+ * (`loadSessionUser()` in users.ts), so deactivating a user or resetting a password (which
+ * raises the version) ends their sessions at once. Changing AUTH_SECRET ends every session.
  */
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import type { Cookies } from '@sveltejs/kit';
 import { AUTH_PASSWORD, AUTH_SECRET, AUTH_SESSION_HOURS, AUTH_USERNAME } from '$app/env/private';
+import type { EnvAdmin } from '#lib/server/users.ts';
 
 export const SESSION_COOKIE = 'sw_session';
 
-export interface SessionUser {
-	username: string;
-}
+/** The always-working admin login from .env. */
+export const envAdmin: EnvAdmin = { username: AUTH_USERNAME, password: AUTH_PASSWORD };
 
 /** Constant-time string comparison (hashing first makes lengths equal). */
 function safeEqual(a: string, b: string): boolean {
@@ -26,34 +27,27 @@ function sign(payload: string): string {
 	return createHmac('sha256', AUTH_SECRET).update(payload).digest('base64url');
 }
 
-export function checkCredentials(username: string, password: string): boolean {
-	// Evaluate both so timing does not reveal which one was wrong
-	const userOk = safeEqual(username, AUTH_USERNAME);
-	const passOk = safeEqual(password, AUTH_PASSWORD);
-	return userOk && passOk;
-}
-
-export function createSessionToken(username: string): { token: string; expires: Date } {
+export function createSessionToken(userId: string, sessionVersion: number): { token: string; expires: Date } {
 	const expires = new Date(Date.now() + AUTH_SESSION_HOURS * 3600_000);
-	const payload = `${Buffer.from(username).toString('base64url')}.${expires.getTime()}`;
+	const payload = `${userId}.${sessionVersion}.${expires.getTime()}`;
 	return { token: `${payload}.${sign(payload)}`, expires };
 }
 
-export function verifySessionToken(token: string | undefined): SessionUser | null {
+/** The user id and session version in a valid, unexpired cookie, or null. */
+export function verifySessionToken(token: string | undefined): { userId: string; sessionVersion: number } | null {
 	if (!token) return null;
 	const parts = token.split('.');
-	if (parts.length !== 3) return null;
-	const [userPart, expPart, signature] = parts;
-	if (!safeEqual(signature, sign(`${userPart}.${expPart}`))) return null;
+	if (parts.length !== 4) return null;
+	const [userId, version, expPart, signature] = parts;
+	if (!safeEqual(signature, sign(`${userId}.${version}.${expPart}`))) return null;
 	if (!(Number(expPart) > Date.now())) return null;
-	const username = Buffer.from(userPart, 'base64url').toString();
-	// Sessions for a renamed user are no longer valid
-	if (!safeEqual(username, AUTH_USERNAME)) return null;
-	return { username };
+	const sessionVersion = Number(version);
+	if (!Number.isInteger(sessionVersion)) return null;
+	return { userId, sessionVersion };
 }
 
-export function setSessionCookie(cookies: Cookies, url: URL, username: string): void {
-	const { token, expires } = createSessionToken(username);
+export function setSessionCookie(cookies: Cookies, url: URL, userId: string, sessionVersion: number): void {
+	const { token, expires } = createSessionToken(userId, sessionVersion);
 	cookies.set(SESSION_COOKIE, token, {
 		path: '/',
 		httpOnly: true,

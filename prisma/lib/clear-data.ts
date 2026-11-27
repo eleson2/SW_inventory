@@ -23,6 +23,7 @@ export async function clearAllData(db: PrismaClient): Promise<void> {
 		db.software.deleteMany(),
 		db.software_categories.deleteMany(),
 		db.customers.deleteMany(),
-		db.vendors.deleteMany()
+		db.vendors.deleteMany(),
+		db.users.deleteMany()
 	]);
 }

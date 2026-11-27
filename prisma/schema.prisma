@@ -23,6 +23,26 @@ model audit_log {
   @@index([user_id])
 }
 
+// People who can log in. The .env user (AUTH_USERNAME) is added here as an admin on its first login.
+model users {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username            String    @unique @db.VarChar(50)
+  display_name        String    @db.VarChar(100)
+  email               String?   @db.VarChar(200)
+  // scrypt hash (src/lib/server/passwords.ts); null = cannot log in with a password
+  password_hash       String?   @db.VarChar(200)
+  is_admin            Boolean   @default(false)
+  can_create_packages Boolean   @default(false)
+  active              Boolean   @default(true)
+  // Part of every session cookie; raising it (password reset, deactivation) ends all sessions
+  session_version     Int       @default(0)
+  last_login_at       DateTime?
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+
+  @@index([active])
+}
+
 // Multi-tenant customer management
 model customers {
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid

@@ -22,6 +22,7 @@ if (!process.env.DATABASE_URL && existsSync(join(ROOT, '.env'))) {
 
 /** Tables in foreign-key order (parents first). */
 const TABLES = [
+	'users',
 	'vendors',
 	'customers',
 	'software_categories',

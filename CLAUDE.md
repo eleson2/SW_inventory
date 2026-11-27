@@ -115,11 +115,22 @@ npm run db:import                 # 5. load the data
 - Anything genuinely provider-specific goes in `src/lib/server/db-dialect.ts`.
 - SQLite allows one writer at a time; use `transactionTimeouts()` for interactive transactions.
 
-### Authentication & Deployment
-Single-user login for demos. `src/hooks.server.ts` requires a valid session for every route except
-`/login` (pages redirect to `/login`, `/api/*` returns 401). Credentials and the cookie-signing secret
-come from `AUTH_USERNAME`, `AUTH_PASSWORD`, `AUTH_SECRET` (declared in `src/env.ts`, read via
-`$app/env/private`; the app refuses to start without them). Logic lives in `src/lib/server/auth.ts`.
+### Authentication, Users & Deployment
+`src/hooks.server.ts` requires a valid session for every route except `/login` (pages redirect to
+`/login`, `/api/*` returns 401) and admin rights for `/admin/*`. `AUTH_USERNAME` / `AUTH_PASSWORD` is
+the always-working admin login (added to `users` on its first login, never lockable, password only in
+.env); `AUTH_SECRET` signs cookies (declared in `src/env.ts`, read via `$app/env/private`; the app
+refuses to start without them).
+- `users` (`src/lib/server/users.ts`): username (lowercase), display name, scrypt `password_hash`
+  (`passwords.ts`), `is_admin`, `can_create_packages`, `active`, `session_version`. `locals.user` is a
+  `SessionUser`, reloaded every request. The cookie (`auth.ts`) holds user id + session version;
+  deactivating or setting a password raises the version and ends that user's sessions.
+- Pages: `/admin/users` (list, new, edit, set password; admins cannot demote/deactivate themselves),
+  `/account` (own rights, change password). `requireUser` / `requireAdmin` in `src/lib/server/permissions.ts`.
+- Planned next: editor lists per customer / vendor / package (with a "contact" marker), enforced in
+  every form action, and the acting user recorded in audit log and install history.
+- `db:export` includes `users` (password hashes too); `deploy -- data:push` therefore replaces the
+  server's users.
 
 Built with `@sveltejs/adapter-node`: `npm run build`, then `node build` on the server with
 `DATABASE_URL`, the `AUTH_*` vars and `ORIGIN=https://your.host` set (see `.env.example`).

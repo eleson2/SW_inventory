@@ -1,13 +1,14 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import {
-	checkCredentials,
 	clearFailedLogins,
+	envAdmin,
 	loginRetryAfter,
 	recordFailedLogin,
 	safeRedirectTarget,
 	setSessionCookie
 } from '#lib/server/auth.ts';
+import { authenticate } from '#lib/server/users.ts';
 
 export const load: PageServerLoad = ({ locals, url }) => {
 	if (locals.user) redirect(303, safeRedirectTarget(url.searchParams.get('redirectTo')));
@@ -29,13 +30,14 @@ export const actions: Actions = {
 			});
 		}
 
-		if (!checkCredentials(username, password)) {
+		const login = await authenticate(username, password, envAdmin);
+		if (!login) {
 			recordFailedLogin(clientKey);
 			return fail(400, { username, message: 'Invalid username or password' });
 		}
 
 		clearFailedLogins(clientKey);
-		setSessionCookie(cookies, url, username);
+		setSessionCookie(cookies, url, login.user.id, login.sessionVersion);
 		redirect(303, safeRedirectTarget(url.searchParams.get('redirectTo')));
 	}
 };

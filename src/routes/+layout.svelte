@@ -94,7 +94,10 @@
 
 			{#if data.user}
 			<form method="POST" action="/logout" use:enhance class="hidden md:flex items-center gap-3 text-sm">
-				<span class="text-foreground/60">{data.user.username}</span>
+				{#if data.user.is_admin}
+					<a href="/admin/users" class="transition-colors hover:text-foreground/80 {isActive('/admin') ? 'text-foreground font-semibold' : 'text-foreground/60'}">Users</a>
+				{/if}
+				<a href="/account" class="text-foreground/60 hover:text-foreground/80" title="My account ({data.user.username})">{data.user.display_name}</a>
 				<button type="submit" class="rounded-md border px-3 py-1.5 hover:bg-accent transition-colors">Sign out</button>
 			</form>
 
@@ -180,9 +183,25 @@
 					>
 						Reports
 					</a>
+					{#if data.user.is_admin}
+						<a
+							href="/admin/users"
+							onclick={handleNavClick}
+							class="py-2 px-4 rounded-md transition-colors min-h-[44px] flex items-center {isActive('/admin') ? 'bg-accent text-foreground font-semibold' : 'text-foreground/60 hover:bg-accent/50'}"
+						>
+							Users
+						</a>
+					{/if}
+					<a
+						href="/account"
+						onclick={handleNavClick}
+						class="py-2 px-4 rounded-md transition-colors min-h-[44px] flex items-center {isActive('/account') ? 'bg-accent text-foreground font-semibold' : 'text-foreground/60 hover:bg-accent/50'}"
+					>
+						My account
+					</a>
 					<form method="POST" action="/logout" use:enhance class="border-t pt-3">
 						<button type="submit" onclick={handleNavClick} class="w-full text-left py-2 px-4 rounded-md min-h-[44px] text-foreground/60 hover:bg-accent/50">
-							Sign out ({data.user.username})
+							Sign out ({data.user.display_name})
 						</button>
 					</form>
 				</nav>

@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
-import type { SessionUser } from '#lib/server/auth.ts';
+import type { SessionUser } from '#lib/server/users.ts';
 
 declare global {
 	namespace App {
