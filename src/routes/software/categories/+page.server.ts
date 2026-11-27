@@ -1,6 +1,8 @@
 import type { Actions, PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
 import { db, createAuditLog } from '#lib/server/db.ts';
+import { requirePermission } from '#lib/server/permissions.ts';
+import { can } from '#lib/utils/permissions.ts';
 import {
 	SUGGESTED_CATEGORIES,
 	categoryChanges,
@@ -9,7 +11,8 @@ import {
 	sameCategoryName
 } from '#lib/utils/software-category.ts';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	const canManage = can(locals.user, 'manage_categories');
 	const [categories, software] = await Promise.all([
 		db.software_categories.findMany({
 			orderBy: { name: 'asc' },
@@ -24,7 +27,8 @@ export const load: PageServerLoad = async () => {
 	return {
 		categories: categories.map(({ _count, ...c }) => ({ ...c, products: _count.software })),
 		software,
-		suggested: SUGGESTED_CATEGORIES
+		suggested: SUGGESTED_CATEGORIES,
+		canManage
 	};
 };
 
@@ -40,7 +44,8 @@ async function readCategoryForm(form: FormData, ownId?: string) {
 }
 
 export const actions: Actions = {
-	create: async ({ request }) => {
+	create: async ({ request, locals }) => {
+		requirePermission(locals, 'manage_categories');
 		const input = await readCategoryForm(await request.formData());
 		if ('error' in input) return fail(400, { error: input.error });
 		const category = await db.software_categories.create({ data: input });
@@ -48,7 +53,8 @@ export const actions: Actions = {
 		return { message: `Added "${category.name}".` };
 	},
 
-	update: async ({ request }) => {
+	update: async ({ request, locals }) => {
+		requirePermission(locals, 'manage_categories');
 		const form = await request.formData();
 		const id = String(form.get('id') ?? '');
 		const existing = await db.software_categories.findUnique({ where: { id } });
@@ -63,7 +69,8 @@ export const actions: Actions = {
 		return { message: `Saved "${input.name}".` };
 	},
 
-	delete: async ({ request }) => {
+	delete: async ({ request, locals }) => {
+		requirePermission(locals, 'manage_categories');
 		const id = String((await request.formData()).get('id') ?? '');
 		const existing = await db.software_categories.findUnique({ where: { id } });
 		if (!existing) return fail(404, { error: 'That category no longer exists.' });
@@ -81,7 +88,8 @@ export const actions: Actions = {
 		};
 	},
 
-	addSuggested: async () => {
+	addSuggested: async ({ locals }) => {
+		requirePermission(locals, 'manage_categories');
 		const existing = (await db.software_categories.findMany({ select: { name: true } })).map((c) => c.name);
 		const missing = SUGGESTED_CATEGORIES.filter((name) => !existing.some((e) => sameCategoryName(e, name)));
 		for (const name of missing) {
@@ -91,7 +99,8 @@ export const actions: Actions = {
 		return { message: missing.length ? `Added ${missing.length} categories.` : 'All suggested categories already exist.' };
 	},
 
-	classify: async ({ request }) => {
+	classify: async ({ request, locals }) => {
+		requirePermission(locals, 'manage_categories');
 		const form = await request.formData();
 		const submitted = new Map<string, string>();
 		for (const [key, value] of form) {

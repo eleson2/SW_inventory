@@ -6,6 +6,7 @@
  */
 import type { Prisma } from '@prisma/client';
 import { db } from './db.ts';
+import { currentUserId } from './request-context.ts';
 import { auditRollback } from '#lib/utils/rollbacks.ts';
 import {
 	classifyChange,
@@ -100,6 +101,7 @@ export async function recordInstallChanges(
 	for (const [key, at] of await writeReconstructed(client, unrecorded)) latest.set(key, at);
 
 	const now = new Date();
+	const userId = currentUserId();
 	await client.lpar_software_history.createMany({
 		data: real.map((c) => {
 			const last = latest.get(pairKey(c.lpar_id, c.software_id));
@@ -116,7 +118,8 @@ export async function recordInstallChanges(
 				occurred_at: at,
 				source,
 				package_id: packageId,
-				reason: c.reason ?? null
+				reason: c.reason ?? null,
+				user_id: userId
 			};
 		})
 	});

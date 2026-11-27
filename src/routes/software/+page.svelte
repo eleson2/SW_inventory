@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import type { Software } from '#lib/types/index.ts';
 	import { goto } from '$app/navigation';
+	import { can, canAnywhere } from '#lib/utils/permissions.ts';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Card from '#lib/components/ui/Card.svelte';
 	import DataTable from '#lib/components/common/DataTable.svelte';
@@ -81,7 +82,9 @@
 		{#snippet actions()}
 			<span class="flex gap-2">
 				<Button href="/software/categories" variant="outline">Categories</Button>
-				<Button onclick={() => goto('/software/new')}>Add Software</Button>
+				{#if canAnywhere(data.user, 'edit_software')}
+					<Button onclick={() => goto('/software/new')}>Add Software</Button>
+				{/if}
 			</span>
 		{/snippet}
 	</PageHeader>

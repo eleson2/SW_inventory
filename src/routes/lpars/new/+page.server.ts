@@ -5,9 +5,13 @@ import { lparSchema } from '#lib/schemas/index.ts';
 import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
 import { fail, redirect } from '@sveltejs/kit';
 import { serverValidate } from '#lib/utils/superforms.ts';
+import { requirePermission } from '#lib/server/permissions.ts';
+import { requireAnywhere } from '#lib/server/scopes.ts';
+import { filterAllowed } from '#lib/utils/permissions.ts';
 
 // Load customers, packages, and all LPARs for dropdowns
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
+	const user = requireAnywhere(locals, 'edit_lpar', 'You are not allowed to create LPARs');
 	// Check if customer_id is provided in URL query params
 	const customerIdFromUrl = url.searchParams.get('customer_id');
 
@@ -73,7 +77,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	return {
 		form,
-		customers,
+		customers: filterAllowed(user, 'edit_lpar', 'customer', customers, (c) => c.id),
 		packages,
 		allLpars,
 		preselectedCustomer
@@ -88,6 +92,7 @@ export const actions: Actions = {
 		if (!form.valid) {
 			return fail(400, { form });
 		}
+		requirePermission(event.locals, 'edit_lpar', { customer: form.data.customer_id });
 
 		// Check for unique code using helper
 		const uniqueCheck = await checkUniqueConstraint(db.lpars, 'code', form.data.code);

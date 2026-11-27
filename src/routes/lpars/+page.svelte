@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import type { Lpar } from '#lib/types/index.ts';
 	import { goto } from '$app/navigation';
+	import { can, canAnywhere } from '#lib/utils/permissions.ts';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Card from '#lib/components/ui/Card.svelte';
 	import DataTable from '#lib/components/common/DataTable.svelte';
@@ -81,7 +82,9 @@
 		description="Monitor LPAR configurations and installed software"
 	>
 		{#snippet actions()}
-			<Button onclick={() => goto('/lpars/new')}>Add LPAR</Button>
+			{#if canAnywhere(data.user, 'edit_lpar')}
+				<Button onclick={() => goto('/lpars/new')}>Add LPAR</Button>
+			{/if}
 		{/snippet}
 	</PageHeader>
 

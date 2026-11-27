@@ -4,6 +4,9 @@ import { message } from 'sveltekit-superforms';
 import { db } from '#lib/server/db.ts';
 import { bundleSchema } from '#lib/schemas/bundle.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
+import { requirePermission } from '#lib/server/permissions.ts';
+import { requireAnywhere } from '#lib/server/scopes.ts';
+import { filterAllowed } from '#lib/utils/permissions.ts';
 import {
 	saveBundle,
 	BundleValidationError,
@@ -11,7 +14,8 @@ import {
 	loadVendorOptions
 } from '#lib/server/bundles.ts';
 
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
+	const user = requireAnywhere(locals, 'edit_bundle', 'You are not allowed to create bundles');
 	const [vendors, allSoftware, allBundles] = await Promise.all([
 		loadVendorOptions(),
 		loadSoftwareForBundles(),
@@ -39,7 +43,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	return {
 		form,
-		vendors,
+		vendors: filterAllowed(user, 'edit_bundle', 'vendor', vendors, (v) => v.id),
 		allSoftware,
 		allBundles,
 		cloneFrom: url.searchParams.get('clone') ?? ''
@@ -50,6 +54,7 @@ export const actions: Actions = {
 	default: async (event) => {
 		const form = await serverValidate(event, bundleSchema);
 		if (!form.valid) return fail(400, { form });
+		requirePermission(event.locals, 'edit_bundle', { vendor: form.data.vendor_id });
 
 		let id: string;
 		try {

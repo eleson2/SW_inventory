@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import type { Customer } from '#lib/types/index.ts';
 	import { goto } from '$app/navigation';
+	import { can, canAnywhere } from '#lib/utils/permissions.ts';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Card from '#lib/components/ui/Card.svelte';
 	import DataTable from '#lib/components/common/DataTable.svelte';
@@ -60,7 +61,9 @@
 		description="Manage customer information in multi-tenant environment"
 	>
 		{#snippet actions()}
-			<Button onclick={() => goto('/customers/new')}>Add Customer</Button>
+			{#if can(data.user, 'manage_customers')}
+				<Button onclick={() => goto('/customers/new')}>Add Customer</Button>
+			{/if}
 		{/snippet}
 	</PageHeader>
 

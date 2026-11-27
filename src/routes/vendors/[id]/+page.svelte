@@ -1,6 +1,8 @@
 <script lang="ts">
-	import type { PageData } from './$types';
+	import type { ActionData, PageData } from './$types';
 	import { goto } from '$app/navigation';
+	import { can, canAnywhere } from '#lib/utils/permissions.ts';
+	import EditorsCard from '#lib/components/admin/EditorsCard.svelte';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Card from '#lib/components/ui/Card.svelte';
 	import Badge from '#lib/components/ui/Badge.svelte';
@@ -11,7 +13,7 @@
 	import VersionDisplay from '#lib/components/domain/VersionDisplay.svelte';
 	import { formatDate, formatDateTime } from '#lib/utils/date-format.ts';
 
-	let { data }: { data: PageData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 	const { vendor } = $derived(data);
 
 	const breadcrumbItems = $derived([
@@ -30,15 +32,19 @@
 		description="Vendor Details and Software Products"
 	>
 		{#snippet actions()}
-			<Button variant="outline" onclick={() => goto(`/vendors/${vendor.id}/edit`)}>
-				Edit
-			</Button>
-			<DeleteButton
-				entityName="Vendor"
-				entityId={vendor.id}
-				entityLabel={vendor.name}
-				variant="destructive"
-			/>
+			{#if can(data.user, 'edit_vendor', { vendor: vendor.id })}
+				<Button variant="outline" onclick={() => goto(`/vendors/${vendor.id}/edit`)}>
+					Edit
+				</Button>
+			{/if}
+			{#if can(data.user, 'manage_vendors')}
+				<DeleteButton
+					entityName="Vendor"
+					entityId={vendor.id}
+					entityLabel={vendor.name}
+					variant="destructive"
+				/>
+			{/if}
 			<Button variant="outline" onclick={() => goto('/vendors')}>
 				Back to List
 			</Button>
@@ -114,9 +120,11 @@
 	<Card class="p-6">
 		<div class="flex items-center justify-between mb-4">
 			<h2 class="text-xl font-semibold">Software Products</h2>
-			<Button size="sm" onclick={() => goto(`/software/new?vendor_id=${vendor.id}`)}>
-				Add Software
-			</Button>
+			{#if can(data.user, 'edit_software', { vendor: vendor.id })}
+				<Button size="sm" onclick={() => goto(`/software/new?vendor_id=${vendor.id}`)}>
+					Add Software
+				</Button>
+			{/if}
 		</div>
 
 		{#if vendor.software.length === 0}
@@ -162,9 +170,11 @@
 	<Card class="p-6">
 		<div class="flex items-center justify-between mb-4">
 			<h2 class="text-xl font-semibold">Vendor Bundles</h2>
-			<Button size="sm" onclick={() => goto(`/bundles/new?vendor_id=${vendor.id}`)}>
-				Add Bundle
-			</Button>
+			{#if can(data.user, 'edit_bundle', { vendor: vendor.id })}
+				<Button size="sm" onclick={() => goto(`/bundles/new?vendor_id=${vendor.id}`)}>
+					Add Bundle
+				</Button>
+			{/if}
 		</div>
 		{#if vendor.bundles.length === 0}
 			<p class="text-sm text-muted-foreground text-center py-8">No maintenance bundles recorded for this vendor</p>
@@ -186,4 +196,6 @@
 			</div>
 		{/if}
 	</Card>
+
+	<EditorsCard editors={data.editors} what="vendor" {form} />
 </div>

@@ -9,14 +9,17 @@ import { sameVersion } from '#lib/utils/version-parser.ts';
 import { Prisma } from '@prisma/client';
 import { transactionTimeouts } from '#lib/server/db-dialect.ts';
 import { getDeploymentImpact } from '#lib/server/deployment.ts';
+import { requireOnLpars, requireAnywhere } from '#lib/server/scopes.ts';
+import { can } from '#lib/utils/permissions.ts';
 
 // Schema for deployment form
 const deploymentSchema = z.object({
 	lparIds: z.array(z.string()).min(1, 'Select at least one LPAR')
 });
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const packageId = params.id;
+	const user = requireAnywhere(locals, 'deploy_package', 'You are not allowed to deploy packages');
 
 	// Validate form with default empty array
 	const form = await serverValidate({ lparIds: [] }, deploymentSchema);
@@ -90,6 +93,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		}
 		return {
 			...lpar,
+			canDeploy: can(user, 'deploy_package', { customer: lpar.customer_id }),
 			changesNeeded,
 			newInstalls,
 			isCompliant: changesNeeded === 0 && newInstalls === 0
@@ -130,8 +134,9 @@ export const actions: Actions = {
 	},
 
 	// Optimized deployment using Prisma batch operations
-	deploy: async ({ params, request }) => {
+	deploy: async ({ params, request, locals }) => {
 		const lparIds = parseLparIds(await request.formData());
+		if (lparIds) await requireOnLpars(locals, 'deploy_package', lparIds);
 		if (!lparIds) {
 			return fail(400, {
 				success: false,

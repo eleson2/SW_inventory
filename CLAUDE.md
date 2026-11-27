@@ -127,17 +127,31 @@ refuses to start without them).
   deactivating or setting a password raises the version and ends that user's sessions.
 - Rights = `user_roles` rows: role + optional scope (`scope_type` customer/vendor/package + `scope_id`,
   null = global) + `is_contact` (the responsible person). Roles and their actions are defined in code
-  (`ROLES` in `src/lib/utils/permissions.ts`: `admin` = all, `package_creator` = `create_package`).
-  **Check rights only with `can(user, action, target)`** (target = the scopes the thing belongs to, e.g.
-  `{ customer }` for an LPAR); server: `requirePermission(locals, action, target)` / `requireAdmin` in
-  `src/lib/server/permissions.ts` (403). Pages use `can(data.user, ...)` only to hide buttons.
-  New right: add an `Action`, list it in a role, enforce it in load + action.
+  (`ROLES` in `src/lib/utils/permissions.ts`): `admin` = all; `editor` on one customer (it + its LPARs +
+  rollouts/deploys to them), vendor (it + software, versions, bundles) or package (the package only), or
+  global (all customers/vendors/software/bundles/packages, but not users, creating/deleting customers and
+  vendors, categories, bulk import, and **not LPARs**); `package_creator` = `create_package` (the creator
+  becomes the package's editor + contact). **Only editors of the LPAR's customer and admins change an LPAR**
+  (edit, rollback, deploy, rollout: `LPAR_ACTIONS` are `scopedOnly`; `ACTION_SCOPE` ties each action to the
+  scope type a scoped role must be on). Deactivating a customer with active LPARs needs that right too.
+  **Check rights only with `can(user, action, target)`** (target = the scopes the thing belongs to:
+  `{ customer }` for an LPAR and for rollouts/deploys per LPAR, `{ vendor }` for software/bundles). Server: `requirePermission(locals, action, target)` / `requireAdmin` in
+  `src/lib/server/permissions.ts` (403); targets from ids via `src/lib/server/scopes.ts` (`lparTarget`,
+  `softwareTarget`, `bundleTarget`, `requireOnLpars`, `requireAnywhere` for "new" pages). Every load of
+  an edit/new page and every form action / API write checks; viewing is open to everyone logged in
+  (LPAR sets and reports too). Pages use `can()` / `canAnywhere()` only to hide buttons and narrow
+  pickers (`filterAllowed`). New right: add an `Action`, list it in a role, enforce it in load + action.
+- Editors: `src/lib/server/editors.ts` (`loadEditors`, `editorActions(scope)` = addEditor/removeEditor/
+  setContact, admins only, audited on the scope; one contact per scope; `removeScopeRoles` on delete;
+  `loadResponsibilities` for `/admin/users/[id]` and `/account`), UI `EditorsCard.svelte` on customer,
+  vendor and package pages.
+- Acting user: `hooks.server.ts` runs each request in `runWithUser()` (`src/lib/server/request-context.ts`),
+  so `createAuditLog` (when no userId is passed) and `recordInstallChanges` (`lpar_software_history.user_id`)
+  record it without callers passing it.
 - `users.is_admin` / `can_create_packages` are legacy (phase 1): `migrateLegacyRoles()` turns them into
   global roles once per server start (hooks) and clears them, so old databases/backups convert themselves.
 - Pages: `/admin/users` (list, new, edit global roles, set password; admins cannot demote/deactivate
-  themselves; editing keeps scoped roles), `/account` (own rights, change password).
-- Planned next: scoped `editor` role per customer / vendor / package with contact, assigned on those
-  pages, enforced in every form action; the acting user recorded in audit log and install history.
+  themselves; editing keeps scoped roles), `/account` (own rights, what you are editor of, change password).
 - `db:export` includes `users` (password hashes too) and `user_roles`; `deploy -- data:push` therefore
   replaces the server's users.
 

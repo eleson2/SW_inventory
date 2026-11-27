@@ -2,8 +2,10 @@ import type { Actions, PageServerLoad } from './$types';
 import { error, fail } from '@sveltejs/kit';
 import { db } from '#lib/server/db.ts';
 import { backfillRollouts, planRollouts, RolloutError, updateRollouts } from '#lib/server/rollouts.ts';
+import { requireOnLpars } from '#lib/server/scopes.ts';
+import { can, canAnywhere } from '#lib/utils/permissions.ts';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	await backfillRollouts();
 	const pkg = await db.packages.findUnique({
 		where: { id: params.id },
@@ -29,7 +31,13 @@ export const load: PageServerLoad = async ({ params }) => {
 			orderBy: { code: 'asc' }
 		})
 	]);
-	return { pkg, rollouts, lpars };
+	const canPlan = (customerId: string) => can(locals.user, 'plan_rollout', { customer: customerId });
+	return {
+		pkg,
+		rollouts: rollouts.map((r) => ({ ...r, canPlan: canPlan(r.lpar.customers.id) })),
+		lpars: lpars.map((l) => ({ ...l, canPlan: canPlan(l.customers.id) })),
+		mayPlan: canAnywhere(locals.user, 'plan_rollout')
+	};
 };
 
 /** YYYY-MM-DD -> Date (UTC midnight); '' -> null; anything else -> undefined (invalid) */
@@ -42,9 +50,10 @@ function readDate(value: FormDataEntryValue | null): Date | null | undefined {
 }
 
 export const actions: Actions = {
-	plan: async ({ params, request }) => {
+	plan: async ({ params, request, locals }) => {
 		const form = await request.formData();
 		const lparIds = form.getAll('lpar').map(String).filter(Boolean);
+		await requireOnLpars(locals, 'plan_rollout', lparIds);
 		const plannedDate = readDate(form.get('planned_date'));
 		const notes = String(form.get('notes') ?? '').trim().slice(0, 500) || null;
 		if (lparIds.length === 0) return fail(400, { message: 'Pick at least one LPAR' });
@@ -56,9 +65,10 @@ export const actions: Actions = {
 		};
 	},
 
-	setDate: async ({ params, request }) => {
+	setDate: async ({ params, request, locals }) => {
 		const form = await request.formData();
 		const ids = form.getAll('id').map(String).filter(Boolean);
+		await requireOnRollouts(locals, params.id, ids);
 		if (ids.length === 0) return fail(400, { message: 'Pick at least one rollout' });
 		const plannedDate = readDate(form.get('planned_date'));
 		if (plannedDate === undefined) return fail(400, { message: 'Planned date is not a valid date' });
@@ -67,12 +77,19 @@ export const actions: Actions = {
 		);
 	},
 
-	cancel: async ({ params, request }) => {
+	cancel: async ({ params, request, locals }) => {
 		const ids = (await request.formData()).getAll('id').map(String).filter(Boolean);
+		await requireOnRollouts(locals, params.id, ids);
 		if (ids.length === 0) return fail(400, { message: 'Pick at least one rollout' });
 		return change(params.id, ids, { cancel: true }, (n) => `Cancelled ${n} rollout(s)`);
 	}
 };
+
+/** Changing rollouts needs plan_rollout on each one's LPAR. */
+async function requireOnRollouts(locals: App.Locals, packageId: string, ids: string[]) {
+	const rollouts = await db.lpar_package_rollouts.findMany({ where: { id: { in: ids }, package_id: packageId }, select: { lpar_id: true } });
+	await requireOnLpars(locals, 'plan_rollout', rollouts.map((r) => r.lpar_id));
+}
 
 async function change(packageId: string, ids: string[], what: Parameters<typeof updateRollouts>[2], done: (n: number) => string) {
 	try {

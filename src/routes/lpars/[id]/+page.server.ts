@@ -1,6 +1,9 @@
 import type { PageServerLoad, Actions } from './$types';
 import { calculateCompatibilityScore } from '#lib/services/package-service.ts';
 import { db } from '#lib/server/db.ts';
+import { requirePermission } from '#lib/server/permissions.ts';
+import { lparTarget } from '#lib/server/scopes.ts';
+import { currentUserId } from '#lib/server/request-context.ts';
 import { recordInstallChanges } from '#lib/server/install-history.ts';
 import { transactionTimeouts } from '#lib/server/db-dialect.ts';
 import { error, fail, redirect } from '@sveltejs/kit';
@@ -65,7 +68,8 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
-	delete: async ({ params }) => {
+	delete: async ({ params, locals }) => {
+		requirePermission(locals, 'edit_lpar', await lparTarget(params.id));
 		try {
 			// Check if LPAR exists
 			const lpar = await db.lpars.findUnique({
@@ -93,6 +97,7 @@ export const actions: Actions = {
 					entity_type: 'lpar',
 					entity_id: params.id,
 					action: 'delete',
+					user_id: currentUserId(),
 					changes: {
 						...lpar,
 						permanently_deleted: true
@@ -106,7 +111,8 @@ export const actions: Actions = {
 
 		redirect(303, '/lpars');
 	},
-	rollback: async ({ params, request }) => {
+	rollback: async ({ params, request, locals }) => {
+		requirePermission(locals, 'edit_lpar', await lparTarget(params.id));
 		const lparId = params.id;
 		const formData = await request.formData();
 		const softwareId = formData.get('software_id')?.toString();
@@ -209,6 +215,7 @@ export const actions: Actions = {
 					entity_type: 'lpar_software',
 					entity_id: lparId,
 					action: 'rollback',
+					user_id: currentUserId(),
 					changes: {
 						software_id: softwareId,
 						from_version: currentVersion,

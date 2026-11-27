@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { versionName } from '#lib/utils/version-parser.ts';
-	import type { PageData } from './$types';
+	import type { ActionData, PageData } from './$types';
 	import { goto } from '$app/navigation';
-	import { can } from '#lib/utils/permissions.ts';
+	import { can, canAnywhere } from '#lib/utils/permissions.ts';
+	import EditorsCard from '#lib/components/admin/EditorsCard.svelte';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Card from '#lib/components/ui/Card.svelte';
 	import Badge from '#lib/components/ui/Badge.svelte';
@@ -16,7 +17,7 @@
 	import { createCloneHandler } from '#lib/utils/clone-handler.ts';
 	import { describeItemSource } from '#lib/utils/bundle-merge.ts';
 
-	let { data }: { data: PageData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 	const { package: pkg } = $derived(data);
 
 	// Vendor bundles the items were copied from
@@ -63,9 +64,11 @@
 		description="Package Details and Software Items"
 	>
 		{#snippet actions()}
-			<Button onclick={() => goto(`/packages/${pkg.id}/deploy`)}>
-				Deploy Package
-			</Button>
+			{#if canAnywhere(data.user, 'deploy_package')}
+				<Button onclick={() => goto(`/packages/${pkg.id}/deploy`)}>
+					Deploy Package
+				</Button>
+			{/if}
 			<Button variant="outline" onclick={() => goto(`/packages/${pkg.id}/rollout`)}>
 				Rollout
 			</Button>
@@ -74,15 +77,17 @@
 					Clone Package
 				</Button>
 			{/if}
-			<Button variant="outline" onclick={() => goto(`/packages/${pkg.id}/edit`)}>
-				Edit
-			</Button>
-			<DeleteButton
-				entityName="Package"
-				entityId={pkg.id}
-				entityLabel={pkg.name}
-				variant="destructive"
-			/>
+			{#if can(data.user, 'edit_package', { package: pkg.id })}
+				<Button variant="outline" onclick={() => goto(`/packages/${pkg.id}/edit`)}>
+					Edit
+				</Button>
+				<DeleteButton
+					entityName="Package"
+					entityId={pkg.id}
+					entityLabel={pkg.name}
+					variant="destructive"
+				/>
+			{/if}
 			<Button variant="outline" onclick={() => window.history.back()}>
 				Back
 			</Button>
@@ -196,6 +201,8 @@
 			</div>
 		{/if}
 	</Card>
+
+	<EditorsCard editors={data.editors} what="package" {form} />
 </div>
 
 <CloneDialog

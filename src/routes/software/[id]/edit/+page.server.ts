@@ -3,12 +3,15 @@ import { db, createAuditLog } from '#lib/server/db.ts';
 import { softwareWithVersionsSchema } from '#lib/schemas/software.ts';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { serverValidate } from '#lib/utils/superforms.ts';
+import { requirePermission } from '#lib/server/permissions.ts';
+import { softwareTarget } from '#lib/server/scopes.ts';
+import { can } from '#lib/utils/permissions.ts';
 import { message, setError } from 'sveltekit-superforms';
 
 /**
  * Load software with all versions for master-detail editing
  */
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const software = await db.software.findUnique({
 		where: { id: params.id },
 		include: {
@@ -26,6 +29,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	if (!software) {
 		throw error(404, 'Software not found');
 	}
+	const user = requirePermission(locals, 'edit_software', { vendor: software.vendor_id });
 
 	// Load vendors and categories for dropdowns
 	const [vendors, categories] = await Promise.all([
@@ -64,7 +68,8 @@ export const load: PageServerLoad = async ({ params }) => {
 	return {
 		form,
 		software,
-		vendors,
+		// Moving the product to another vendor needs edit rights there too
+		vendors: vendors.filter((v) => v.id === software.vendor_id || can(user, 'edit_software', { vendor: v.id })),
 		categories
 	};
 };
@@ -78,12 +83,14 @@ export const actions: Actions = {
 	 * Uses Prisma transaction to ensure atomicity
 	 */
 	default: async (event) => {
+		requirePermission(event.locals, 'edit_software', await softwareTarget(event.params.id));
 		// Use Superforms to validate form data
 		const form = await serverValidate(event, softwareWithVersionsSchema);
 
 		if (!form.valid) {
 			return fail(400, { form });
 		}
+		requirePermission(event.locals, 'edit_software', { vendor: form.data.vendor_id });
 
 		const validated = form.data;
 

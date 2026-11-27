@@ -11,15 +11,19 @@ export function requireUser(locals: App.Locals) {
 	return locals.user;
 }
 
-const DENIED: Record<Action, string> = {
+const DENIED: Partial<Record<Action, string>> = {
 	manage_users: 'Only administrators can do this',
-	create_package: 'You are not allowed to create packages'
+	create_package: 'You are not allowed to create packages',
+	manage_customers: 'Only administrators can add or delete customers',
+	manage_vendors: 'Only administrators can add or delete vendors',
+	manage_categories: 'Only administrators can change categories',
+	import_data: 'Only administrators can import data'
 };
 
 /** The logged-in user when allowed to do `action` on `target`, else 403. */
 export function requirePermission(locals: App.Locals, action: Action, target: Target = {}) {
 	const user = requireUser(locals);
-	if (!can(user, action, target)) error(403, DENIED[action]);
+	if (!can(user, action, target)) error(403, DENIED[action] ?? 'You are not an editor of this (ask an administrator to add you as editor)');
 	return user;
 }
 

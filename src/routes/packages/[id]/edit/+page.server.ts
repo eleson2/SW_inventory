@@ -5,11 +5,13 @@ import { packageUpdateSchema } from '#lib/schemas/package.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
 import { message, setError } from 'sveltekit-superforms';
 import { loadBundlesForPackages } from '#lib/server/bundles.ts';
+import { requirePermission } from '#lib/server/permissions.ts';
 
 /**
  * Load package with items, plus all software and their versions for dropdowns
  */
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
+	requirePermission(locals, 'edit_package', { package: params.id });
 	const pkg = await db.packages.findUnique({
 		where: { id: params.id },
 		include: {
@@ -84,6 +86,7 @@ export const load: PageServerLoad = async ({ params }) => {
  */
 export const actions: Actions = {
 	default: async (event) => {
+		requirePermission(event.locals, 'edit_package', { package: event.params.id });
 		// Use Superforms to validate form data
 		const form = await serverValidate(event, packageUpdateSchema);
 

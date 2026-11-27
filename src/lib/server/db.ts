@@ -4,6 +4,7 @@
  */
 import { PrismaClient } from '@prisma/client';
 import { configureDatabase } from './db-dialect.ts';
+import { currentUserId } from './request-context.ts';
 
 // PrismaClient is attached to the `globalThis` object in development to prevent
 // exhausting your database connection limit during hot reload in development
@@ -91,6 +92,7 @@ export async function createAuditLog(
 	entityId: string,
 	action: 'create' | 'update' | 'delete' | 'rollback' | 'version_update',
 	changes: Record<string, any>,
+	/** Defaults to the logged-in user of the current request */
 	userId?: string,
 	/** Pass the transaction client when called inside db.$transaction: SQLite has one writer,
 	 * so a write on the main connection would wait for the transaction until it times out. */
@@ -102,7 +104,7 @@ export async function createAuditLog(
 			entity_id: entityId,
 			action,
 			changes,
-			user_id: userId,
+			user_id: userId ?? currentUserId(),
 			timestamp: new Date()
 		}
 	});

@@ -14,7 +14,9 @@
 
 	type LparWithStatus = (typeof data.lpars)[0];
 
-	let availableLpars = $state<LparWithStatus[]>(untrack(() => data.lpars));
+	// Only LPARs the user may deploy to (editor of their customer)
+	let availableLpars = $state<LparWithStatus[]>(untrack(() => data.lpars.filter((l) => l.canDeploy)));
+	const hiddenLpars = $derived(data.lpars.filter((l) => !l.canDeploy).length);
 	let selectedLpars = $state<LparWithStatus[]>([]);
 	const lparNameById = $derived(new Map(data.lpars.map((l) => [l.id, l.name])));
 
@@ -204,6 +206,11 @@
 	<!-- Dual Listbox for LPAR Selection -->
 	<Card class="p-6">
 		<h2 class="text-xl font-semibold mb-4">Select Target LPARs</h2>
+		{#if hiddenLpars > 0}
+			<p class="mb-3 text-sm text-muted-foreground">
+				{hiddenLpars} LPAR(s) not listed: only editors of their customer can deploy to them.
+			</p>
+		{/if}
 		<DualListbox
 			bind:available={availableLpars}
 			bind:selected={selectedLpars}

@@ -43,7 +43,7 @@
 	const taken = $derived(new Set(data.rollouts.filter((r) => r.stage !== 'cancelled').map((r) => r.lpar_id)));
 	const lparOptions = $derived(
 		data.lpars
-			.filter((l) => !taken.has(l.id))
+			.filter((l) => l.canPlan && !taken.has(l.id))
 			.map((l) => ({
 				id: l.id,
 				label: l.code,
@@ -54,7 +54,7 @@
 	let planLpars = $state<string[]>([]);
 
 	const selected = new SvelteSet<string>();
-	const openIds = $derived(rows.filter((r) => isOpen(r.stage)).map((r) => r.id));
+	const openIds = $derived(rows.filter((r) => r.canPlan && isOpen(r.stage)).map((r) => r.id));
 	const allSelected = $derived(openIds.length > 0 && openIds.every((id) => selected.has(id)));
 	function toggleAll() {
 		if (allSelected) selected.clear();
@@ -107,6 +107,7 @@
 		{/each}
 	</div>
 
+	{#if data.mayPlan}
 	<Card class="p-4">
 		<h2 class="mb-2 font-semibold">Plan rollout</h2>
 		<form method="POST" action="?/plan" use:enhance={afterSubmit} class="flex flex-wrap items-end gap-3 text-sm">
@@ -126,8 +127,11 @@
 				Plan for {planLpars.length} LPAR{planLpars.length === 1 ? '' : 's'}
 			</Button>
 		</form>
-		<p class="mt-2 text-xs text-muted-foreground">Without a date the LPARs are “initiated”; with a date “planned”.</p>
+		<p class="mt-2 text-xs text-muted-foreground">
+			Without a date the LPARs are “initiated”; with a date “planned”. Only LPARs of customers you are an editor of are listed.
+		</p>
 	</Card>
+	{/if}
 
 	<Card class="p-4">
 		{#if rows.length === 0}
@@ -167,7 +171,7 @@
 							{@const overdue = isOverdue({ stage: r.stage, planned_date: r.planned_date ? new Date(r.planned_date) : null }, today)}
 							<tr class="border-b {overdue ? 'bg-red-50' : ''}">
 								<td class="px-3 py-1.5">
-									{#if isOpen(r.stage)}
+									{#if r.canPlan && isOpen(r.stage)}
 										<input
 											type="checkbox"
 											checked={selected.has(r.id)}

@@ -3,8 +3,12 @@ import { customerUpdateSchema } from '#lib/schemas/index.ts';
 import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
 import { error, fail } from '@sveltejs/kit';
 import { serverValidate } from '#lib/utils/superforms.ts';
+import { requirePermission } from '#lib/server/permissions.ts';
+import { can } from '#lib/utils/permissions.ts';
+import { setError } from 'sveltekit-superforms';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
+	requirePermission(locals, 'edit_customer', { customer: params.id });
 	const customer = await db.customers.findUnique({
 		where: { id: params.id }
 	});
@@ -20,6 +24,7 @@ export const load: PageServerLoad = async ({ params }) => {
 
 export const actions: Actions = {
 	default: async (event) => {
+		requirePermission(event.locals, 'edit_customer', { customer: event.params.id });
 	const form = await serverValidate(event, customerUpdateSchema);
 
 		if (!form.valid) {
@@ -35,6 +40,14 @@ export const actions: Actions = {
 					errors: { ...form.errors, code: { _errors: [uniqueCheck.error!] } }
 				}
 			});
+		}
+
+		// Deactivating also deactivates the customer's LPARs: only editors of this customer (and admins)
+		if (form.data.active === false && !can(event.locals.user, 'edit_lpar', { customer: event.params.id })) {
+			const activeLpars = await db.lpars.count({ where: { customer_id: event.params.id, active: true } });
+			if (activeLpars > 0) {
+				return setError(form, 'active', `Deactivating would also deactivate ${activeLpars} LPAR(s); only editors of this customer can do that.`);
+			}
 		}
 
 		try {

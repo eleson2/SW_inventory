@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import type { BundleListRow } from './+page.server.ts';
 	import { goto } from '$app/navigation';
+	import { can, canAnywhere } from '#lib/utils/permissions.ts';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Card from '#lib/components/ui/Card.svelte';
 	import DataTable from '#lib/components/common/DataTable.svelte';
@@ -39,7 +40,9 @@
 	>
 		{#snippet actions()}
 			<Button variant="outline" onclick={() => goto('/import')}>Import CSV</Button>
-			<Button onclick={() => goto('/bundles/new')}>Add Bundle</Button>
+			{#if canAnywhere(data.user, 'edit_bundle')}
+				<Button onclick={() => goto('/bundles/new')}>Add Bundle</Button>
+			{/if}
 		{/snippet}
 	</PageHeader>
 
@@ -71,7 +74,9 @@
 					</p>
 					<div class="mt-6 flex justify-center gap-2">
 						<Button variant="outline" onclick={() => goto('/import')}>Import CSV</Button>
-						<Button onclick={() => goto('/bundles/new')}>Add Bundle</Button>
+						{#if canAnywhere(data.user, 'edit_bundle')}
+							<Button onclick={() => goto('/bundles/new')}>Add Bundle</Button>
+						{/if}
 					</div>
 				</div>
 			{/snippet}

@@ -69,7 +69,12 @@
 		</div>
 	{/if}
 
+	{#if !data.canManage}
+		<p class="text-sm text-muted-foreground">Only administrators can change categories and classify products.</p>
+	{/if}
+
 	<Card class="p-4">
+		<fieldset disabled={!data.canManage}>
 		<div class="mb-3 flex items-center justify-between">
 			<h2 class="font-semibold">Categories</h2>
 			{#if editing !== 'new'}<Button size="sm" variant="outline" onclick={() => (editing = 'new')}>Add category</Button>{/if}
@@ -126,9 +131,11 @@
 				</tbody>
 			</table>
 		{/if}
+		</fieldset>
 	</Card>
 
 	<Card class="p-4">
+		<fieldset disabled={!data.canManage}>
 		<form method="POST" action="?/classify" use:enhance={afterSave}>
 			<div class="mb-3 flex flex-wrap items-end gap-4 text-sm">
 				<h2 class="mr-auto font-semibold">
@@ -189,5 +196,6 @@
 				</div>
 			{/if}
 		</form>
+		</fieldset>
 	</Card>
 </div>

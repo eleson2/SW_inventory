@@ -1,6 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { db, createAuditLog } from '#lib/server/db.ts';
+import { requirePermission } from '#lib/server/permissions.ts';
+import { bundleTarget } from '#lib/server/scopes.ts';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const bundle = await db.vendor_bundles.findUnique({
@@ -35,7 +37,8 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
-	delete: async ({ params }) => {
+	delete: async ({ params, locals }) => {
+		requirePermission(locals, 'edit_bundle', await bundleTarget(params.id));
 		try {
 			const bundle = await db.vendor_bundles.findUnique({
 				where: { id: params.id },

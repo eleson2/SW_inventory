@@ -2,6 +2,7 @@
 	import { versionName } from '#lib/utils/version-parser.ts';
 	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
+	import { can, canAnywhere } from '#lib/utils/permissions.ts';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Card from '#lib/components/ui/Card.svelte';
 	import Badge from '#lib/components/ui/Badge.svelte';
@@ -53,21 +54,23 @@
 		description="Software Product Details"
 	>
 		{#snippet actions()}
-			<Button onclick={() => goto(`/software/${software.id}/version`)}>
-				New Version
-			</Button>
-			<Button variant="outline" onclick={() => (showCloneDialog = true)}>
-				Clone Software
-			</Button>
-			<Button variant="outline" onclick={() => goto(`/software/${software.id}/edit`)}>
-				Edit
-			</Button>
-			<DeleteButton
-				entityName="Software"
-				entityId={software.id}
-				entityLabel={software.name}
-				variant="destructive"
-			/>
+			{#if can(data.user, 'edit_software', { vendor: software.vendor_id })}
+				<Button onclick={() => goto(`/software/${software.id}/version`)}>
+					New Version
+				</Button>
+				<Button variant="outline" onclick={() => (showCloneDialog = true)}>
+					Clone Software
+				</Button>
+				<Button variant="outline" onclick={() => goto(`/software/${software.id}/edit`)}>
+					Edit
+				</Button>
+				<DeleteButton
+					entityName="Software"
+					entityId={software.id}
+					entityLabel={software.name}
+					variant="destructive"
+				/>
+			{/if}
 			<Button variant="outline" onclick={() => goto('/software')}>
 				Back to List
 			</Button>

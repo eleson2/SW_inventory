@@ -1,9 +1,11 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '#lib/server/db.ts';
 import { createDetailLoader } from '#lib/server/route-factory.ts';
+import { requirePermission } from '#lib/server/permissions.ts';
+import { editorActions, loadEditors, removeScopeRoles } from '#lib/server/editors.ts';
 import { redirect, fail } from '@sveltejs/kit';
 
-export const load: PageServerLoad = createDetailLoader({
+const loadDetail = createDetailLoader({
 	model: db.customers,
 	entityName: 'Customer',
 	include: {
@@ -16,8 +18,16 @@ export const load: PageServerLoad = createDetailLoader({
 	}
 });
 
+export const load: PageServerLoad = async (event) => ({
+	customer: (await loadDetail(event)).customer,
+	editors: await loadEditors('customer', event.params.id, event.locals.user)
+});
+
 export const actions: Actions = {
-	delete: async ({ params }) => {
+	...editorActions('customer'),
+
+	delete: async ({ params, locals }) => {
+		requirePermission(locals, 'manage_customers');
 		try {
 			// Check if customer exists
 			const customer = await db.customers.findUnique({
@@ -49,6 +59,7 @@ export const actions: Actions = {
 			await db.customers.delete({
 				where: { id: params.id }
 			});
+			await removeScopeRoles('customer', params.id);
 
 			await createAuditLog('customer', params.id, 'delete', {
 				...customer,

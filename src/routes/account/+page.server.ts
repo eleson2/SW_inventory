@@ -2,11 +2,12 @@ import type { Actions, PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
 import { envAdmin, setSessionCookie } from '#lib/server/auth.ts';
 import { requireUser } from '#lib/server/permissions.ts';
+import { loadResponsibilities } from '#lib/server/editors.ts';
 import { changeOwnPassword, UserError } from '#lib/server/users.ts';
 
-export const load: PageServerLoad = ({ locals }) => {
+export const load: PageServerLoad = async ({ locals }) => {
 	const user = requireUser(locals);
-	return { isEnvUser: user.is_env_user };
+	return { isEnvUser: user.is_env_user, responsibilities: await loadResponsibilities(user.id) };
 };
 
 export const actions: Actions = {

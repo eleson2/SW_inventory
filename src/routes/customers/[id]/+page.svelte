@@ -1,6 +1,8 @@
 <script lang="ts">
-	import type { PageData } from './$types';
+	import type { ActionData, PageData } from './$types';
 	import { goto } from '$app/navigation';
+	import { can, canAnywhere } from '#lib/utils/permissions.ts';
+	import EditorsCard from '#lib/components/admin/EditorsCard.svelte';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Card from '#lib/components/ui/Card.svelte';
 	import Badge from '#lib/components/ui/Badge.svelte';
@@ -10,7 +12,7 @@
 	import PageHeader from '#lib/components/common/PageHeader.svelte';
 	import { formatDateTime } from '#lib/utils/date-format.ts';
 
-	let { data }: { data: PageData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 	const { customer } = $derived(data);
 
 	const breadcrumbItems = $derived([
@@ -28,15 +30,19 @@
 		description="Customer Details and Configuration"
 	>
 		{#snippet actions()}
-			<Button variant="outline" onclick={() => goto(`/customers/${customer.id}/edit`)}>
-				Edit
-			</Button>
-			<DeleteButton
-				entityName="Customer"
-				entityId={customer.id}
-				entityLabel={customer.name}
-				variant="destructive"
-			/>
+			{#if can(data.user, 'edit_customer', { customer: customer.id })}
+				<Button variant="outline" onclick={() => goto(`/customers/${customer.id}/edit`)}>
+					Edit
+				</Button>
+			{/if}
+			{#if can(data.user, 'manage_customers')}
+				<DeleteButton
+					entityName="Customer"
+					entityId={customer.id}
+					entityLabel={customer.name}
+					variant="destructive"
+				/>
+			{/if}
 			<Button variant="outline" onclick={() => window.history.back()}>
 				Back
 			</Button>
@@ -92,9 +98,11 @@
 	<Card class="p-6">
 		<div class="flex items-center justify-between mb-4">
 			<h2 class="text-xl font-semibold">LPARs</h2>
-			<Button size="sm" onclick={() => goto(`/lpars/new?customer_id=${customer.id}`)}>
-				Add LPAR
-			</Button>
+			{#if can(data.user, 'edit_lpar', { customer: customer.id })}
+				<Button size="sm" onclick={() => goto(`/lpars/new?customer_id=${customer.id}`)}>
+					Add LPAR
+				</Button>
+			{/if}
 		</div>
 
 		{#if customer.lpars.length === 0}
@@ -130,4 +138,6 @@
 			</div>
 		{/if}
 	</Card>
+
+	<EditorsCard editors={data.editors} what="customer" {form} />
 </div>

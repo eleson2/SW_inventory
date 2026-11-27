@@ -1,9 +1,11 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '#lib/server/db.ts';
 import { createDetailLoader } from '#lib/server/route-factory.ts';
+import { requirePermission } from '#lib/server/permissions.ts';
+import { editorActions, loadEditors, removeScopeRoles } from '#lib/server/editors.ts';
 import { redirect, fail } from '@sveltejs/kit';
 
-export const load: PageServerLoad = createDetailLoader({
+const loadDetail = createDetailLoader({
 	model: db.vendors,
 	entityName: 'Vendor',
 	include: {
@@ -29,8 +31,16 @@ export const load: PageServerLoad = createDetailLoader({
 	}
 });
 
+export const load: PageServerLoad = async (event) => ({
+	vendor: (await loadDetail(event)).vendor,
+	editors: await loadEditors('vendor', event.params.id, event.locals.user)
+});
+
 export const actions: Actions = {
-	delete: async ({ params }) => {
+	...editorActions('vendor'),
+
+	delete: async ({ params, locals }) => {
+		requirePermission(locals, 'manage_vendors');
 		try {
 			// Check if vendor exists
 			const vendor = await db.vendors.findUnique({
@@ -70,6 +80,7 @@ export const actions: Actions = {
 			await db.vendors.delete({
 				where: { id: params.id }
 			});
+			await removeScopeRoles('vendor', params.id);
 
 			await createAuditLog('vendor', params.id, 'delete', {
 				...vendor,

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
+	import { can, canAnywhere } from '#lib/utils/permissions.ts';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Card from '#lib/components/ui/Card.svelte';
 	import Badge from '#lib/components/ui/Badge.svelte';
@@ -16,6 +17,7 @@
 
 	let { data }: { data: PageData } = $props();
 	const { lpar, compatibility } = $derived(data);
+	const canEdit = $derived(can(data.user, 'edit_lpar', { customer: lpar.customer_id }));
 
 	let showCloneDialog = $state(false);
 	let cloning = $state(false);
@@ -100,18 +102,20 @@
 		description="LPAR Details and Configuration"
 	>
 		{#snippet actions()}
-			<Button onclick={() => showCloneDialog = true}>
-				Clone LPAR
-			</Button>
-			<Button variant="outline" onclick={() => goto(`/lpars/${lpar.id}/edit`)}>
-				Edit
-			</Button>
-			<DeleteButton
-				entityName="LPAR"
-				entityId={lpar.id}
-				entityLabel={lpar.name}
-				variant="destructive"
-			/>
+			{#if canEdit}
+				<Button onclick={() => showCloneDialog = true}>
+					Clone LPAR
+				</Button>
+				<Button variant="outline" onclick={() => goto(`/lpars/${lpar.id}/edit`)}>
+					Edit
+				</Button>
+				<DeleteButton
+					entityName="LPAR"
+					entityId={lpar.id}
+					entityLabel={lpar.name}
+					variant="destructive"
+				/>
+			{/if}
 			<Button variant="outline" onclick={() => window.history.back()}>
 				Back
 			</Button>
@@ -225,9 +229,11 @@
 			<h2 class="text-xl font-semibold">Installed Software</h2>
 			<span class="flex gap-2">
 				<Button size="sm" variant="outline" href="/lpars/{lpar.id}/history">Install history</Button>
-				<Button size="sm" onclick={() => goto(`/lpars/${lpar.id}/edit`)}>
-					Manage Software
-				</Button>
+				{#if canEdit}
+					<Button size="sm" onclick={() => goto(`/lpars/${lpar.id}/edit`)}>
+						Manage Software
+					</Button>
+				{/if}
 			</span>
 		</div>
 
@@ -252,7 +258,7 @@
 							<span class="text-xs text-muted-foreground">
 								Installed: {formatDateTime(new Date(software.installed_date))}
 							</span>
-							{#if software.software?.versions && software.software.versions.length > 1}
+							{#if canEdit && software.software?.versions && software.software.versions.length > 1}
 								<Button
 									size="sm"
 									variant="outline"

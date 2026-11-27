@@ -5,6 +5,7 @@ import { packageWithItemsSchema } from '#lib/schemas/package.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
 import { loadBundlesForPackages } from '#lib/server/bundles.ts';
 import { requirePermission } from '#lib/server/permissions.ts';
+import { addEditor } from '#lib/server/editors.ts';
 
 // Load all packages for clone dropdown and all software for PackageItemsManager
 export const load: PageServerLoad = async ({ url, locals }) => {
@@ -71,7 +72,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 
 export const actions: Actions = {
 	default: async (event) => {
-		requirePermission(event.locals, 'create_package');
+		const user = requirePermission(event.locals, 'create_package');
 	// Use Superforms to validate form data
 	const form = await serverValidate(event, packageWithItemsSchema);
 
@@ -152,6 +153,9 @@ export const actions: Actions = {
 					undefined,
 					tx
 				);
+
+				// The creator is the package's editor and contact
+				await addEditor(tx, 'package', pkg.id, user.id, true);
 
 				return pkg;
 			});

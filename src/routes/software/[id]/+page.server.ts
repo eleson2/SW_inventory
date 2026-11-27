@@ -1,6 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '#lib/server/db.ts';
 import { createDetailLoader } from '#lib/server/route-factory.ts';
+import { requirePermission } from '#lib/server/permissions.ts';
+import { softwareTarget } from '#lib/server/scopes.ts';
 import { redirect, fail } from '@sveltejs/kit';
 
 export const load: PageServerLoad = createDetailLoader({
@@ -19,7 +21,8 @@ export const load: PageServerLoad = createDetailLoader({
 });
 
 export const actions: Actions = {
-	delete: async ({ params }) => {
+	delete: async ({ params, locals }) => {
+		requirePermission(locals, 'edit_software', await softwareTarget(params.id));
 		try {
 			// Check if software exists and get all dependencies
 			const software = await db.software.findUnique({

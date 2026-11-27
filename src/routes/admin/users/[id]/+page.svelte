@@ -6,6 +6,7 @@
 	import Card from '#lib/components/ui/Card.svelte';
 	import Button from '#lib/components/ui/Button.svelte';
 	import UserForm from '#lib/components/admin/UserForm.svelte';
+	import ResponsibilitiesList from '#lib/components/admin/ResponsibilitiesList.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	const inputClass = 'h-9 w-full rounded-md border border-input bg-background px-3 text-sm';
@@ -33,6 +34,12 @@
 
 	<Card class="p-6">
 		<UserForm action="?/update" values={data.user} envUser={data.isEnvUser} />
+	</Card>
+
+	<Card class="p-6 space-y-3">
+		<h2 class="font-semibold">Editor of</h2>
+		<ResponsibilitiesList items={data.responsibilities} />
+		<p class="text-xs text-muted-foreground">Editors and contacts are assigned on the customer, vendor or package page.</p>
 	</Card>
 
 	<Card class="p-6 space-y-3">

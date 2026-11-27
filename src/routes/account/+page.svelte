@@ -6,6 +6,7 @@
 	import Card from '#lib/components/ui/Card.svelte';
 	import Button from '#lib/components/ui/Button.svelte';
 	import { GLOBAL_ROLES, ROLES, hasGlobalRole } from '#lib/utils/permissions.ts';
+	import ResponsibilitiesList from '#lib/components/admin/ResponsibilitiesList.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	const user = $derived(page.data.user);
@@ -25,6 +26,8 @@
 			{/each}
 			<li>Can see every page and report</li>
 		</ul>
+		<h3 class="pt-2 font-semibold">Editor of</h3>
+		<ResponsibilitiesList items={data.responsibilities} empty="No customer, vendor or package assigned to you." />
 	</Card>
 
 	<Card class="p-6 space-y-3">

@@ -228,7 +228,7 @@ export function createUpdateFormAction<T extends z.ZodObject>(
 			});
 
 			// Create audit log entry
-			await createAuditLog(config.entityType, record.id, 'update', record, oldRecord);
+			await createAuditLog(config.entityType, record.id, 'update', { old: oldRecord, new: record });
 		} catch (error) {
 			console.error(`Error updating ${config.entityType}:`, error);
 			return fail(500, { form });

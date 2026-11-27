@@ -3,6 +3,7 @@ import { error, fail } from '@sveltejs/kit';
 import { db } from '#lib/server/db.ts';
 import { envAdmin } from '#lib/server/auth.ts';
 import { requireAdmin } from '#lib/server/permissions.ts';
+import { loadResponsibilities } from '#lib/server/editors.ts';
 import { globalRoles, normalizeUsername, readUserForm, setPassword, updateUser, UserError } from '#lib/server/users.ts';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -24,7 +25,8 @@ export const load: PageServerLoad = async ({ params }) => {
 	const { password_hash, roles, ...rest } = user;
 	return {
 		user: { ...rest, roles: globalRoles({ roles }), has_password: !!password_hash },
-		isEnvUser: user.username === normalizeUsername(envAdmin.username)
+		isEnvUser: user.username === normalizeUsername(envAdmin.username),
+		responsibilities: await loadResponsibilities(user.id)
 	};
 };
 

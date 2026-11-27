@@ -3,8 +3,10 @@ import { vendorUpdateSchema } from '#lib/schemas/index.ts';
 import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
 import { error, fail } from '@sveltejs/kit';
 import { serverValidate } from '#lib/utils/superforms.ts';
+import { requirePermission } from '#lib/server/permissions.ts';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
+	requirePermission(locals, 'edit_vendor', { vendor: params.id });
 	const vendor = await db.vendors.findUnique({
 		where: { id: params.id }
 	});
@@ -21,6 +23,7 @@ export const load: PageServerLoad = async ({ params }) => {
 
 export const actions: Actions = {
 	default: async (event) => {
+		requirePermission(event.locals, 'edit_vendor', { vendor: event.params.id });
 	const form = await serverValidate(event, vendorUpdateSchema);
 
 		if (!form.valid) {

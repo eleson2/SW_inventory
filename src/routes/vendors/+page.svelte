@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import type { Vendor } from '#lib/types/index.ts';
 	import { goto } from '$app/navigation';
+	import { can, canAnywhere } from '#lib/utils/permissions.ts';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Card from '#lib/components/ui/Card.svelte';
 	import DataTable from '#lib/components/common/DataTable.svelte';
@@ -54,7 +55,9 @@
 		description="Track software vendors and their contact information"
 	>
 		{#snippet actions()}
-			<Button onclick={() => goto('/vendors/new')}>Add Vendor</Button>
+			{#if can(data.user, 'manage_vendors')}
+				<Button onclick={() => goto('/vendors/new')}>Add Vendor</Button>
+			{/if}
 		{/snippet}
 	</PageHeader>
 
@@ -96,9 +99,11 @@
 					<h3 class="mt-2 text-sm font-semibold text-foreground">No vendors yet</h3>
 					<p class="mt-1 text-sm text-muted-foreground">Get started by adding your first software vendor.</p>
 					<div class="mt-6">
-						<Button onclick={() => goto('/vendors/new')}>
-							Add Vendor
-						</Button>
+						{#if can(data.user, 'manage_vendors')}
+							<Button onclick={() => goto('/vendors/new')}>
+								Add Vendor
+							</Button>
+						{/if}
 					</div>
 				</div>
 			{/snippet}

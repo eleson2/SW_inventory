@@ -3,6 +3,8 @@ import type { PageServerLoad, Actions } from './$types';
 import { db, createAuditLog } from '#lib/server/db.ts';
 import { transactionTimeouts } from '#lib/server/db-dialect.ts';
 import { z } from 'zod';
+import { requirePermission } from '#lib/server/permissions.ts';
+import { softwareTarget } from '#lib/server/scopes.ts';
 
 const versionSchema = z.object({
 	version: z.string().min(1, 'Version is required').max(50),
@@ -12,7 +14,8 @@ const versionSchema = z.object({
 	release_notes: z.string().max(1000)
 });
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
+	requirePermission(locals, 'edit_software', await softwareTarget(params.id));
 	const software = await db.software.findUnique({
 		where: { id: params.id },
 		include: {
@@ -37,7 +40,8 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ params, request }) => {
+	default: async ({ params, request, locals }) => {
+		requirePermission(locals, 'edit_software', await softwareTarget(params.id));
 		const formData = await request.formData();
 		const data = {
 			version: formData.get('version'),

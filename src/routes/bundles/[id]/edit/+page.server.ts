@@ -4,6 +4,9 @@ import { message } from 'sveltekit-superforms';
 import { db } from '#lib/server/db.ts';
 import { bundleUpdateSchema, type BundleType } from '#lib/schemas/bundle.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
+import { requirePermission } from '#lib/server/permissions.ts';
+import { bundleTarget } from '#lib/server/scopes.ts';
+import { can } from '#lib/utils/permissions.ts';
 import {
 	saveBundle,
 	BundleValidationError,
@@ -11,12 +14,13 @@ import {
 	loadVendorOptions
 } from '#lib/server/bundles.ts';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const bundle = await db.vendor_bundles.findUnique({
 		where: { id: params.id },
 		include: { items: { orderBy: { software: { name: 'asc' } } } }
 	});
 	if (!bundle) error(404, 'Bundle not found');
+	const user = requirePermission(locals, 'edit_bundle', { vendor: bundle.vendor_id });
 
 	const [vendors, allSoftware] = await Promise.all([loadVendorOptions(), loadSoftwareForBundles()]);
 
@@ -41,13 +45,20 @@ export const load: PageServerLoad = async ({ params }) => {
 		bundleUpdateSchema
 	);
 
-	return { form, bundle, vendors, allSoftware };
+	return {
+		form,
+		bundle,
+		vendors: vendors.filter((v) => v.id === bundle.vendor_id || can(user, 'edit_bundle', { vendor: v.id })),
+		allSoftware
+	};
 };
 
 export const actions: Actions = {
 	default: async (event) => {
+		requirePermission(event.locals, 'edit_bundle', await bundleTarget(event.params.id));
 		const form = await serverValidate(event, bundleUpdateSchema);
 		if (!form.valid) return fail(400, { form });
+		requirePermission(event.locals, 'edit_bundle', { vendor: form.data.vendor_id });
 
 		try {
 			await saveBundle(form.data, event.params.id);

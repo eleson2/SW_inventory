@@ -2,7 +2,7 @@
 	import { versionName } from '#lib/utils/version-parser.ts';
 	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
-	import { can } from '#lib/utils/permissions.ts';
+	import { can, canAnywhere } from '#lib/utils/permissions.ts';
 	import Button from '#lib/components/ui/Button.svelte';
 	import Card from '#lib/components/ui/Card.svelte';
 	import Badge from '#lib/components/ui/Badge.svelte';
@@ -26,9 +26,11 @@
 					Create Package
 				</Button>
 			{/if}
-			<Button variant="outline" onclick={() => goto(`/bundles/new?clone=${bundle.id}`)}>Clone as Next Level</Button>
-			<Button variant="outline" onclick={() => goto(`/bundles/${bundle.id}/edit`)}>Edit</Button>
-			<DeleteButton entityName="Bundle" entityId={bundle.id} entityLabel={bundle.code} variant="destructive" />
+			{#if can(data.user, 'edit_bundle', { vendor: bundle.vendor_id })}
+				<Button variant="outline" onclick={() => goto(`/bundles/new?clone=${bundle.id}`)}>Clone as Next Level</Button>
+				<Button variant="outline" onclick={() => goto(`/bundles/${bundle.id}/edit`)}>Edit</Button>
+				<DeleteButton entityName="Bundle" entityId={bundle.id} entityLabel={bundle.code} variant="destructive" />
+			{/if}
 		{/snippet}
 	</PageHeader>
 

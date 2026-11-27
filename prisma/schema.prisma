@@ -385,6 +385,8 @@ model lpar_software_history {
   package_id     String?   @db.Uuid
   reason         String?   @db.VarChar(500)
   reconstructed  Boolean   @default(false)
+  // Who made the change (null: before user accounts, rebuilt, or from a script)
+  user_id        String?   @db.Uuid
   created_at     DateTime  @default(now())
   lpar           lpars     @relation(fields: [lpar_id], references: [id], onDelete: Cascade)
   software       software  @relation(fields: [software_id], references: [id], onDelete: Cascade)

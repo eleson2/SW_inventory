@@ -4,6 +4,8 @@ import { db } from '#lib/server/db.ts';
 import { recordInstallChanges } from '#lib/server/install-history.ts';
 import { transactionTimeouts } from '#lib/server/db-dialect.ts';
 import { importBundleRows, parseBundleRows } from '#lib/server/bundles.ts';
+import { isHttpError } from '@sveltejs/kit';
+import { requirePermission } from '#lib/server/permissions.ts';
 
 interface ImportResult {
   success: boolean;
@@ -15,7 +17,7 @@ interface ImportResult {
   };
 }
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -34,6 +36,19 @@ export const POST: RequestHandler = async ({ request }) => {
 
     let result: ImportResult;
 
+    // Bundles: edit_bundle on every vendor in the file; everything else is an admin import
+    if (importType === 'bundles') {
+      const rows = parseBundleRows(data);
+      const codes = [...new Set(rows.map((r) => r.vendor_code.toUpperCase()))];
+      const vendors = await db.vendors.findMany({ where: { code: { in: codes } }, select: { id: true, code: true } });
+      for (const code of codes) {
+        const vendor = vendors.find((v) => v.code.toUpperCase() === code);
+        requirePermission(locals, vendor ? 'edit_bundle' : 'manage_vendors', vendor ? { vendor: vendor.id } : {});
+      }
+      return Response.json(await importBundleRows(rows));
+    }
+    requirePermission(locals, 'import_data');
+
     switch (importType) {
       case 'vendors':
         result = await importVendors(data);
@@ -47,15 +62,13 @@ export const POST: RequestHandler = async ({ request }) => {
       case 'lpars':
         result = await importLpars(data);
         break;
-      case 'bundles':
-        // Vendor bundle CSV (see BUNDLE_CSV_COLUMNS / scripts/fetch-bundles)
-        return Response.json(await importBundleRows(parseBundleRows(data)));
       default:
         return Response.json({ success: false, message: 'Invalid import type' }, { status: 400 });
     }
 
     return Response.json(result);
   } catch (error: any) {
+    if (isHttpError(error)) throw error;
     console.error('Import error:', error);
     return Response.json(
       { success: false, message: error.message || 'Import failed' },

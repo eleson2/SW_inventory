@@ -4,6 +4,7 @@ import { db } from '#lib/server/db.ts';
 import { SESSION_COOKIE, envAdmin, verifySessionToken } from '#lib/server/auth.ts';
 import { ensureLegacyRolesMigrated, loadSessionUser } from '#lib/server/users.ts';
 import { can } from '#lib/utils/permissions.ts';
+import { runWithUser } from '#lib/server/request-context.ts';
 
 /** Routes reachable without logging in. */
 const PUBLIC_PATHS = ['/login'];
@@ -26,12 +27,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 		redirect(303, `/login?redirectTo=${encodeURIComponent(path + event.url.search)}`);
 	}
 
-	// User administration; the actions check again (requireAdmin)
+	// User administration; the actions check again (requireAdmin). Other rights are checked per
+	// page and action (requirePermission); everyone logged in can view everything.
 	if (path === '/admin' || path.startsWith('/admin/')) {
 		if (!can(event.locals.user, 'manage_users')) error(403, 'Only administrators can manage users');
 	}
 
-	const response = await resolve(event);
+	// Audit log and install history record this user (request-context.ts)
+	const response = await runWithUser(event.locals.user?.id ?? null, () => resolve(event));
 	response.headers.set('X-Frame-Options', 'DENY');
 	response.headers.set('X-Content-Type-Options', 'nosniff');
 	response.headers.set('Referrer-Policy', 'same-origin');

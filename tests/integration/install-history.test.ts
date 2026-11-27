@@ -12,6 +12,7 @@ vi.mock('../../src/lib/server/db.ts', async () => {
 });
 
 const { recordInstallChanges, backfillInstallHistory } = await import('../../src/lib/server/install-history.ts');
+const { runWithUser } = await import('../../src/lib/server/request-context.ts');
 
 describe('Install history', () => {
 	let lparA: { id: string };
@@ -105,6 +106,21 @@ describe('Install history', () => {
 		const january = stateAt(await testDb.lpar_software_history.findMany(), new Date('2025-01-15'));
 		expect(january.get(pairKey(lparA.id, cics.id))).toEqual({ version: 'V6R1M0', ptf_level: 'UI1' });
 		expect(january.has(pairKey(lparA.id, db2.id))).toBe(false);
+	});
+
+	it('records the acting user of the request', async () => {
+		const user = await testDb.users.create({ data: { username: 'bo', display_name: 'Bo' } });
+		const before = await row(lparB.id, cics.id);
+		await testDb.lpar_software.update({ where: { id: before.id }, data: { current_version: 'V6R1M0' } });
+		await runWithUser(user.id, () =>
+			recordInstallChanges(testDb, [{ lpar_id: lparB.id, software_id: cics.id, before, to: { version: 'V6R1M0', ptf_level: null } }], 'lpar_edit')
+		);
+		const events = await testDb.lpar_software_history.findMany({ where: { lpar_id: lparB.id }, orderBy: { occurred_at: 'asc' } });
+		// The rebuilt install has no user; the change made in the request has
+		expect(events.map((e) => [e.reconstructed, e.user_id])).toEqual([
+			[true, null],
+			[false, user.id]
+		]);
 	});
 
 	it('never dates a change before the last recorded event', async () => {

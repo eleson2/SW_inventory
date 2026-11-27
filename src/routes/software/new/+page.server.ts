@@ -3,9 +3,13 @@ import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
 import { fail, redirect } from '@sveltejs/kit';
 import { softwareWithVersionsSchema } from '#lib/schemas/software.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
+import { requirePermission } from '#lib/server/permissions.ts';
+import { requireAnywhere } from '#lib/server/scopes.ts';
+import { filterAllowed } from '#lib/utils/permissions.ts';
 
 // Load vendors and all software for dropdown
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
+	const user = requireAnywhere(locals, 'edit_software', 'You are not allowed to add software');
 	// Check if vendor_id is provided in URL query params
 	const vendorIdFromUrl = url.searchParams.get('vendor_id');
 
@@ -61,7 +65,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	return {
 		form,
-		vendors,
+		vendors: filterAllowed(user, 'edit_software', 'vendor', vendors, (v) => v.id),
 		allSoftware,
 		preselectedVendor,
 		categories
@@ -76,6 +80,7 @@ export const actions: Actions = {
 		if (!form.valid) {
 			return fail(400, { form });
 		}
+		requirePermission(event.locals, 'edit_software', { vendor: form.data.vendor_id });
 
 		try {
 			// Check if software already exists for this vendor

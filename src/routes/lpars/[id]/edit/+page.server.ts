@@ -5,10 +5,13 @@ import { db, createAuditLog, checkUniqueConstraint } from '#lib/server/db.ts';
 import { fail, redirect, error } from '@sveltejs/kit';
 import { lparWithSoftwareSchema } from '#lib/schemas/lpar.ts';
 import { serverValidate } from '#lib/utils/superforms.ts';
+import { requirePermission } from '#lib/server/permissions.ts';
+import { lparTarget } from '#lib/server/scopes.ts';
+import { can } from '#lib/utils/permissions.ts';
 import { message, setError } from 'sveltekit-superforms';
 import { findVersionId, sameVersion } from '#lib/utils/version-parser.ts';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const [lpar, customers, packages, allSoftware] = await Promise.all([
 		db.lpars.findUnique({
 			where: { id: params.id },
@@ -58,6 +61,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	if (!lpar) {
 		throw error(404, 'LPAR not found');
 	}
+	const user = requirePermission(locals, 'edit_lpar', { customer: lpar.customer_id });
 
 	const softwareById = new Map(allSoftware.map((s) => [s.id, s]));
 
@@ -85,7 +89,8 @@ export const load: PageServerLoad = async ({ params }) => {
 	return {
 		form,
 		lpar,
-		customers,
+		// Moving the LPAR to another customer needs edit rights there too
+		customers: customers.filter((c) => c.id === lpar.customer_id || can(user, 'edit_lpar', { customer: c.id })),
 		packages,
 		allSoftware
 	};
@@ -94,10 +99,12 @@ export const load: PageServerLoad = async ({ params }) => {
 export const actions: Actions = {
 	default: async (event) => {
 		const { params } = event;
+		requirePermission(event.locals, 'edit_lpar', await lparTarget(params.id));
 		const form = await serverValidate(event, lparWithSoftwareSchema);
 		if (!form.valid) {
 			return fail(400, { form });
 		}
+		requirePermission(event.locals, 'edit_lpar', { customer: form.data.customer_id });
 
 		const validated = form.data;
 		const kept = validated.software_installations.filter((inst) => inst._action !== 'delete');
