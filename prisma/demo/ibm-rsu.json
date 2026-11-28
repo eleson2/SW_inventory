@@ -1,0 +1,434 @@
+{
+ "RSU2603": {
+  "name": "IBM CST RSU2603",
+  "release_date": "2026-04-06",
+  "source_url": "https://public.dhe.ibm.com/systems/z/servicetest/RSU2603.pdf",
+  "notes": "CST tested (RSU2603 product list); 1557 PTFs assigned RSU2603 (all products)",
+  "rows": [
+   [
+    "CICSTS",
+    "CICS TS",
+    "6.1"
+   ],
+   [
+    "CICSTS",
+    "CICS TS",
+    "6.2"
+   ],
+   [
+    "CICSTS",
+    "CICS TS",
+    "6.3"
+   ],
+   [
+    "DB2",
+    "Db2",
+    "12"
+   ],
+   [
+    "DB2",
+    "Db2",
+    "13"
+   ],
+   [
+    "GDPS",
+    "GDPS",
+    "4.6.0"
+   ],
+   [
+    "GDPS",
+    "GDPS",
+    "4.7.0"
+   ],
+   [
+    "GDPS",
+    "GDPS",
+    "4.8.0"
+   ],
+   [
+    "IMS",
+    "IMS",
+    "15.3"
+   ],
+   [
+    "IMS",
+    "IMS",
+    "15.4"
+   ],
+   [
+    "IMS",
+    "IMS",
+    "15.5"
+   ],
+   [
+    "IMS",
+    "IMS",
+    "15.6"
+   ],
+   [
+    "IRLM",
+    "IRLM",
+    "2.3"
+   ],
+   [
+    "IBM31BITSDKFORZOS",
+    "IBM 31-bit SDK for z/OS",
+    "8"
+   ],
+   [
+    "IBM64BITSDKFORZOS",
+    "IBM 64-bit SDK for z/OS",
+    "8"
+   ],
+   [
+    "IBMMQ",
+    "IBM MQ",
+    "9.4.0"
+   ],
+   [
+    "IBMMQ",
+    "IBM MQ",
+    "9.4.5"
+   ],
+   [
+    "IBMMQ",
+    "IBM MQ",
+    "9.3.0"
+   ],
+   [
+    "ZOS",
+    "z/OS",
+    "V2R5"
+   ],
+   [
+    "ZOS",
+    "z/OS",
+    "3.1"
+   ],
+   [
+    "ZOS",
+    "z/OS",
+    "3.2"
+   ]
+  ]
+ },
+ "RSU2606": {
+  "name": "IBM CST RSU2606",
+  "release_date": "2026-07-07",
+  "source_url": "https://public.dhe.ibm.com/systems/z/servicetest/RSU2606.pdf",
+  "notes": "CST tested (RSU2606 product list); 1202 PTFs assigned RSU2606 (all products)",
+  "rows": [
+   [
+    "CICSTS",
+    "CICS TS",
+    "6.1"
+   ],
+   [
+    "CICSTS",
+    "CICS TS",
+    "6.2"
+   ],
+   [
+    "CICSTS",
+    "CICS TS",
+    "6.3"
+   ],
+   [
+    "DB2",
+    "Db2",
+    "12"
+   ],
+   [
+    "DB2",
+    "Db2",
+    "13"
+   ],
+   [
+    "GDPS",
+    "GDPS",
+    "4.8.0"
+   ],
+   [
+    "IMS",
+    "IMS",
+    "15.3"
+   ],
+   [
+    "IMS",
+    "IMS",
+    "15.4"
+   ],
+   [
+    "IMS",
+    "IMS",
+    "15.5"
+   ],
+   [
+    "IMS",
+    "IMS",
+    "15.6"
+   ],
+   [
+    "IRLM",
+    "IRLM",
+    "2.3"
+   ],
+   [
+    "IBM31BITSDKFORZOS",
+    "IBM 31-bit SDK for z/OS",
+    "8"
+   ],
+   [
+    "IBM64BITSDKFORZOS",
+    "IBM 64-bit SDK for z/OS",
+    "8"
+   ],
+   [
+    "WEBSPHEREAPPLICATIONSERVERFORZOS",
+    "WebSphere Application Server for z/OS",
+    "9.0.5.27"
+   ],
+   [
+    "WEBSPHEREAPPLICATIONSERVERFORZOS",
+    "WebSphere Application Server for z/OS",
+    "8.5.5.29"
+   ],
+   [
+    "IBMMQ",
+    "IBM MQ",
+    "9.4.0"
+   ],
+   [
+    "IBMMQ",
+    "IBM MQ",
+    "9.4.5"
+   ],
+   [
+    "IBMMQ",
+    "IBM MQ",
+    "9.3.0"
+   ],
+   [
+    "ZOS",
+    "z/OS",
+    "V2R5"
+   ],
+   [
+    "ZOS",
+    "z/OS",
+    "3.1"
+   ],
+   [
+    "ZOS",
+    "z/OS",
+    "3.2"
+   ]
+  ]
+ },
+ "RSU2609": {
+  "name": "IBM CST RSU2609",
+  "release_date": "2026-10-07",
+  "source_url": "https://public.dhe.ibm.com/systems/z/servicetest/RSU2609.pdf",
+  "notes": "CST tested (RSU2609 product list); 1412 PTFs assigned RSU2609 (all products)",
+  "rows": [
+   [
+    "CICSTS",
+    "CICS TS",
+    "6.2"
+   ],
+   [
+    "CICSTS",
+    "CICS TS",
+    "6.3"
+   ],
+   [
+    "DB2",
+    "Db2",
+    "12"
+   ],
+   [
+    "DB2",
+    "Db2",
+    "13"
+   ],
+   [
+    "GDPS",
+    "GDPS",
+    "4.8.0"
+   ],
+   [
+    "IMS",
+    "IMS",
+    "15.3"
+   ],
+   [
+    "IMS",
+    "IMS",
+    "15.4"
+   ],
+   [
+    "IMS",
+    "IMS",
+    "15.5"
+   ],
+   [
+    "IMS",
+    "IMS",
+    "15.6"
+   ],
+   [
+    "IRLM",
+    "IRLM",
+    "2.3"
+   ],
+   [
+    "IBM31BITSDKFORZOS",
+    "IBM 31-bit SDK for z/OS",
+    "8"
+   ],
+   [
+    "IBM64BITSDKFORZOS",
+    "IBM 64-bit SDK for z/OS",
+    "8"
+   ],
+   [
+    "WEBSPHEREAPPLICATIONSERVERFORZOS",
+    "WebSphere Application Server for z/OS",
+    "9.0.5.28"
+   ],
+   [
+    "WEBSPHEREAPPLICATIONSERVERFORZOS",
+    "WebSphere Application Server for z/OS",
+    "8.5.5.29"
+   ],
+   [
+    "IBMMQ",
+    "IBM MQ",
+    "9.4.0"
+   ],
+   [
+    "IBMMQ",
+    "IBM MQ",
+    "10.0.0"
+   ],
+   [
+    "ZOS",
+    "z/OS",
+    "V2R5"
+   ],
+   [
+    "ZOS",
+    "z/OS",
+    "3.1"
+   ],
+   [
+    "ZOS",
+    "z/OS",
+    "3.2"
+   ]
+  ]
+ },
+ "RSU2610": {
+  "name": "IBM CST RSU2610",
+  "release_date": "2026-11-04",
+  "source_url": "https://public.dhe.ibm.com/systems/z/servicetest/RSU2610.pdf",
+  "notes": "CST tested (RSU2609 product list); 445 PTFs assigned RSU2610 (all products)",
+  "rows": [
+   [
+    "CICSTS",
+    "CICS TS",
+    "6.2"
+   ],
+   [
+    "CICSTS",
+    "CICS TS",
+    "6.3"
+   ],
+   [
+    "DB2",
+    "Db2",
+    "12"
+   ],
+   [
+    "DB2",
+    "Db2",
+    "13"
+   ],
+   [
+    "GDPS",
+    "GDPS",
+    "4.8.0"
+   ],
+   [
+    "IMS",
+    "IMS",
+    "15.3"
+   ],
+   [
+    "IMS",
+    "IMS",
+    "15.4"
+   ],
+   [
+    "IMS",
+    "IMS",
+    "15.5"
+   ],
+   [
+    "IMS",
+    "IMS",
+    "15.6"
+   ],
+   [
+    "IRLM",
+    "IRLM",
+    "2.3"
+   ],
+   [
+    "IBM31BITSDKFORZOS",
+    "IBM 31-bit SDK for z/OS",
+    "8"
+   ],
+   [
+    "IBM64BITSDKFORZOS",
+    "IBM 64-bit SDK for z/OS",
+    "8"
+   ],
+   [
+    "WEBSPHEREAPPLICATIONSERVERFORZOS",
+    "WebSphere Application Server for z/OS",
+    "9.0.5.28"
+   ],
+   [
+    "WEBSPHEREAPPLICATIONSERVERFORZOS",
+    "WebSphere Application Server for z/OS",
+    "8.5.5.29"
+   ],
+   [
+    "IBMMQ",
+    "IBM MQ",
+    "9.4.0"
+   ],
+   [
+    "IBMMQ",
+    "IBM MQ",
+    "10.0.0"
+   ],
+   [
+    "ZOS",
+    "z/OS",
+    "V2R5"
+   ],
+   [
+    "ZOS",
+    "z/OS",
+    "3.1"
+   ],
+   [
+    "ZOS",
+    "z/OS",
+    "3.2"
+   ]
+  ]
+ }
+}

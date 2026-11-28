@@ -18,6 +18,7 @@ npm run db:push                                   # Push schema to database
 
 # Option A: TypeScript seed script
 npm run db:seed                                   # Seed via TypeScript (seed.ts); both providers
+npm run db:demo -- --replace                      # REPLACES all data with the demo set (prisma/demo-data.ts)
 
 # Option B: SQL scripts (PostgreSQL only)
 npx tsx prisma/scripts/run-sql.ts reset           # Empty all tables
@@ -497,6 +498,15 @@ See `prisma/postgres-extras/add_views_and_functions.sql` for full documentation.
 6. Build UI with existing components where possible
 
 ### Testing Data
+
+**Demo set** (`npm run db:demo -- --replace`, `prisma/demo-data.ts`): what the demo server shows; replaces
+everything, in one transaction. 10 customers / 28 LPARs (one DEV LPAR per multi-LPAR customer with the IBM or
+Broadcom dev tools, outside the packages), OMEGAMON + SYSVIEW + z/OS stack, IBM levels from the real CST reports
+(`prisma/demo/ibm-rsu.json`), Broadcom CARS levels invented (made-up PTFs), packages 2026.Q3 (11 July: RSU2606 +
+CARS2607) and 2026.Q4 (10 October: RSU2609 + CARS2610), history from 20 April 2026 with rollbacks, ahead/behind
+LPARs, Q4 rollouts planned/overdue/cancelled, demo end-of-support dates, users anna/erik/sara (customer editors),
+olle/maja (vendors), pia (packages), tom (no rights), password `demo-pass-2026`. To change the story, edit the
+tables at the top of the script. Then `npm run deploy -- data:push` puts it on the server.
 
 **Option A: TypeScript Seed** (integrates with Prisma)
 ```bash
