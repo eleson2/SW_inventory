@@ -87,9 +87,18 @@ function remote(...args: string[]) {
 	run('ssh', [...SSH_OPTS, '-t', HOST, ['sudo', 'env', ...env, 'bash', REMOTE_SCRIPT, ...args].join(' ')]);
 }
 
+/** The prompt needs someone to type; without a terminal (e.g. `! cmd` in Claude Code) stop with a hint. */
+function requireTerminal(question: string) {
+	if (!process.stdin.isTTY) throw new Error(`${question}
+No terminal to type "yes" in: run the same command with --yes to confirm.`);
+}
+
 async function confirm(question: string) {
+	requireTerminal(question);
 	const rl = createInterface({ input: process.stdin, output: process.stdout });
-	const answer = await rl.question(`${question} Type "yes" to continue: `);
+	// Input ending (Ctrl+D) counts as no instead of leaving the question pending
+	const closed = new Promise<string>((done) => rl.once('close', () => done('')));
+	const answer = await Promise.race([rl.question(`${question} Type "yes" to continue: `), closed]);
 	rl.close();
 	return answer.trim().toLowerCase() === 'yes';
 }
@@ -126,6 +135,7 @@ function dataPull(load: boolean) {
 }
 
 async function dataPush(dirArg: string | undefined, yes: boolean) {
+	if (!yes) requireTerminal(`This REPLACES all data on ${HOST}.`); // before the export, not after
 	let dir: string;
 	if (dirArg) {
 		dir = resolve(ROOT, dirArg);
